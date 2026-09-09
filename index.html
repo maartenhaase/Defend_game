@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Desert Bunker Defense v2.7</title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<header>
+  <strong>DBD // 2.7 // GITHUB BUILD</strong>
+  <span>W <b id="wave">0</b></span>
+  <span>SUP <b id="supply">45</b></span>
+  <span>HP <b id="hp">100</b></span>
+  <span>AR <b id="armor">20</b></span>
+  <span>PROG <b id="waveProg">–</b></span>
+  <span>RNG <b id="ammoRangeHud">100%</b></span>
+  <span>G <b id="gunLvl">1</b></span>
+  <span>ROF <b id="rofLvl">1</b></span>
+  <span>DMG <b id="dmgLvl">1</b></span>
+  <span>COOL <b id="heatLvl">1</b></span>
+  <span id="gunName" class="mini">FIELD RIFLE</span>
+</header>
+
+<div id="wrap">
+<canvas id="game"></canvas>
+
+<div id="fire" class="panel">
+  <div id="msg">READY</div>
+  <div id="weaponStats" class="mini" style="margin-bottom:5px">MG BURST</div>
+  <div class="row">
+    <button data-ammo="normal" class="active">1 N <b id="anormal">70</b></button>
+    <button data-ammo="ap">2 AP <b id="aap">18</b></button>
+    <button data-ammo="he">3 HE <b id="ahe">12</b></button>
+    <span class="mini">HEAT</span><span id="heatWrap"><span id="heat"></span></span>
+    <button id="briefBtn">BRIEF</button>
+  </div>
+</div>
+
+<div id="shop" class="panel">
+  <h3>SUPPLY</h3>
+  <div class="shoprow"><span>N +30</span><button data-buy="normal" id="normalBuy">6</button></div>
+  <div class="shoprow"><span>AP +12</span><button data-buy="ap" id="apBuy">9</button></div>
+  <div class="shoprow"><span>HE +8</span><button data-buy="he" id="heBuy">10</button></div>
+  <div class="shoprow"><span>N RANGE <b id="nLvl">1</b></span><button data-buy="normalUp" id="normalUpCost">12</button></div>
+  <div class="shoprow"><span>AP RANGE+VEH DMG <b id="apLvl">1</b></span><button data-buy="apUp" id="apUpCost">15</button></div>
+  <div class="shoprow"><span>HE MORTAR SPLASH+SPEED <b id="heLvl">1</b></span><button data-buy="heUp" id="heUpCost">14</button></div>
+  <div class="shoprow"><span>REPAIR +32</span><button data-buy="repair">10</button></div>
+  <div class="shoprow"><span>ARMOR +20</span><button data-buy="armor">12</button></div>
+  <div class="shoprow"><span>GUN TYPE</span><button data-buy="gun" id="gunCost">18</button></div>
+  <div class="shoprow"><span>OVERHEAT</span><button data-buy="heat" id="heatCost">10</button></div>
+  <div class="shoprow"><span>RATE</span><button data-buy="rof" id="rofCost">10</button></div>
+  <div class="shoprow"><span>DAMAGE</span><button data-buy="damage" id="dmgCost">10</button></div>
+  <div class="shoprow"><span>TRENCH CREW <b id="trenchLvl">0+0</b></span><button data-buy="trench" id="trenchCost">16</button></div>
+  <button id="nextBtn" style="width:100%;margin-top:7px">NEXT</button>
+</div>
+
+<div id="brief" class="panel">
+  <h3>FIELD BRIEF // <span id="bw">1</span></h3>
+  <div class="intel">
+    <div>INF<b id="bi">?</b></div>
+    <div>ARM<b id="bv">?</b></div>
+  </div>
+  <div id="bnote" class="mini">Visibility poor.</div>
+  <button id="goBtn" style="width:100%;margin-top:9px">DEPLOY</button>
+</div>
+</div>
+
+<script src="src/audio.js"></script>
+<script src="src/01_core.js"></script>
+<script src="src/02_data_world.js"></script>
+<script src="src/03_wave_spawn.js"></script>
+<script src="src/04_combat.js"></script>
+<script src="src/05_ai_update.js"></script>
+<script src="src/06_render.js"></script>
+<script src="src/07_input_ui.js"></script>
+
+</body>
+</html>
