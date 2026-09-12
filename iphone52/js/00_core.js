@@ -9,14 +9,22 @@ const C={
 const ISOX=4.18,ISOY=2.08;
 const WORLD={aMin:-104,aMax:86,sMin:-52,sMax:52};
 const PCENTER_A=(WORLD.aMin+WORLD.aMax)/2;
-let P_A_X=1.43,P_S_X=.62,P_A_Y=2.08,P_S_Y=1.18,P_CX=0,P_CY=0;
+let P_A_X=.36,P_S_X=2.85,P_A_Y=3.00,P_S_Y=.30,P_CX=0,P_CY=0;
 function updateProjection(){
   PORTRAIT=W<=600&&H>W;
   if(!PORTRAIT)return;
-  const weaponReserve=Math.min(125,Math.max(102,H*.17));
-  const playTop=8, playBottom=H-weaponReserve-8, playH=Math.max(360,playBottom-playTop);
-  const sx=Math.min(1,(W-18)/348), sy=Math.min(1,playH/535), k=Math.min(sx,sy);
-  P_A_X=1.43*k; P_S_X=.62*k; P_A_Y=2.08*k; P_S_Y=1.18*k;
+  // Portrait projection: progression (a) runs mainly top -> bottom, while
+  // the cross-field axis (s) runs mainly left -> right.  The previous
+  // matrix made the x/y basis vectors almost parallel, collapsing the
+  // battlefield into one diagonal strip on iPhone.
+  const weaponReserve=Math.min(132,Math.max(108,H*.17));
+  const playTop=10, playBottom=H-weaponReserve-8, playH=Math.max(390,playBottom-playTop);
+  const aSpan=WORLD.aMax-WORLD.aMin, sSpan=WORLD.sMax-WORLD.sMin;
+  const baseAX=.36, baseSX=2.85, baseAY=3.00, baseSY=.30;
+  const needW=Math.abs(baseAX)*aSpan+Math.abs(baseSX)*sSpan;
+  const needH=Math.abs(baseAY)*aSpan+Math.abs(baseSY)*sSpan;
+  const k=Math.min((W-18)/needW,(playH-12)/needH);
+  P_A_X=baseAX*k; P_S_X=baseSX*k; P_A_Y=baseAY*k; P_S_Y=baseSY*k;
   P_CX=W*.50;
   P_CY=playTop+playH*.50;
 }
