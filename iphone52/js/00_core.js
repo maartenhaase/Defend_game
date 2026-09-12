@@ -13,10 +13,6 @@ let P_A_X=.36,P_S_X=2.85,P_A_Y=3.00,P_S_Y=.30,P_CX=0,P_CY=0;
 function updateProjection(){
   PORTRAIT=W<=600&&H>W;
   if(!PORTRAIT)return;
-  // Portrait projection: progression (a) runs mainly top -> bottom, while
-  // the cross-field axis (s) runs mainly left -> right.  The previous
-  // matrix made the x/y basis vectors almost parallel, collapsing the
-  // battlefield into one diagonal strip on iPhone.
   const weaponReserve=Math.min(132,Math.max(108,H*.17));
   const playTop=10, playBottom=H-weaponReserve-8, playH=Math.max(390,playBottom-playTop);
   const aSpan=WORLD.aMax-WORLD.aMin, sSpan=WORLD.sMax-WORLD.sMin;
@@ -34,17 +30,11 @@ function inRiver(a,s){return a>RIVER.a-RIVER.half&&a<RIVER.a+RIVER.half&&Math.ab
 function nearBridge(s){return RIVER.bridges.some(b=>Math.abs(s-b)<RIVER.bridgeHalf)}
 function chooseBridge(e){if(e.bridgeS!==undefined&&e.bridgeS!==null)return e.bridgeS;const nearest=RIVER.bridges.slice().sort((a,b)=>Math.abs(e.s-a)-Math.abs(e.s-b))[0];e.bridgeS=Math.random()<.72?nearest:RIVER.bridges.find(b=>b!==nearest);return e.bridgeS}
 function riverTarget(e,forward=true){if(!e.vehicle)return null;const b=chooseBridge(e),west=RIVER.a-RIVER.half-2.2,east=RIVER.a+RIVER.half+2.2;if(forward){if(e.a<west)return{a:west,s:b,river:true};if(e.a<east)return{a:east,s:b,river:true}}else{if(e.a>east)return{a:east,s:b,river:true};if(e.a>west)return{a:west,s:b,river:true}}return null}
-function resize(){const r=canvas.getBoundingClientRect();DPR=Math.min(2,devicePixelRatio||1);canvas.width=Math.max(1,Math.round(r.width*DPR));canvas.height=Math.max(1,Math.round(r.height*DPR));ctx.setTransform(DPR,0,0,DPR,0,0);W=r.width;H=r.height;updateProjection();if(!mouse.x||PORTRAIT){mouse.x=W*.50;mouse.y=PORTRAIT?H*.46:H*.48}}
+function resize(){const r=canvas.getBoundingClientRect(),mobile=r.width<=600&&r.height>r.width;DPR=Math.min(mobile?1.5:2,devicePixelRatio||1);canvas.width=Math.max(1,Math.round(r.width*DPR));canvas.height=Math.max(1,Math.round(r.height*DPR));ctx.setTransform(DPR,0,0,DPR,0,0);W=r.width;H=r.height;updateProjection();if(!mouse.x||PORTRAIT){mouse.x=W*.50;mouse.y=PORTRAIT?H*.46:H*.48}}
 addEventListener('resize',resize);if(window.visualViewport)visualViewport.addEventListener('resize',()=>requestAnimationFrame(resize));resize();
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))} function rnd(a,b){return a+Math.random()*(b-a)} function lerp(a,b,t){return a+(b-a)*t}
-function isoAS(a,s,z=0){
-  if(PORTRAIT){const da=a-PCENTER_A;return{x:P_CX+da*P_A_X+s*P_S_X,y:P_CY+da*P_A_Y+s*P_S_Y-z*.72}}
-  return{x:W*.47+a*ISOX,y:H*.50+s*ISOY-z}
-}
-function asFromScreen(sx,sy){
-  if(PORTRAIT){const dx=sx-P_CX,dy=sy-P_CY,det=P_A_X*P_S_Y-P_S_X*P_A_Y||.001;return{a:PCENTER_A+(dx*P_S_Y-P_S_X*dy)/det,s:(P_A_X*dy-dx*P_A_Y)/det}}
-  return{a:(sx-W*.47)/ISOX,s:(sy-H*.50)/ISOY}
-}
+function isoAS(a,s,z=0){if(PORTRAIT){const da=a-PCENTER_A;return{x:P_CX+da*P_A_X+s*P_S_X,y:P_CY+da*P_A_Y+s*P_S_Y-z*.72}}return{x:W*.47+a*ISOX,y:H*.50+s*ISOY-z}}
+function asFromScreen(sx,sy){if(PORTRAIT){const dx=sx-P_CX,dy=sy-P_CY,det=P_A_X*P_S_Y-P_S_X*P_A_Y||.001;return{a:PCENTER_A+(dx*P_S_Y-P_S_X*dy)/det,s:(P_A_X*dy-dx*P_A_Y)/det}}return{a:(sx-W*.47)/ISOX,s:(sy-H*.50)/ISOY}}
 function xyFromAS(a,s){return{x:(a+s)/2,y:(s-a)/2}}
 function isoXY(x,y,z=0){return isoAS(x-y,x+y,z)}
 function distAS(a,b){return Math.hypot(a.a-b.a,a.s-b.s)}
