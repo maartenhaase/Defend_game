@@ -31,8 +31,11 @@ h3{margin:0 0 9px;font:800 11px ui-monospace,SFMono-Regular,Menlo,monospace;lett
 #chain{margin-left:auto;color:#f0c45d;opacity:.85}
 #tip{position:absolute;right:15px;bottom:15px;max-width:320px;padding:8px 10px;background:#0e1512c7;border:1px solid #425047;border-radius:7px;color:#a9b5a8;font-size:9px;pointer-events:none}
 @media(max-width:900px){#weapons{width:360px}header{gap:10px;font-size:10px}#tip{display:none}}
+
 html,body{width:100%;height:100%;height:100dvh;overscroll-behavior:none;-webkit-text-size-adjust:100%;-webkit-user-select:none;user-select:none}
-canvas,button{touch-action:none;-webkit-tap-highlight-color:transparent}
+canvas{touch-action:none;-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.panel[hidden]{display:none!important}
 @media (max-width:600px) and (orientation:portrait){
   body{grid-template-rows:auto minmax(0,1fr);height:100dvh;min-height:100dvh}
   header{height:auto;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 8px;padding:calc(5px + env(safe-area-inset-top)) 8px 5px;font-size:9px;line-height:1.15;letter-spacing:.01em}
