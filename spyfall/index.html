@@ -10,11 +10,15 @@
 <meta content="telephone=no" name="format-detection"/>
 <title>Spyfall Offline</title>
 
-<link href="./style.css" rel="stylesheet"/><script defer="" src="./data.js"></script><script defer="" src="./app.js"></script></head>
+<link href="./style.css" rel="stylesheet"/>
+<script defer src="./data.js"></script>
+<script defer src="./data_extra.js"></script>
+<script defer src="./app.js"></script>
+</head>
 <body>
 <div class="app">
 <div class="header">
-<div class="brand"><div class="logo">🕵️</div><div><h1>Spyfall Offline</h1><div class="sub">één telefoon • volledig offline • eigen dataset</div></div></div>
+<div class="brand"><div class="logo">🕵️</div><div><h1>Spyfall Offline</h1><div class="sub">één telefoon • volledig offline • 8 datasets</div></div></div>
 <button class="btn ghost small" id="resetBtn" title="Alles resetten" type="button">↻</button>
 </div>
 <section id="setupScreen">
@@ -31,6 +35,11 @@
 <button class="pill active" data-set="nl" type="button">🇳🇱 Nederland</button>
 <button class="pill" data-set="eu" type="button">🇪🇺 Europa</button>
 <button class="pill" data-set="world" type="button">🌍 Wereldwijd</button>
+<button class="pill" data-set="films" type="button">🎬 Films</button>
+<button class="pill" data-set="bijbel" type="button">📖 Bijbelse verhalen</button>
+<button class="pill" data-set="geschiedenis" type="button">🏛️ Geschiedenis</button>
+<button class="pill" data-set="sprookjes" type="button">🧚 Sprookjes & fantasie</button>
+<button class="pill" data-set="avontuur" type="button">🧭 Vakantie & avontuur</button>
 <button class="pill" data-set="mix" type="button">🎲 Alles mixen</button>
 </div>
 <div class="divider"></div>
@@ -41,7 +50,7 @@
 <p class="tiny" style="margin:10px 2px 0">Tip: met 4–6 spelers werkt 1 spion het best. Twee spionnen is vooral leuk met een grotere groep.</p>
 </div>
 <button class="btn primary" id="startBtn" style="width:100%;font-size:18px" type="button">Start nieuwe ronde</button>
-<div class="footer-note">Alle gegevens blijven in dit HTML-bestand / op je apparaat. Er wordt niets verzonden.</div>
+<div class="footer-note">Alle gegevens blijven in dit spel / op je apparaat. Er wordt niets verzonden.</div>
 </section>
 <section class="hidden" id="handoffScreen">
 <div class="card center">
