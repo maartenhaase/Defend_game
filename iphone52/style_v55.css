@@ -1,0 +1,16 @@
+/* JBD v5.5 — lightweight mobile overlay */
+#upgradeViz{position:absolute;right:12px;top:12px;width:155px;padding:7px 9px;pointer-events:none;z-index:7;font:600 9px/1.25 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d7dfcc;letter-spacing:.05em}
+#upgradeViz .ttl{font-size:8px;color:#f0dfb5;margin-bottom:5px;opacity:.9}
+#upgradeViz .urow{display:flex;justify-content:space-between;gap:10px;margin:3px 0}
+#upgradeViz .pips{display:inline-flex;gap:3px}
+#upgradeViz .pip{width:8px;height:8px;border-radius:2px;border:1px solid #6e796f;background:#18231d}
+#upgradeViz .pip.on{background:#e9e1c4;border-color:#f1ebdb}
+#upgradeViz .pip.cool.on{background:#8fb7cb;border-color:#d7f0ff}
+@media (max-width:600px) and (orientation:portrait){
+  #upgradeViz{right:6px;top:7px;width:132px;padding:5px 6px;border-radius:9px;font-size:7px;background:linear-gradient(180deg,#16221ddd,#101713dd)}
+  #upgradeViz .ttl{font-size:6.5px;margin-bottom:3px}
+  #upgradeViz .urow{margin:2px 0}
+  #upgradeViz .pip{width:6px;height:6px}
+  #shop{font-size:10px}
+  #shop .shoprow{padding:6px 0}
+}
