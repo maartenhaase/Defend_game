@@ -19,7 +19,7 @@ function loadPrefs(){
     const p = JSON.parse(localStorage.getItem('spyfallPlayers'));
     if(Array.isArray(p) && p.length>=3) players = p;
     const s = localStorage.getItem('spyfallSet');
-    if(['nl','eu','world','mix'].includes(s)) selectedSet=s;
+    if(s && (s==='mix' || Object.prototype.hasOwnProperty.call(DATASETS,s))) selectedSet=s;
   }catch(e){}
 }
 function showScreen(id){ screens.forEach(s=>$('#'+s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0); }
@@ -41,7 +41,7 @@ function renderPills(){ document.querySelectorAll('.pill').forEach(p=>p.classLis
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 function randInt(n){ return Math.floor(Math.random()*n); }
 function shuffled(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=randInt(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
-function getPool(){ return selectedSet==='mix' ? [...DATASETS.nl,...DATASETS.eu,...DATASETS.world] : DATASETS[selectedSet]; }
+function getPool(){ return selectedSet==='mix' ? Object.values(DATASETS).flat() : (DATASETS[selectedSet] || DATASETS.nl); }
 function cleanedPlayers(){ return players.map((x,i)=>x.trim()||`Speler ${i+1}`); }
 
 function startGame(){
