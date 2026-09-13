@@ -1,5 +1,5 @@
-const CACHE='wauw-quiz-v2';
-const ASSETS=['./','./index.html','./style.css','./data.js','./app.js','./manifest.webmanifest','./data/dieren.js','./data/rest1.js','./data/rest2.js','./data/rest3.js'];
+const CACHE='wauw-quiz-hard-v5';
+const ASSETS=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./hard/init.js','./hard/p1.js','./hard/p2.js','./hard/p3.js','./hard/p4.js','./hard/p5.js','./hard/loader.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(CACHE).then(x=>x.put(e.request,c)).catch(()=>{});return r;}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html'))));});
