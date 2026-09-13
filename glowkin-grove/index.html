@@ -10,7 +10,10 @@
     #status{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:28px;font-size:18px}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-  <script src="./payload.js"></script>
+  <script src="./payload0.js"></script>
+  <script src="./payload1.js"></script>
+  <script src="./payload2.js"></script>
+  <script src="./payload3.js"></script>
 </head>
 <body>
 <div id="status">Glowkin Grove laden…</div>
@@ -19,8 +22,9 @@
   const status=document.getElementById('status');
   try{
     if(!window.pako) throw new Error('De laadmodule kon niet starten');
-    if(!window.GLOWKIN_GZIP_B64) throw new Error('Gamegegevens ontbreken');
-    const bytes=Uint8Array.from(atob(window.GLOWKIN_GZIP_B64),c=>c.charCodeAt(0));
+    const parts=[window.GLOWKIN_PART_0,window.GLOWKIN_PART_1,window.GLOWKIN_PART_2,window.GLOWKIN_PART_3];
+    if(parts.some(x=>!x)) throw new Error('Gamegegevens ontbreken');
+    const bytes=Uint8Array.from(atob(parts.join('')),c=>c.charCodeAt(0));
     const html=new TextDecoder('utf-8').decode(window.pako.ungzip(bytes));
     document.open();
     document.write(html);
