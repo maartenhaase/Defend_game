@@ -1,0 +1,1 @@
+const QUIZ_DATA={};
