@@ -1,5 +1,5 @@
-const CACHE='spyfall-offline-v2';
-const ASSETS=['./','./index.html','./style.css','./data.js','./app.js'];
+const CACHE='spyfall-offline-v3';
+const ASSETS=['./','./index.html','./style.css','./data.js','./data_extra.js','./app.js'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
