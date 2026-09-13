@@ -112,9 +112,8 @@ function rebuildLevel(n){
 
 const oldStart513=startWave;
 startWave=function(){
-  const next=state.wave+1;
-  rebuildLevel(next);
   oldStart513();
+  rebuildLevel(state.wave);
   applyCampaignInfo(state.wave);
   state.spawnClock=.12;
   const h=document.querySelector('header strong');
