@@ -7,7 +7,7 @@ const HOLD={active:false,pid:null,sx:0,sy:0,x:0,y:0,t0:0,pull:0,ammo:'mg'};
 const THEME_NAMES=['JUNGLE','POLAR','DESERT'];
 
 function themeName(){ return THEME_NAMES[Math.max(0,(state.wave-1)%3)]||'JUNGLE'; }
-function setHeader(){ const h=document.querySelector('header strong'); if(h) h.textContent=`JBD // 5.9 // ${themeName()} ${state.wave||1}`; }
+function setHeader(){ const h=document.querySelector('header strong'); if(h) h.textContent=`JBD // 5.10 // ${themeName()} ${state.wave||1}`; }
 
 function rebalanceScenery(){
   if(typeof TRENCHES!=='undefined'){
@@ -173,8 +173,9 @@ function drawNeutral(n){
   ctx.restore();
 }
 
+const _drawShots = typeof drawShots==='function' ? drawShots : null;
 drawShots=function(){
-  for(const sh of state.shots){ if(sh.t<0||sh.done) continue; const u=clamp(sh.t/sh.life,0,1),a=lerp(sh.a,sh.ta,u),s=lerp(sh.s,sh.ts,u),z=sh.arc?Math.sin(u*Math.PI)*55:0,p=isoAS(a,s,z);
+  for(const sh of state.shots){ if(sh.t<0||sh.done) continue; const u=clamp(sh.t/sh.life,0,1),a=lerp(sh.a,sh.ta,u),s=lerp(sh.s,sh.ts,u),z=sh.arc?Math.sin(u*Math.PI)*(sh.type==='he'?62:32):0,p=isoAS(a,s,z);
     if(sh.enemy){ const q=isoAS(sh.a,sh.s),r=isoAS(a,s); line(q.x,q.y,r.x,r.y,.8,'#e98c5e66'); circle(p.x,p.y,1.2,'#ffc775'); }
     else if(sh.type==='mg'){ circle(p.x,p.y,1.2,C.tracer,'#fff2ad',.5); }
     else if(sh.type==='ap'){ circle(p.x,p.y,1.7,'#b7e0e7','#efffff',.7); }
@@ -192,19 +193,70 @@ drawEnemy=function(e){
   rr(p.x-w/2,y,w,PORTRAIT?3:4,2,'#231c18aa'); ctx.fillStyle=targetClass(e)==='personnel'?'#9abf75':targetClass(e)==='armor'?'#85b6c4':'#e6bc59'; ctx.fillRect(p.x-w/2+1,y+1,(w-2)*f,PORTRAIT?1.5:2);
 };
 
-drawCrosshair=function(){ const col=HOLD.active?(HOLD.ammo==='mg'?'#e9e1c4':HOLD.ammo==='ap'?'#9dd6e4':'#efc65c'):'#e9e1c4'; ctx.save(); ctx.translate(mouse.x,mouse.y); ctx.strokeStyle=col; ctx.lineWidth=1.25; ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.stroke(); line(-16,0,-6,0,1.25,col); line(6,0,16,0,1.25,col); line(0,-16,0,-6,1.25,col); line(0,6,0,16,1.25,col); if(HOLD.active){ ctx.globalAlpha=.28; const rad=HOLD.ammo==='mg'?8:HOLD.ammo==='ap'?14:22; ctx.beginPath(); ctx.arc(0,0,rad,0,Math.PI*2); ctx.stroke(); } ctx.restore(); };
+function computeSling(){
+  const b=isoAS(77,0), dx=HOLD.x-b.x, dy=Math.max(0,HOLD.y-b.y), px=Math.hypot(dx,dy), maxPull=150;
+  const power=clamp(px/maxPull,0,1), hold=clamp((performance.now()-HOLD.t0)/1000,0,1.4), charge=clamp(power*.42+(hold/.95)*.58,0,1);
+  let ammo=charge<.34?'mg':charge<.70?'ap':'he';
+  const mag=Math.max(1,px), dirX=-dx/mag, dirY=-dy/mag;
+  const probe=110, w0=asFromScreen(b.x,b.y), w1=asFromScreen(b.x+dirX*probe,b.y+dirY*probe), wa=w1.a-w0.a, ws=w1.s-w0.s, wl=Math.max(.001,Math.hypot(wa,ws));
+  const range=42+power*150, ta=clamp(77+(wa/wl)*range,WORLD.aMin-4,WORLD.aMax+2), ts=clamp((ws/wl)*range,WORLD.sMin+2,WORLD.sMax-2);
+  const speed=105+power*260, life=clamp(range/speed,.16,1.15);
+  return {b,dx,dy,px,power,hold,charge,ammo,ta,ts,range,speed,life};
+}
+function selectByCharge(){ const q=computeSling(); HOLD.pull=q.px; HOLD.ammo=q.ammo; selected=q.ammo; updateUI(); return q; }
 
-function aimFromEvent(e){ const r=canvas.getBoundingClientRect(); mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top; }
-function chooseAmmoGesture(){ const dt=(performance.now()-HOLD.t0)/1000,dx=HOLD.x-HOLD.sx,dy=HOLD.y-HOLD.sy,pull=Math.hypot(dx,dy); HOLD.pull=pull; let ammo='mg'; if(pull>90||dt>.55) ammo='he'; else if(pull>26||dt>.18) ammo='ap'; HOLD.ammo=ammo; selected=ammo; }
-function holdDown(e){ if(e.pointerType!=='touch'&&e.button!==0) return; aimFromEvent(e); HOLD.active=true; HOLD.pid=e.pointerId; HOLD.sx=mouse.x; HOLD.sy=mouse.y; HOLD.x=mouse.x; HOLD.y=mouse.y; HOLD.t0=performance.now(); HOLD.ammo='mg'; selected='mg'; fireHeld=false; e.preventDefault(); e.stopImmediatePropagation(); try{canvas.setPointerCapture(e.pointerId)}catch(_){} }
-function holdMove(e){ if(!HOLD.active) return; aimFromEvent(e); HOLD.x=mouse.x; HOLD.y=mouse.y; chooseAmmoGesture(); e.preventDefault(); e.stopImmediatePropagation(); }
-function holdUp(e){ if(!HOLD.active) return; aimFromEvent(e); HOLD.x=mouse.x; HOLD.y=mouse.y; chooseAmmoGesture(); fireHeld=false; state.trigger=0; fire(); HOLD.active=false; e.preventDefault(); e.stopImmediatePropagation(); try{canvas.releasePointerCapture(e.pointerId)}catch(_){} }
-canvas.addEventListener('pointerdown',holdDown,true); canvas.addEventListener('pointermove',holdMove,true); canvas.addEventListener('pointerup',holdUp,true); canvas.addEventListener('pointercancel',holdUp,true); addEventListener('pointerup',holdUp,true);
+function slingFire(){
+  if(state.phase!=='wave'||state.overheated) return;
+  const q=selectByCharge();
+  if(q.px<14){ $('msg').textContent='TREK OMLAAG OM TE VUREN'; return; }
+  const type=q.ammo,w=weaponStats(type);
+  if(state.ammo[type]<=0){ $('msg').textContent=`${type.toUpperCase()} EMPTY`; return; }
+  state.ammo[type]--; state.heat+=w.heat*(.72+.55*q.power);
+  if(state.heat>100+(state.coolLvl-1)*18){ state.overheated=true; $('msg').textContent='OVERHEAT'; }
+  shotSound(type); state.shake=Math.min(6,state.shake+(type==='mg'?.45:type==='ap'?1.5:2.4)*(.65+q.power));
+  const b={a:77,s:0}, damage=w.damage*(.68+q.power*.92)*(type==='he'?1.08:1), splash=(w.splash||0)*(.78+q.charge*.6);
+  state.shots.push({enemy:false,type,a:b.a,s:b.s,ta:q.ta,ts:q.ts,t:0,life:q.life,damage,splash,arc:type==='he'||type==='ap',hitDone:false,sling:true,power:q.power,charge:q.charge});
+  if(type==='he'){
+    for(const e of state.enemies){ if(!e.vehicle&&!e.fort&&Math.hypot(e.a-q.ta,e.s-q.ts)<splash*1.7&&Math.random()<.72){e.action='sprint';e.actionT=.9;e.s+=rnd(-4,4)} }
+  }
+  state.trigger=Math.max(.12,w.cycle*(1.05-q.power*.25));
+  $('msg').textContent=`${type.toUpperCase()} · POWER ${Math.round(q.power*100)}%`;
+  updateUI();
+}
+
+drawCrosshair=function(){
+  const q=HOLD.active?computeSling():null, col=q?(q.ammo==='mg'?'#eee3c5':q.ammo==='ap'?'#a9dce8':'#efc65c'):'#e9e1c4';
+  ctx.save(); ctx.translate(mouse.x,mouse.y); ctx.strokeStyle=col; ctx.lineWidth=1.1; ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  if(!q) return;
+  const b=q.b, finger={x:HOLD.x,y:HOLD.y};
+  ctx.save();
+  ctx.strokeStyle=col; ctx.lineWidth=2.2; ctx.globalAlpha=.82;
+  ctx.beginPath();ctx.moveTo(b.x-8,b.y-5);ctx.lineTo(finger.x,finger.y);ctx.lineTo(b.x+8,b.y-5);ctx.stroke();
+  circle(finger.x,finger.y,5,'#252d27',col,1.2);
+  const tp=isoAS(q.ta,q.ts), arc=16+q.power*42+(q.ammo==='he'?16:q.ammo==='ap'?7:0);
+  ctx.fillStyle=col;ctx.globalAlpha=.52;
+  for(let i=1;i<=10;i++){const u=i/10,x=lerp(b.x,tp.x,u),y=lerp(b.y,tp.y,u)-Math.sin(Math.PI*u)*arc;circle(x,y,i===10?2.2:1.4,col)}
+  const bx=b.x+20, by=b.y+22, h=44; rr(bx,by-h,5,h,2,'#101713aa','#657168',.7); ctx.fillStyle=col; ctx.fillRect(bx+1,by-h+1,3,(h-2)*q.charge);
+  ctx.restore();
+};
+
+function aimFromEvent(e){ const r=canvas.getBoundingClientRect(); mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top; HOLD.x=mouse.x; HOLD.y=mouse.y; }
+function holdDown(e){
+  if(e.pointerType!=='touch'&&e.button!==0) return;
+  const b=isoAS(77,0),r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  HOLD.active=true;HOLD.pid=e.pointerId;HOLD.t0=performance.now();HOLD.sx=b.x;HOLD.sy=b.y;HOLD.x=x;HOLD.y=Math.max(y,b.y);HOLD.ammo='mg';selected='mg';fireHeld=false;
+  mouse.x=HOLD.x;mouse.y=HOLD.y; e.preventDefault();e.stopImmediatePropagation();try{canvas.setPointerCapture(e.pointerId)}catch(_){} selectByCharge();
+}
+function holdMove(e){ if(!HOLD.active)return; aimFromEvent(e); const b=isoAS(77,0); HOLD.y=Math.max(HOLD.y,b.y); mouse.y=HOLD.y; selectByCharge(); e.preventDefault();e.stopImmediatePropagation(); }
+function holdUp(e){
+  if(!HOLD.active)return; aimFromEvent(e); const b=isoAS(77,0); HOLD.y=Math.max(HOLD.y,b.y); mouse.y=HOLD.y; selectByCharge(); fireHeld=false; state.trigger=0; slingFire(); HOLD.active=false;
+  e.preventDefault();e.stopImmediatePropagation();try{canvas.releasePointerCapture(e.pointerId)}catch(_){}
+}
+canvas.addEventListener('pointerdown',holdDown,true);canvas.addEventListener('pointermove',holdMove,true);canvas.addEventListener('pointerup',holdUp,true);canvas.addEventListener('pointercancel',holdUp,true);addEventListener('pointerup',holdUp,true);
 
 const _draw=draw;
 draw=function(){ _draw();
   ctx.save(); for(const n of neutrals){ if(n.alive) drawNeutral(n); } ctx.restore();
-  if(HOLD.active){ const b=isoAS(77,0); ctx.save(); ctx.strokeStyle=HOLD.ammo==='mg'?'#efe2b8':HOLD.ammo==='ap'?'#b7e0e7':'#efc65c'; ctx.lineWidth=2; ctx.globalAlpha=.7; ctx.beginPath(); ctx.moveTo(b.x,b.y-8); ctx.quadraticCurveTo((b.x+HOLD.x)/2,b.y-45,HOLD.x,HOLD.y); ctx.stroke(); ctx.restore(); }
   if(state.bunkerFlash>0){ ctx.save(); ctx.globalAlpha=Math.min(.22,state.bunkerFlash*.22); ctx.fillStyle='#d73f3f'; ctx.fillRect(0,0,W,H); ctx.restore(); }
 };
 
