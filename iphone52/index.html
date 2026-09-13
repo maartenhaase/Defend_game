@@ -6,26 +6,24 @@
 <meta name="theme-color" content="#101815">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JBD v5.11">
-<title>Jungle Bunker Defense v5.11 — True Slingshot</title>
+<meta name="apple-mobile-web-app-title" content="JBD v5.11.1">
+<title>Jungle Bunker Defense v5.11.1 — True Slingshot</title>
 <link rel="stylesheet" href="style.css?v=53">
 <link rel="stylesheet" href="style_v55.css?v=55">
 <style>
-#counterGuide,#targetCard,#upgradeViz,#tip{display:none!important}
+#counterGuide,#targetCard,#upgradeViz,#tip,#compatAmmo{display:none!important}
 #weapons .row{display:grid!important;grid-template-columns:1fr auto;gap:8px;align-items:center}
 #slingPanel{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;width:100%}
 #chargeWrap{height:8px;border:1px solid #5d6b62;border-radius:999px;overflow:hidden;background:#111a15}
-#chargeFill{height:100%;width:0;background:linear-gradient(90deg,#eee4c5,#9dd6e4,#efbd55);transition:width .04s linear}
+#chargeFill{height:100%;width:0;background:linear-gradient(90deg,#eee4c5,#9dd6e4,#efbd55);transition:width .04s linear;display:block}
 #chargeType{font:800 10px ui-monospace,SFMono-Regular,Menlo,monospace;min-width:55px;text-align:right}
 #powerRead{font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;color:#c4cec2;min-width:32px;text-align:right}
-#compatAmmo{display:none!important}
-#weapons .mini,#heatWrap{display:none!important}
 @media(max-width:600px){#weapons{padding:7px 8px!important}#msg{font-size:8px!important;margin-bottom:6px!important}#slingPanel{grid-template-columns:auto 1fr auto;gap:6px}#chargeType{font-size:9px;min-width:48px}}
 </style>
 </head>
 <body>
 <header>
-  <strong>JBD // 5.11 // TRUE SLINGSHOT</strong>
+  <strong>JBD // 5.11.1 // TRUE SLINGSHOT</strong>
   <span>WAVE <b id="wave">0</b></span>
   <span>SUP <b id="supply">70</b></span>
   <span>BUNKER <b id="hp">180</b></span>
@@ -58,7 +56,7 @@
     <div id="bnote" class="mini">Eén wapen. Pak de bunker en trek omlaag. Verder trekken = meer snelheid en bereik. Langer vasthouden = KINETIC → AP → HE. Loslaten = schieten.</div>
     <button id="goBtn" style="width:100%;margin-top:11px">DEPLOY</button>
   </div>
-  <div id="compatAmmo"><span id="amg">999</span><span id="aap">999</span><span id="ahe">999</span></div>
+  <div id="compatAmmo"><span id="amg">999</span><span id="aap">999</span><span id="ahe">999</span><span id="heatWrap"><span id="heat"></span></span></div>
   <div id="targetCard"></div><div id="upgradeViz" class="panel"></div><div id="tip"></div>
 </div>
 <script src="js/00_core.js?v=53"></script>
@@ -73,6 +71,6 @@
 <script src="js/09_v57.js?v=57"></script>
 <script src="js/10_v57_visual.js?v=57b"></script>
 <script src="js/11_v581_stable.js?v=581"></script>
-<script src="js/13_v511_true_sling.js?v=511"></script>
+<script src="js/13_v511_true_sling.js?v=5111"></script>
 </body>
 </html>
