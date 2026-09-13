@@ -12,97 +12,19 @@
 <link rel="stylesheet" href="./style.css">
 <script defer src="./data.js"></script>
 <script defer src="./data/dieren.js"></script>
-<script defer src="./data/mens.js"></script>
-<script defer src="./data/aarde.js"></script>
-<script defer src="./data/ruimte.js"></script>
-<script defer src="./data/wetenschap.js"></script>
-<script defer src="./data/geschiedenis.js"></script>
-<script defer src="./data/taal.js"></script>
-<script defer src="./data/eten.js"></script>
-<script defer src="./data/nederland-europa.js"></script>
-<script defer src="./data/wereld.js"></script>
+<script defer src="./data/rest.js"></script>
 <script defer src="./app.js"></script>
 </head>
 <body>
 <main class="app">
-<header class="topbar">
-  <div class="brand">
-    <div class="logo">?</div>
-    <div><h1>Wauw Quiz</h1><p>1000 verrassende kennisvragen</p></div>
-  </div>
-  <button id="homeBtn" class="icon-btn hidden" type="button" aria-label="Terug naar instellingen">⚙︎</button>
-</header>
+<header class="topbar"><div class="brand"><div class="logo">?</div><div><h1>Wauw Quiz</h1><p>1000 verrassende kennisvragen</p></div></div><button id="homeBtn" class="icon-btn hidden" type="button" aria-label="Terug naar instellingen">⚙︎</button></header>
 <section id="setupScreen">
-  <div class="hero">
-    <div class="eyebrow">QUIZMASTER KAN GEWOON MEESPELEN</div>
-    <h2>Geen afgezaagde pubquiz.</h2>
-    <p>Lees alleen de vraag voor. Denk zelf mee. Het antwoord blijft verborgen tot iedereen gekozen heeft.</p>
-  </div>
-  <div class="card">
-    <div class="section-head">
-      <div><h3>Categorieën</h3><p><span id="selectedCount">10</span> van 10 aan</p></div>
-      <div class="mini-actions">
-        <button id="allBtn" class="mini" type="button">Alles</button>
-        <button id="noneBtn" class="mini" type="button">Geen</button>
-      </div>
-    </div>
-    <div id="categoryGrid" class="category-grid"></div>
-  </div>
-  <div class="card">
-    <label for="questionCount">Aantal vragen in deze ronde</label>
-    <select id="questionCount">
-      <option value="10">10 vragen</option>
-      <option value="20" selected>20 vragen</option>
-      <option value="30">30 vragen</option>
-      <option value="50">50 vragen</option>
-      <option value="100">100 vragen</option>
-      <option value="all">Alle vragen uit de gekozen categorieën</option>
-    </select>
-    <p class="small-note">Vragen komen in willekeurige volgorde en worden binnen een ronde niet herhaald.</p>
-  </div>
-  <button id="startBtn" class="primary big" type="button">Start de quiz →</button>
-  <p class="offline-note">Na één keer laden werkt deze quiz ook zonder internet.</p>
+<div class="hero"><div class="eyebrow">QUIZMASTER KAN GEWOON MEESPELEN</div><h2>Geen afgezaagde pubquiz.</h2><p>Lees alleen de vraag voor. Denk zelf mee. Het antwoord blijft verborgen tot iedereen gekozen heeft.</p></div>
+<div class="card"><div class="section-head"><div><h3>Categorieën</h3><p><span id="selectedCount">10</span> van 10 aan</p></div><div class="mini-actions"><button id="allBtn" class="mini" type="button">Alles</button><button id="noneBtn" class="mini" type="button">Geen</button></div></div><div id="categoryGrid" class="category-grid"></div></div>
+<div class="card"><label for="questionCount">Aantal vragen in deze ronde</label><select id="questionCount"><option value="10">10 vragen</option><option value="20" selected>20 vragen</option><option value="30">30 vragen</option><option value="50">50 vragen</option><option value="100">100 vragen</option><option value="all">Alle vragen uit de gekozen categorieën</option></select><p class="small-note">Vragen komen in willekeurige volgorde en worden binnen een ronde niet herhaald.</p></div>
+<button id="startBtn" class="primary big" type="button">Start de quiz →</button><p class="offline-note">Na één keer laden werkt deze quiz ook zonder internet.</p>
 </section>
-<section id="quizScreen" class="hidden">
-  <div class="progress-wrap">
-    <div class="progress-meta">
-      <span id="counter">Vraag 1 van 20</span>
-      <span id="remainingText">19 te gaan</span>
-    </div>
-    <div class="progress"><div id="progressBar"></div></div>
-  </div>
-  <article class="question-card">
-    <div class="question-top">
-      <span id="categoryBadge" class="badge">Categorie</span>
-      <button id="skipBtn" class="skip" type="button">andere vraag ↻</button>
-    </div>
-    <div id="questionText" class="question">Vraag</div>
-    <div id="thinkHint" class="think-hint">
-      <span>🤔</span>
-      <p>Quizmaster: denk zelf ook mee. Het antwoord staat nog nergens in beeld.</p>
-    </div>
-    <button id="revealBtn" class="reveal" type="button">TOON ANTWOORD</button>
-    <div id="answerPanel" class="answer-panel hidden" aria-live="polite">
-      <div class="answer-label">ANTWOORD</div>
-      <div id="answerText" class="answer"></div>
-      <div class="fact-divider"></div>
-      <div class="fact-label">WAAROM DIT LEUK IS</div>
-      <div id="factText" class="fact"></div>
-    </div>
-  </article>
-  <button id="nextBtn" class="primary big hidden" type="button">Volgende vraag →</button>
-</section>
-<section id="endScreen" class="hidden">
-  <div class="end-card">
-    <div class="end-icon">✓</div>
-    <div class="eyebrow">RONDE KLAAR</div>
-    <h2 id="endTitle">20 vragen gehad</h2>
-    <p id="endText">Geen enkele vraag is in deze ronde herhaald.</p>
-    <button id="againBtn" class="primary big" type="button">Nog een ronde</button>
-    <button id="settingsBtn" class="secondary big" type="button">Categorieën aanpassen</button>
-  </div>
-</section>
-</main>
-<div id="toast" class="toast"></div>
-</body>
-</html>
+<section id="quizScreen" class="hidden"><div class="progress-wrap"><div class="progress-meta"><span id="counter">Vraag 1 van 20</span><span id="remainingText">19 te gaan</span></div><div class="progress"><div id="progressBar"></div></div></div><article class="question-card"><div class="question-top"><span id="categoryBadge" class="badge">Categorie</span><button id="skipBtn" class="skip" type="button">andere vraag ↻</button></div><div id="questionText" class="question">Vraag</div><div id="thinkHint" class="think-hint"><span>🤔</span><p>Quizmaster: denk zelf ook mee. Het antwoord staat nog nergens in beeld.</p></div><button id="revealBtn" class="reveal" type="button">TOON ANTWOORD</button><div id="answerPanel" class="answer-panel hidden" aria-live="polite"><div class="answer-label">ANTWOORD</div><div id="answerText" class="answer"></div><div class="fact-divider"></div><div class="fact-label">WAAROM DIT LEUK IS</div><div id="factText" class="fact"></div></div></article><button id="nextBtn" class="primary big hidden" type="button">Volgende vraag →</button></section>
+<section id="endScreen" class="hidden"><div class="end-card"><div class="end-icon">✓</div><div class="eyebrow">RONDE KLAAR</div><h2 id="endTitle">20 vragen gehad</h2><p id="endText">Geen enkele vraag is in deze ronde herhaald.</p><button id="againBtn" class="primary big" type="button">Nog een ronde</button><button id="settingsBtn" class="secondary big" type="button">Categorieën aanpassen</button></div></section>
+</main><div id="toast" class="toast"></div>
+</body></html>
