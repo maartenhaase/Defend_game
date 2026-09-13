@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Incident 23 — v4</title>
+<link rel="stylesheet" href="../incident23/style.css">
+<script defer src="../incident23v3/cases-v2.js"></script>
+<script defer src="./app.js"></script>
+</head>
+<body>
+<main class="app">
+<header><div class="logo">🚨</div><div><h1>Incident 23</h1><p>één van jullie deed het</p></div><button id="homeBtn" class="icon hidden" type="button">⚙︎</button></header>
+<section id="setup">
+  <div class="hero"><div class="eyebrow">SIMPEL SOCIAL DEDUCTION</div><h2>Vier verdachten. Eén dader.</h2><p>Iedereen krijgt drie korte feiten. Geen lastige tijden of details: vooral wie waar was, wie iets zag en welk verhaal niet klopt.</p></div>
+  <div class="card"><div class="head"><div><h3>Spelers</h3><span>deze namen komen ook in het verhaal</span></div></div><div id="players" class="players"></div></div>
+  <div class="card"><div class="head"><div><h3>Kies een zaak</h3><span>1 demo + 15 zaken</span></div></div><div id="caseGrid" class="casegrid"></div></div>
+  <button id="startBtn" class="primary" type="button">Start zaak →</button>
+  <p class="tiny center">Onschuldigen vertellen de waarheid. Alleen de dader mag liegen.</p>
+</section>
+<section id="briefing" class="hidden"><div class="card"><div class="eyebrow">DE ZAAK</div><div id="caseTitle" class="title"></div><p id="caseIntro" class="muted"></p><div class="divider"></div><div id="charList" class="chars"></div><button id="dealBtn" class="primary" type="button">Deel rollen uit →</button></div></section>
+<section id="handoff" class="hidden"><div class="card center"><div class="big">📱</div><div class="muted">Geef de telefoon aan</div><div id="handoffName" class="playername"></div><p class="muted">De anderen kijken weg.</p><button id="readyBtn" class="primary" type="button">Ik ben <span id="readyName"></span></button></div></section>
+<section id="role" class="hidden"><div class="card"><div id="guiltyBadge" class="guilty hidden">JIJ BENT DE DADER</div><div id="innocentBadge" class="innocent hidden">JIJ BENT ONSCHULDIG</div><div id="roleName" class="title"></div><div id="roleJob" class="muted"></div><div class="divider"></div><div class="label">ONTHOUD DEZE 3 FEITEN</div><div id="privateFacts" class="facts"></div><div id="guiltyTip" class="warning hidden">Je mag liegen over jouw verhaal. Je weet niet welk bewijs straks verschijnt.</div><button id="seenBtn" class="primary" type="button">Gezien — telefoon doorgeven</button></div></section>
+<section id="discussion" class="hidden"><div class="card"><div class="eyebrow">TELEFOON MAG WEG</div><div id="discussionTitle" class="title"></div><p class="muted">Vertel wat je weet. Vraag elkaar waar je was en wat je zag.</p><div id="demoTip" class="tip hidden"></div><div id="clueBox" class="clue hidden"><div class="label">NIEUW OPENBAAR BEWIJS</div><div id="clueText" class="clueText"></div></div><button id="clueBtn" class="primary" type="button"></button></div></section>
+<section id="accuse" class="hidden"><div class="card"><div class="eyebrow">EINDSTEMMING</div><div class="title">Wie heeft het gedaan?</div><p class="muted">Bespreek het kort en kies daarna één persoon.</p><label for="accuseSelect">Jullie verdenken</label><select id="accuseSelect"></select><button id="revealBtn" class="danger" type="button">Ontmasker de dader →</button></div></section>
+<section id="result" class="hidden"><div class="card"><div class="eyebrow">OPLOSSING</div><div id="resultTitle" class="title"></div><div id="resultBox" class="resultbox"></div><div class="divider"></div><div class="label">WAT ER ECHT GEBEURDE</div><div id="solution" class="solution"></div><button id="againBtn" class="primary" type="button">Andere zaak</button></div></section>
+</main>
+<div id="toast" class="toast"></div>
+</body>
+</html>
