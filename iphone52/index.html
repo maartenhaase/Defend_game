@@ -6,14 +6,14 @@
 <meta name="theme-color" content="#101815">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JBD v5.8.2">
-<title>Jungle Bunker Defense v5.8.2 — Mobile Rebalance</title>
+<meta name="apple-mobile-web-app-title" content="JBD v5.9">
+<title>Jungle Bunker Defense v5.9 — Vehicle Action</title>
 <link rel="stylesheet" href="style.css?v=53">
 <link rel="stylesheet" href="style_v55.css?v=55">
 </head>
 <body>
 <header>
-  <strong>JBD // 5.8.2 // MOBILE REBALANCE</strong>
+  <strong>JBD // 5.9 // VEHICLE ACTION</strong>
   <span>WAVE <b id="wave">0</b></span>
   <span>SUP <b id="supply">70</b></span>
   <span>BUNKER <b id="hp">180</b></span>
@@ -25,7 +25,7 @@
 <div id="wrap">
   <canvas id="game"></canvas>
   <div id="weapons" class="panel">
-    <div id="msg">READY // tik/vasthouden om te vuren</div>
+    <div id="msg">READY // tik = MG · sleep = AP · vasthouden = HE</div>
     <div id="counterGuide">
       <div class="guide mg"><b>MG → PERSONEEL</b>exposed infantry / bikes</div>
       <div class="guide ap"><b>AP → PANTSER</b>trucks / armor / StuG</div>
@@ -53,7 +53,7 @@
   <div id="brief" class="panel" hidden>
     <h3>FIELD BRIEF // WAVE <span id="bw">1</span></h3>
     <div class="intel"><div>PERSONNEL<b id="bi">?</b></div><div>ARMOR<b id="ba">?</b></div><div>ENGINEERS<b id="be">?</b></div></div>
-    <div id="bnote" class="mini">Civilians en witte UN-trucks zijn NO FIRE. Bunkerhits geven rode schade-feedback.</div>
+    <div id="bnote" class="mini">Tap/sleep/hold sling-shot controls. Civilians en witte UN-trucks zijn NO FIRE.</div>
     <button id="goBtn" style="width:100%;margin-top:11px">DEPLOY</button>
   </div>
   <div id="targetCard"></div>
@@ -72,6 +72,6 @@
 <script src="js/09_v57.js?v=57"></script>
 <script src="js/10_v57_visual.js?v=57b"></script>
 <script src="js/11_v581_stable.js?v=581"></script>
-<script src="js/12_v582_rebalance.js?v=582"></script>
+<script src="js/12_v59_vehicle.js?v=59"></script>
 </body>
 </html>
