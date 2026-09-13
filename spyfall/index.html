@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" name="viewport"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="#111827" name="theme-color"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="telephone=no" name="format-detection"/>
+<title>Spyfall Offline</title>
+
+<link href="./style.css" rel="stylesheet"/><script defer="" src="./data.js"></script><script defer="" src="./app.js"></script></head>
+<body>
+<div class="app">
+<div class="header">
+<div class="brand"><div class="logo">🕵️</div><div><h1>Spyfall Offline</h1><div class="sub">één telefoon • volledig offline • eigen dataset</div></div></div>
+<button class="btn ghost small" id="resetBtn" title="Alles resetten" type="button">↻</button>
+</div>
+<section id="setupScreen">
+<div class="card">
+<div class="section-title"><h2>Spelers</h2><span id="playerCountLabel">4 spelers</span></div>
+<div class="stack" id="players"></div>
+<div class="row" style="margin-top:10px">
+<button class="btn ghost grow" id="addPlayerBtn" type="button">＋ speler toevoegen</button>
+</div>
+</div>
+<div class="card">
+<div class="section-title"><h2>Locatieset</h2><span>kies één of mix</span></div>
+<div class="pills" id="setPills">
+<button class="pill active" data-set="nl" type="button">🇳🇱 Nederland</button>
+<button class="pill" data-set="eu" type="button">🇪🇺 Europa</button>
+<button class="pill" data-set="world" type="button">🌍 Wereldwijd</button>
+<button class="pill" data-set="mix" type="button">🎲 Alles mixen</button>
+</div>
+<div class="divider"></div>
+<div class="row wrap">
+<div class="grow" style="min-width:150px"><label>Ronde-duur</label><select id="roundMinutes"><option value="6">6 minuten</option><option selected="" value="8">8 minuten</option><option value="10">10 minuten</option><option value="12">12 minuten</option></select></div>
+<div class="grow" style="min-width:150px"><label>Aantal spionnen</label><select id="spyCount"><option selected="" value="1">1 spion</option><option value="2">2 spionnen</option></select></div>
+</div>
+<p class="tiny" style="margin:10px 2px 0">Tip: met 4–6 spelers werkt 1 spion het best. Twee spionnen is vooral leuk met een grotere groep.</p>
+</div>
+<button class="btn primary" id="startBtn" style="width:100%;font-size:18px" type="button">Start nieuwe ronde</button>
+<div class="footer-note">Alle gegevens blijven in dit HTML-bestand / op je apparaat. Er wordt niets verzonden.</div>
+</section>
+<section class="hidden" id="handoffScreen">
+<div class="card center">
+<div class="big-icon">📱</div>
+<div class="hint">Geef de telefoon aan</div>
+<div class="name" id="handoffName">Maarten</div>
+<p class="hint">Alleen deze speler mag nu kijken. Tik pas als de telefoon in de juiste handen is.</p>
+<button class="btn blue" id="readyBtn" style="width:100%;margin-top:8px" type="button">Ik ben <span id="readyName">Maarten</span></button>
+</div>
+</section>
+<section class="hidden" id="revealScreen">
+<div class="card center">
+<div class="hint">Geheime kaart voor</div>
+<div class="name" id="revealName"></div>
+<div class="secret" id="secretBox">
+<div id="coveredContent">
+<div class="big-icon" style="font-size:48px">🙈</div>
+<div class="cover">Houd ingedrukt om te kijken</div>
+<div class="tiny" style="margin-top:8px">Laat los = meteen weer verborgen</div>
+</div>
+<div class="hidden" id="secretContent"></div>
+</div>
+<button class="btn primary" disabled="" id="seenBtn" style="width:100%" type="button">Ik heb het gezien</button>
+</div>
+</section>
+<section class="hidden" id="roundScreen">
+<div class="card center">
+<div class="location-chip">🔒 locatie is geheim</div>
+<div class="timer" id="timer">08:00</div>
+<div class="hint" id="starterText">Maarten begint met een vraag.</div>
+<div class="row" style="margin-top:14px">
+<button class="btn ghost grow" id="timerToggle" type="button">⏸ Pauze</button>
+<button class="btn danger grow" id="endRoundBtn" type="button">Ronde stoppen</button>
+</div>
+</div>
+<div class="card">
+<div class="section-title"><h2>Vraaghulp</h2><span>houd het subtiel</span></div>
+<div class="list" id="questionIdeas"></div>
+</div>
+<div class="card">
+<div class="section-title"><h2>Mogelijke locaties</h2><span>handig voor de spion</span></div>
+<button class="btn ghost" id="locationsToggle" style="width:100%" type="button">Toon locatielijst</button>
+<div class="list hidden" id="locationsList" style="margin-top:10px"></div>
+</div>
+</section>
+<section class="hidden" id="resultScreen">
+<div class="card center">
+<div class="big-icon">🎭</div>
+<div class="hint">De locatie was</div>
+<div class="name" id="resultLocation"></div>
+<div class="hint" style="margin-top:8px">De spion was / spionnen waren</div>
+<div class="name spy" id="resultSpies" style="font-size:24px"></div>
+<div class="divider"></div>
+<div class="list" id="roleSummary"></div>
+<button class="btn primary" id="againBtn" style="width:100%;margin-top:14px" type="button">Nog een ronde</button>
+<button class="btn ghost" id="backSetupBtn" style="width:100%;margin-top:8px" type="button">Terug naar instellingen</button>
+</div>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
