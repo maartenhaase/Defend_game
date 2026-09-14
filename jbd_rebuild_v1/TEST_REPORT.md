@@ -1,52 +1,85 @@
-# JBD rebuild v1 — Milestone 7 test report
+# JBD rebuild v1 — Milestone 8 test report
 
 Datum: 2026-09-14
 
 ## Scope
 
-Milestone 7 voegt mobile readability/performance en Airborne toe bovenop Milestone 6.
+Milestone 8 voegt de volledige 9-map campaign toe bovenop Milestone 7 Airborne en de mobile scaling.
 
-## Syntax / standalone
+## Build / syntax
 
-- Alle `src/*.js` bestanden: `node -c` geslaagd.
-- `node build.js` geslaagd.
+- Alle `src/*.js`: `node -c` geslaagd.
+- `build.js`: syntaxcheck geslaagd.
+- `node build.js`: geslaagd.
 - Gebundelde JavaScript uit `dist/index.html`: syntaxcheck geslaagd.
-- Standalone release bevat geen externe runtime-assets.
+- Standalone release: geen externe runtime-assets.
 
-## Mobile scale
+## Campaign progression
 
-- Chromium device metrics: 390 × 844, deviceScaleFactor 2.
-- Interne Canvas DPR op mobile: 1.65.
-- Entity render scale op mobile: 0.72.
-- Infantry movement: walk 22, sprint 50, assault 61 px/s.
-- Collision/hit radii zijn niet evenredig verkleind; touch aim blijft vergevingsgezind.
+Browser-test met echte UI-flow (`DEPLOY` / `NEXT MAP`) doorliep:
 
-## Airborne functional tests
+- JUNGLE 1
+- JUNGLE 2
+- JUNGLE 3
+- DESERT 1
+- DESERT 2
+- DESERT 3
+- POLAR 1
+- POLAR 2
+- POLAR 3
+- daarna correct JUNGLE 1, Cycle 2.
 
-- Transport aircraft start na de armor-wave timing.
-- Plane pass en propeller phase geverifieerd in runtime.
-- 6/6 parachutisten werden gedropt.
-- Fast deterministic sim: 6/6 landden correct.
-- Elke landing maakte exact één nieuwe infantry unit.
-- 6 collapsed parachutes bleven als tijdelijke battlefield marks aanwezig.
-- Twee MG-damage hits op een descending paratrooper: airborne kill, geen landing/spawn.
-- HE blast path is gekoppeld aan descending airborne targets.
-- Geen uncaught JavaScript exceptions in de final functional runs.
+Cycle 2 start met difficulty scalar 1.12.
 
-## Runtime / performance
+## Scenario content
 
-Headless Chromium, 390 × 844, emulated deviceScaleFactor 2, internal DPR 1.65:
+Elke van de 9 scenario-definities bevat:
 
-- Representative scene: 12 infantry + 1 tank + 6 descending paratroopers: ~60 FPS, quality 1.0.
-- Heavy stress sample: 25 infantry + 5 vehicles + 6 descending paratroopers + ~300 pooled particles: ~58–59 FPS, quality 1.0.
-- Stress sample had 0 observed uncaught JavaScript exceptions.
+- 2 bruggen;
+- eigen rivierpositie/bocht;
+- eigen gebouwpositie;
+- 4–7 loopgraven afhankelijk van map;
+- opnieuw gegenereerde wegen, vegetatie en obstakels;
+- 6–8 voertuigen in drie korte phases;
+- 0 of 3 airborne paratroopers per pass;
+- eigen infantry count en map-specifieke sightline / movement multipliers.
 
-Deze waarden zijn browser/headless-metingen, geen fysieke iPhone Safari benchmark.
+## River / bridge mechanics
 
-## Visual check
+Gecontroleerde Polar 2-simulatie:
 
-`milestone7_mobile_final.png` is opgenomen op een 390 × 844 device viewport en toont de kleinere mobile scale, transport aircraft, parachutes, infantry, halftrack, bunker en compactere HUD.
+- halftrack gestart op de verkeerde rivieroever;
+- bridge routing werd geactiveerd;
+- vehicle bereikte riverStage 2 (overkant bereikt);
+- 0 gesimuleerde frames waarin het voertuig door onbeveiligd rivierwater reed;
+- infantry water speed factor: 0.46;
+- normale ground factor: 1.0.
 
-## Belangrijke beperking
+## Touch input
 
-Een fysieke iPhone Safari is nog niet rechtstreeks getest vanuit deze runtime. De gebruiker heeft de vorige Milestone 6 build wel als soepel op mobiel gerapporteerd; deze build verlaagt de render scale en mobile DPR om de extra Airborne-last te compenseren.
+390 × 844 mobile emulation, DPR 2 / internal DPR 1.65:
+
+- echte touchscreen tap op een geplaatst infantry target;
+- MG burst vuurde 4 projectiles;
+- hits werden door het bestaande combat-systeem geregistreerd;
+- game bleef in `playing` zonder JS exception.
+
+## Performance sample
+
+Headless Chromium, 390 × 844, deviceScaleFactor 2, internal DPR 1.65:
+
+- 25 living infantry;
+- 5 actieve voertuigen;
+- 3 descending paratroopers;
+- runtime sample ~60 FPS;
+- quality scalar 1.0;
+- 0 geobserveerde uncaught JavaScript exceptions.
+
+## Visual inspection
+
+Jungle, Desert en Polar renders zijn afzonderlijk bekeken. De drie themes hebben verschillende grondkleur, vegetatiedichtheid/obstakels en river treatment. De kleinere Milestone 7 mobile entity scale blijft behouden.
+
+## Niet geclaimd
+
+- Geen fysieke iPhone Safari benchmark vanuit deze runtime.
+- Gameplay balancing over een volledige handmatig uitgespeelde 9-map campaign blijft een menselijke playtest-taak.
