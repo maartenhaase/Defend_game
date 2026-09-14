@@ -1,11 +1,10 @@
-name: Deploy JBD to GitHub Pages
+name: Deploy JBD Web to GitHub Pages
 
 on:
   push:
     branches: ["main"]
     paths:
-      - "jbd_rebuild_v1/src/**"
-      - "jbd_rebuild_v1/build.js"
+      - "web_v6/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -27,8 +26,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build current JBD standalone
-        run: node jbd_rebuild_v1/build.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -36,7 +33,7 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./jbd_rebuild_v1/dist
+          path: ./web_v6
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
