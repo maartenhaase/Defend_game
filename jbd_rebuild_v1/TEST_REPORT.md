@@ -1,22 +1,48 @@
-# JBD rebuild v1 — test report
+# JBD rebuild v1 — Milestone 5 test report
 
-Runtime target used for this build check: headless Chromium, 390×844 CSS-pixel viewport, standalone HTML injected as one document. This verifies the browser runtime and portrait layout but is **not** a real iPhone Safari device test.
+Date: 2026-09-14
+Scope: Level 1 vertical slice + assault-whistle cover release + Milestone 5 visual/audio polish.
 
-Checks performed:
-- bundled JavaScript syntax check with `node --check`
-- load and initialize game
-- click DEPLOY through browser input
-- artillery intro completes and persistent crater cover nodes are created
-- pointer-input MG, AP and HE shots
-- infantry observed in ADVANCE, SPRINT_TO_COVER and FIRE_FROM_COVER states
-- HE kill reaches visible DEAD state
-- forced cleanup verifies Level 1 completion transition
-- browser runtime reported no uncaught JavaScript errors during the final functional run
+## Automated / logic checks
+- Bundled JavaScript: `node --check` passed.
+- Module top-level load harness: passed.
+- Crater assault pulse with 3 occupied craters:
+  - assault whistle emitted;
+  - shared release at 3.8 s;
+  - all 3 soldiers changed from crater cover to ADVANCE in the same pulse;
+  - all crater `occupiedBy` values were cleared;
+  - assault sprint timers were active after release.
+- HE cover protection:
+  - exposed infantry: 100% reference damage;
+  - crater-covered infantry: 58% of reference damage.
 
-The hidden `?debug=1` mode shows FPS/entity/particle data and AI states. `?stress=1&debug=1` starts a cosmetic/entity stress setup for profiling.
+## Browser runtime
+Chromium headless, emulated viewport 390×844, DPR 2. The standalone HTML was injected directly into the browser document for testing because localhost navigation is blocked by the runtime administrator policy.
 
-Stress check (same runtime, stress flag forced because the test harness uses `about:blank` and cannot preserve a query string while injecting the standalone document):
-- 25 active infantry
-- 410 active pooled particles at the measured peak
-- ~62 FPS immediately after stress deploy and ~60 FPS after 5 seconds in the headless runtime
-- no uncaught JavaScript errors during that stress run
+Verified:
+- DEPLOY interaction;
+- artillery and crater creation;
+- natural infantry cover selection;
+- natural assault-whistle cycles;
+- synchronized crater release;
+- MG / AP / HE pointer timing;
+- HE explosion;
+- audio context unlock;
+- particle engine and rendering;
+- 0 observed uncaught JavaScript/runtime error events.
+
+Natural run sample at ~13 seconds:
+- ~59.9 FPS;
+- assault pulse: 1;
+- 3 infantry released together in that pulse;
+- 14 crater cover nodes.
+
+Stress sample:
+- 27 living infantry;
+- 304 active particles;
+- ~60 FPS;
+- quality scalar: 1.0.
+
+## Not claimed
+- No physical iPhone Safari test was performed.
+- Audio identity was executed without runtime errors, but subjective speaker/headphone quality still needs a human listen test.

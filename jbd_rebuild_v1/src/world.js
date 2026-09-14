@@ -29,8 +29,10 @@
     g.strokeStyle='rgba(120,96,54,.7)';g.lineWidth=5;g.stroke(); g.fillStyle='rgba(26,25,20,.8)';g.beginPath();for(let i=0;i<n;i++){const a=i/n*6.28,rr=radius*(.52+r()*.14);const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr*.68;i?g.lineTo(px,py):g.moveTo(px,py);}g.closePath();g.fill();
     g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.ellipse(x+radius*.12,y+radius*.2,radius*.46,radius*.23,.1,0,6.28);g.fill();
     for(let i=0;i<8;i++){const a=r()*6.28,rr=radius*(.65+r()*.75);g.fillStyle='rgba(79,57,31,.7)';g.beginPath();g.arc(x+Math.cos(a)*rr,y+Math.sin(a)*rr*.65,1+r()*2.4,0,6.28);g.fill();}g.restore();
-    const node={id:s.cover.length+1,x,y,radius:radius*.78,coverStrength:.58,occupiedBy:null,danger:0,age:0};s.cover.push(node); return node;
+    const node={id:s.cover.length+1,x,y,radius:radius*.78,coverStrength:.72,occupiedBy:null,danger:0,age:0};s.cover.push(node); return node;
   }
   function bloodMark(s,x,y,amount=1){const g=s.damageCtx;g.save();g.fillStyle='rgba(91,18,15,.55)';for(let i=0;i<5*amount;i++){const a=Math.random()*6.28,d=Math.random()*13*amount,rr=.9+Math.random()*2.4;g.beginPath();g.ellipse(x+Math.cos(a)*d,y+Math.sin(a)*d,rr,rr*.55,a,0,6.28);g.fill();}g.restore();}
-  J.World={resize,crater,bloodMark};
+  function scorchMark(s,x,y,radius=18,intensity=1){const g=s.damageCtx,r=U.mulberry32(U.hash((x*17+y*23+s.simTime*900)|0));g.save();g.translate(x,y);g.rotate(r()*6.28);g.globalCompositeOperation='multiply';for(let ring=0;ring<3;ring++){const n=11,rr=radius*(.55+ring*.18),alpha=(.10+intensity*.055)*(1-ring*.2);g.fillStyle=`rgba(31,28,22,${alpha})`;g.beginPath();for(let i=0;i<n;i++){const a=i/n*6.28,rad=rr*(.72+r()*.45),px=Math.cos(a)*rad,py=Math.sin(a)*rad*.72;i?g.lineTo(px,py):g.moveTo(px,py);}g.closePath();g.fill();}g.restore();}
+  function soilImpact(s,x,y,heavy=false){const g=s.damageCtx;g.save();g.fillStyle=heavy?'rgba(37,33,25,.42)':'rgba(49,43,31,.28)';g.beginPath();g.ellipse(x,y,heavy?5:2.5,heavy?2.4:1.2,Math.random()*3,0,6.28);g.fill();g.restore();}
+  J.World={resize,crater,bloodMark,scorchMark,soilImpact};
 })();

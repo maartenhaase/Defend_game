@@ -17,7 +17,7 @@
       if(s.spawn.count>=C.level.spawnCount&&s.enemies.every(e=>e.state==='DEAD')){s.completeT+=dt;if(s.completeT>C.level.completeDelay&&!s.levelComplete){s.levelComplete=true;s.mode='complete';showComplete();}}
     } else if(s.mode==='gameover'){J.Infantry.update(s,dt);J.Combat.update(s,dt);showGameOver();}
   }
-  function showComplete(){title.textContent='LEVEL 1 SECURE';sub.innerHTML=`Vertical slice cleared · ${s.stats.kills} kills<br><span>Crater cover, artillery, MG/AP/HE en death states actief.</span>`;deploy.style.display='none';restart.style.display='inline-flex';restart.textContent='PLAY AGAIN';overlay.classList.remove('hidden');}
+  function showComplete(){title.textContent='LEVEL 1 SECURE';sub.innerHTML=`Vertical slice cleared · ${s.stats.kills} kills<br><span>Assault whistle, crater cover, artillery en polished MG/AP/HE actief.</span>`;deploy.style.display='none';restart.style.display='inline-flex';restart.textContent='PLAY AGAIN';overlay.classList.remove('hidden');}
   function showGameOver(){if(!overlay.classList.contains('hidden'))return;title.textContent='BUNKER OVERRUN';sub.textContent='De linie is gebroken.';deploy.style.display='none';restart.style.display='inline-flex';restart.textContent='REDEPLOY';overlay.classList.remove('hidden');}
   function loop(ts){if(!s.lastTs)s.lastTs=ts;let frame=Math.min(C.maxFrameDelta,(ts-s.lastTs)/1000);s.lastTs=ts;s.accumulator+=frame;const inst=1/Math.max(.001,frame);s.fpsSmoothed=U.lerp(s.fpsSmoothed,inst,.05);s.quality=s.fpsSmoothed<48?Math.max(.55,s.quality-.005):Math.min(1,s.quality+.002);
     let steps=0;while(s.accumulator>=C.step&&steps<6){update(C.step);s.accumulator-=C.step;steps++;}J.Render.render(s,ctx);requestAnimationFrame(loop);}
