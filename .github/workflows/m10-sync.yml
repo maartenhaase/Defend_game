@@ -6,6 +6,7 @@ on:
     paths:
       - "m10_payload/**"
       - ".github/workflows/m10-sync.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
