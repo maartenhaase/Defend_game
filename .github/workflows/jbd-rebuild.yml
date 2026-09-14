@@ -32,14 +32,18 @@ jobs:
           fs.writeFileSync('/tmp/jbd-bundle.js', m[1]);
           NODE
           node --check /tmp/jbd-bundle.js
-      - name: Commit generated dist
+      - name: Mirror standalone build into existing Pages site
+        run: |
+          mkdir -p web_v6/jbd_rebuild_v1
+          cp jbd_rebuild_v1/dist/index.html web_v6/jbd_rebuild_v1/index.html
+      - name: Commit generated release
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add jbd_rebuild_v1/dist/index.html
+          git add jbd_rebuild_v1/dist/index.html web_v6/jbd_rebuild_v1/index.html
           if git diff --cached --quiet; then
-            echo "dist already current"
+            echo "release already current"
             exit 0
           fi
-          git commit -m "Build JBD rebuild v1 standalone dist"
+          git commit -m "Publish JBD rebuild v1 standalone release"
           git push
