@@ -5,20 +5,22 @@
     if(s.airborne.started)return;
     s.airborne.started=true;s.airborne.t=0;s.airborne.finished=false;s.airborne.dropped=0;
     const y=s.safe.top+Math.max(82,s.viewport.h*C.airborne.planeYRatio);
-    s.airborne.plane={id:70001,x:-92,y,prevX:-92,speed:C.airborne.planeSpeed,prop:0,phase:0,active:true};
-    s.ui.message='AIRBORNE CONTACT';s.ui.messageT=1.05;J.Audio.play('planeApproach',{x:0,variation:s.rng()});J.Audio.aircraftMotor(70001,{x:0,active:true});
+    const pid=70001+(s.campaign?.index||0)+(s.campaign?.cycle||1)*20;
+    s.airborne.plane={id:pid,x:-92,y,prevX:-92,speed:C.airborne.planeSpeed*(s.scenario?.theme==='polar'?1.08:1),prop:0,phase:0,active:true};
+    s.ui.message='AIRBORNE CONTACT';s.ui.messageT=1.05;J.Audio.play('planeApproach',{x:0,variation:s.rng()});J.Audio.aircraftMotor(s.airborne.plane.id,{x:0,active:true});
   }
 
   function spawnPara(s,x,y,index){
     const r=s.rng,landY=s.viewport.h*U.rnd(C.airborne.landingMinRatio,C.airborne.landingMaxRatio,r);
-    const p={id:30000+index,x,baseX:x,y,landingY:landY,hp:C.airborne.hp,state:'DESCENT',phase:r()*6.28,rot:(r()-.5)*.16,vy:C.airborne.descentSpeed*(.92+r()*.16),alpha:1,deadT:0};
+    const p={id:30000+index,x,baseX:x,y,landingY:landY,hp:C.airborne.hp*(s.scenario?.airborneHpMult||1),state:'DESCENT',phase:r()*6.28,rot:(r()-.5)*.16,vy:C.airborne.descentSpeed*(.92+r()*.16),alpha:1,deadT:0};
     s.airborne.paratroopers.push(p);J.Audio.play('chuteOpen',{x,variation:r()});
   }
 
   function maybeDrop(s){
     const a=s.airborne,plane=a.plane;if(!plane||!plane.active)return;
-    while(a.dropped<C.airborne.dropCount){
-      const f=a.dropped/Math.max(1,C.airborne.dropCount-1);
+    const count=s.scenario?.airborneCount??C.airborne.dropCount;
+    while(a.dropped<count){
+      const f=a.dropped/Math.max(1,count-1);
       const trigger=s.viewport.w*(C.airborne.dropStartRatio+(C.airborne.dropEndRatio-C.airborne.dropStartRatio)*f);
       if(plane.x<trigger)break;
       spawnPara(s,plane.x-8,plane.y+15,a.dropped);a.dropped++;
@@ -59,8 +61,9 @@
 
   function update(s,dt){
     if(!s.artillery.finished)return;
+    const count=s.scenario?.airborneCount??C.airborne.dropCount;if(count<=0){s.airborne.finished=true;return;}
     if(!s.airborne.started){
-      const t=s.vehicleWave.started?s.vehicleWave.t:0;if(t>=C.airborne.startTime)start(s);else return;
+      const t=s.vehicleWave.started?s.vehicleWave.t:0;if(t>=(s.scenario?.airborneStart??C.airborne.startTime))start(s);else return;
     }
     const a=s.airborne;a.t+=dt;
     if(a.plane&&a.plane.active){const q=a.plane;q.prevX=q.x;q.x+=q.speed*dt;q.y+=Math.sin(a.t*1.35)*.12;q.prop=(q.prop+dt*23)%6.28;J.Audio.aircraftMotor(q.id,{x:q.x,active:true});maybeDrop(s);if(q.x>s.viewport.w+102){q.active=false;J.Audio.aircraftMotor(q.id,{x:q.x,active:false});J.Audio.play('planeFade',{x:s.viewport.w,variation:s.rng()});}}
@@ -73,7 +76,7 @@
     }
     for(const c of a.collapsed)c.t+=dt;a.collapsed=a.collapsed.filter(c=>c.t<c.life);
     a.paratroopers=a.paratroopers.filter(p=>p.state!=='LANDED');
-    if(a.started&&!a.finished&&a.plane&&!a.plane.active&&a.dropped>=C.airborne.dropCount&&a.paratroopers.length===0)a.finished=true;
+    if(a.started&&!a.finished&&a.plane&&!a.plane.active&&a.dropped>=count&&a.paratroopers.length===0)a.finished=true;
   }
 
   function allResolved(s){return s.airborne.finished;}

@@ -10,8 +10,8 @@
     const cfg=typeCfg(type),w=s.viewport.w;
     const x=U.clamp(w*.5+lane*w*.62,44,w-44);
     const v={
-      id:nextId++,type,x,y:-48,spawnX:x,lane,hp:cfg.hp,maxHp:cfg.hp,radius:cfg.radius,
-      speed:cfg.speed,state:'ADVANCE',stateT:0,hullAngle:Math.PI/2,turretAngle:Math.PI/2,
+      id:nextId++,type,x,y:-48,spawnX:x,lane,hp:cfg.hp*(s.scenario?.vehicleHpMult||1),maxHp:cfg.hp*(s.scenario?.vehicleHpMult||1),radius:cfg.radius,
+      speed:cfg.speed*(s.scenario?.vehicleSpeedMult||1),state:'ADVANCE',stateT:0,hullAngle:Math.PI/2,turretAngle:Math.PI/2,
       trackPhase:0,wheelPhase:0,suspension:Math.random()*6.28,recoil:0,muzzle:0,fireT:.7+s.rng()*1.1,
       smokeT:0,motorT:0,damageStage:0,armorBroken:false,deadT:0,dropDone:false,dropT:0,
       dropY:s.viewport.h*C.vehicles.dropYRatio,passengers:cfg.passengers||0,passengersDropped:0,
@@ -28,7 +28,7 @@
     if(!s.artillery.finished)return;
     if(!s.vehicleWave.started){s.vehicleWave.started=true;s.vehicleWave.t=0;s.vehicleWave.index=0;}
     s.vehicleWave.t+=dt;
-    const q=C.vehicles.waveSchedule;
+    const q=s.scenario?.vehicleSchedule||C.vehicles.waveSchedule;
     while(s.vehicleWave.index<q.length&&s.vehicleWave.t>=q[s.vehicleWave.index].time){
       const item=q[s.vehicleWave.index++];spawn(s,item.type,item.lane);
     }
@@ -59,7 +59,7 @@
     v.recoil=heavy?11:5;v.muzzle=heavy?.12:.07;
     const spread=heavy?.025:.07,ang=v.turretAngle+U.gaussian()*spread;
     const sx=v.x+Math.cos(ang)*(heavy?31:24),sy=v.y+Math.sin(ang)*(heavy?31:24);
-    s.vehicleShots.push({x:sx,y:sy,px:sx,py:sy,ang,kind:heavy?'shell':'mg',speed:heavy?430:680,life:1.5,owner:v.id,damage:cfg.damage});
+    s.vehicleShots.push({x:sx,y:sy,px:sx,py:sy,ang,kind:heavy?'shell':'mg',speed:heavy?430:680,life:1.5,owner:v.id,damage:cfg.damage*(s.scenario?.vehicleDamageMult||1)});
     J.Audio.play(heavy?'tankGun':'vehicleMg',{x:v.x,variation:Math.random()});
     J.Particles.emit(s,'muzzle',sx,sy,heavy?6:3,{angle:ang,arc:.22,speedMin:32,speedMax:130,life:.11,size:heavy?3.8:2.2});
     J.Particles.emit(s,'smoke',sx,sy,heavy?3:1,{angle:ang+Math.PI,arc:.7,speedMin:7,speedMax:26,life:.6,size:4});
@@ -97,9 +97,10 @@
 
     if(updateDrop(s,v,dt)){J.Audio.vehicleMotor(v.id,{x:v.x,speed:4,type:v.type,active:true});return;}
 
-    const cfg=typeCfg(v.type),targetX=v.departing?v.spawnX:laneTarget(s,v),targetY=v.departing?s.viewport.h+C.vehicles.exitPadding:s.bunker.y-80;
+    const cfg=typeCfg(v.type),fallbackX=v.departing?v.x:laneTarget(s,v),fallbackY=v.departing?s.viewport.h+C.vehicles.exitPadding:s.bunker.y-80;
+    const wp=J.World.vehicleWaypoint(s,v,fallbackX,fallbackY),targetX=wp.x,targetY=wp.y;
     const dx=targetX-v.x,dy=targetY-v.y,d=Math.hypot(dx,dy)||1;
-    const moveSpeed=v.departing?cfg.speed*1.05:cfg.speed;
+    const moveSpeed=v.departing?v.speed*1.05:v.speed;
     const canStop=(v.type==='tank'||v.type==='stug'||v.type==='halftrack'||v.type==='technical');
     const bunkerDist=Math.hypot(s.bunker.x-v.x,s.bunker.y-v.y);
     const stopForFire=canStop&&cfg.range&&bunkerDist<cfg.range*.86;
@@ -112,7 +113,7 @@
     if(v.departing&&v.y>s.viewport.h+C.vehicles.exitPadding*.65){v.state='DEPARTED';J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});return;}
 
     v.fireT-=dt;
-    if(cfg.range&&v.fireT<=0&&bunkerDist<cfg.range){fire(s,v);v.fireT=cfg.fireInterval*(.82+s.rng()*.38);}
+    if(cfg.range&&v.fireT<=0&&bunkerDist<cfg.range){fire(s,v);v.fireT=cfg.fireInterval*(.82+s.rng()*.38)/(s.scenario?.vehicleFireRateMult||1);}
     J.Audio.vehicleMotor(v.id,{x:v.x,speed:actualSpeed,type:v.type,active:true});
 
     const hpRatio=v.hp/v.maxHp;

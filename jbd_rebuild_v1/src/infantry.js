@@ -6,9 +6,9 @@
   function spawn(s,x=null,y=null,opts={}){
     const r=s.rng,w=s.viewport.w;
     const e={
-      id:nextId++,type:opts.type||'rifleman',x:x??(28+r()*(w-56)),y:y??(20+r()*18),vx:0,vy:0,
-      angle:Math.PI/2,hp:C.infantry.hp,state:'ADVANCE',stateT:0,
-      speed:C.infantry.speed*(.9+r()*.18),anim:r()*10,phase:r()*10,
+      id:nextId++,type:opts.type||'rifleman',x:x??J.World.pickSpawnX(s,r),y:y??(20+r()*18),vx:0,vy:0,
+      angle:Math.PI/2,hp:C.infantry.hp*(s.scenario?.enemyHpMult||1),state:'ADVANCE',stateT:0,
+      speed:C.infantry.speed*(s.scenario?.infantrySpeedMult||1)*(.9+r()*.18),anim:r()*10,phase:r()*10,
       fireT:r()*.6,suppression:0,cover:null,coverT:0,hitT:0,deathT:0,
       fallDir:r()<.5?-1:1,alpha:1,coverIntent:opts.coverIntent??(r()<.72),reCoverT:opts.reCoverT||0,
       assaultT:0,muzzleT:0,recoilT:0
@@ -21,7 +21,7 @@
     for(const c of s.cover){
       if(c.occupiedBy&&c.occupiedBy!==e.id)continue;
       const dx=c.x-e.x,dy=c.y-e.y,d=Math.hypot(dx,dy);
-      if(d>C.infantry.coverSearchRadius||c.y<e.y-55||c.y>s.bunker.y-70)continue;
+      if(d>(s.scenario?.coverSearchRadius||C.infantry.coverSearchRadius)||c.y<e.y-55||c.y>s.bunker.y-70)continue;
       let score=-d*.7+c.coverStrength*120+(c.y-e.y)*.18-c.danger*80;
       if(score>bestScore){bestScore=score;best=c;}
     }
@@ -94,10 +94,10 @@
       if(c){e.cover=c;e.coverIntent=false;c.occupiedBy=e.id;transition(e,'SPRINT_TO_COVER');}
     }
 
-    let tx=s.bunker.x,ty=s.bunker.y-28,spd=e.assaultT>0?C.infantry.assaultSprint:e.speed;
+    let tx=s.bunker.x,ty=s.bunker.y-28,spd=e.assaultT>0?C.infantry.assaultSprint*(s.scenario?.infantrySpeedMult||1):e.speed;
 
     if(e.state==='SPRINT_TO_COVER'&&e.cover){
-      tx=e.cover.x;ty=e.cover.y;spd=C.infantry.sprint;
+      tx=e.cover.x;ty=e.cover.y;spd=C.infantry.sprint*(s.scenario?.infantrySpeedMult||1);
       if(Math.hypot(tx-e.x,ty-e.y)<7){transition(e,'ENTER_COVER');e.coverT=.20;}
     }
 
@@ -109,17 +109,17 @@
 
     if(e.state==='FIRE_FROM_COVER'){
       e.fireT-=dt;
-      if(e.fireT<=0){enemyFire(s,e,true);e.fireT=C.infantry.fireInterval*(.82+Math.random()*.5)*(1+e.suppression*.8);}
+      if(e.fireT<=0){enemyFire(s,e,true);e.fireT=C.infantry.fireInterval*(.82+Math.random()*.5)*(1+e.suppression*.8)/(s.scenario?.enemyFireRateMult||1);}
       return;
     }
 
     if(e.state==='ADVANCE'||e.state==='SPRINT_TO_COVER'){
       const dx=tx-e.x,dy=ty-e.y,d=Math.hypot(dx,dy)||1;
-      e.vx=dx/d*spd;e.vy=dy/d*spd;e.x+=e.vx*dt;e.y+=e.vy*dt;e.angle=Math.atan2(e.vy,e.vx);
-      if(e.state==='ADVANCE'&&d<C.infantry.range&&e.assaultT<=0){transition(e,'IN_COVER');e.fireT=.15+Math.random()*.5;}
+      const terrain=J.World.waterSpeed(s,e.x,e.y);e.vx=dx/d*spd*terrain;e.vy=dy/d*spd*terrain;e.x+=e.vx*dt;e.y+=e.vy*dt;e.angle=Math.atan2(e.vy,e.vx);
+      if(e.state==='ADVANCE'&&d<(s.scenario?.infantryRange||C.infantry.range)&&e.assaultT<=0){transition(e,'IN_COVER');e.fireT=.15+Math.random()*.5;}
     } else if(e.state==='IN_COVER'){
       e.fireT-=dt;
-      if(e.fireT<=0){enemyFire(s,e,false);e.fireT=C.infantry.fireInterval*(.9+Math.random()*.45);}
+      if(e.fireT<=0){enemyFire(s,e,false);e.fireT=C.infantry.fireInterval*(.9+Math.random()*.45)/(s.scenario?.enemyFireRateMult||1);}
     }
   }
 
@@ -132,7 +132,7 @@
     J.Audio.play('enemyRifle',{x:e.x,variation:Math.random()});
     J.Particles.emit(s,'muzzle',e.x,e.y-8,2,{angle:e.angle,arc:.18,speedMin:18,speedMax:42,life:.07,size:2.4});
     if(Math.random()<hitChance){
-      s.bunker.hp=Math.max(0,s.bunker.hp-(covered?1.4:2.0));
+      s.bunker.hp=Math.max(0,s.bunker.hp-(covered?1.4:2.0)*(s.scenario?.enemyDamageMult||1));
       s.bunker.flash=.16;s.trauma=Math.min(1,s.trauma+.035);
       J.Audio.play('bunkerHit',{x:s.bunker.x,variation:Math.random()});
       J.Particles.emit(s,'spark',s.bunker.x+U.rnd(-28,28),s.bunker.y-24,4,{speedMin:35,speedMax:105,life:.18,size:1.2});

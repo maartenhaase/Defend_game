@@ -100,10 +100,11 @@
 
   function artilleryStart(s){
     s.artillery.started=true;s.artillery.t=0;s.artillery.index=0;s.artillery.next=C.artillery.introDelay;const r=s.rng;s.artillery.events=[];
-    for(let i=0;i<C.artillery.count;i++){
-      const margin=26,x=margin+r()*(s.viewport.w-margin*2),y=58+r()*(s.bunker.y-155);
-      const time=C.artillery.introDelay+(i/(C.artillery.count-1))*C.artillery.duration+(r()-.5)*.12;
-      s.artillery.events.push({x,y,time,whistle:false,done:false});
+    const count=s.scenario?.artilleryCount||C.artillery.count,duration=s.scenario?.artilleryDuration||C.artillery.duration;
+    for(let i=0;i<count;i++){
+      const pt=J.World.randomGroundPoint(s,r,58,s.bunker.y-95);
+      const time=C.artillery.introDelay+(i/Math.max(1,count-1))*duration+(r()-.5)*.12;
+      s.artillery.events.push({x:pt.x,y:pt.y,time,whistle:false,done:false});
     }
   }
 
