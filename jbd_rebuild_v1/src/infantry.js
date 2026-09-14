@@ -3,14 +3,14 @@
   let nextId=1;
   const COVER_STATES=new Set(['ENTER_COVER','FIRE_FROM_COVER']);
 
-  function spawn(s,x=null){
+  function spawn(s,x=null,y=null,opts={}){
     const r=s.rng,w=s.viewport.w;
     const e={
-      id:nextId++,type:'rifleman',x:x??(28+r()*(w-56)),y:20+r()*18,vx:0,vy:0,
+      id:nextId++,type:opts.type||'rifleman',x:x??(28+r()*(w-56)),y:y??(20+r()*18),vx:0,vy:0,
       angle:Math.PI/2,hp:C.infantry.hp,state:'ADVANCE',stateT:0,
       speed:C.infantry.speed*(.9+r()*.18),anim:r()*10,phase:r()*10,
       fireT:r()*.6,suppression:0,cover:null,coverT:0,hitT:0,deathT:0,
-      fallDir:r()<.5?-1:1,alpha:1,coverIntent:r()<.72,reCoverT:0,
+      fallDir:r()<.5?-1:1,alpha:1,coverIntent:opts.coverIntent??(r()<.72),reCoverT:opts.reCoverT||0,
       assaultT:0,muzzleT:0,recoilT:0
     };
     s.enemies.push(e);return e;

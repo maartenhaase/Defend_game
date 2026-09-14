@@ -70,6 +70,7 @@
       if(e.state==='DEAD')continue;const d=Math.hypot(e.x-x,e.y-y);
       if(d<radius){const fall=1-d/radius;J.Infantry.damage(s,e,C.weapons.he.damage*(.35+.75*fall),'he',e.x,e.y);e.suppression=1;}
     }
+    J.Vehicles.blastDamage(s,x,y,radius,C.weapons.he.damage);
     for(const c of s.cover){const d=Math.hypot(c.x-x,c.y-y);if(d<radius*1.2)c.danger=Math.max(c.danger,1);}
   }
 
@@ -77,9 +78,12 @@
     for(const b of s.bullets){
       if(!b.active)continue;b.life-=dt;b.px=b.x;b.py=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.travel+=Math.hypot(b.vx,b.vy)*dt;
       if(b.kind==='he'){
+        const vh=J.Vehicles.hitProjectile(s,b);
+        if(vh&&vh.detonate){b.active=false;explode(s,b.x,b.y,C.weapons.he.radius,'he',false);continue;}
         const d=Math.hypot(b.x-b.targetX,b.y-b.targetY);
         if(d<24||b.travel>=b.maxTravel||b.life<=0||b.y<0||b.x<0||b.x>s.viewport.w){b.active=false;explode(s,b.x,b.y,C.weapons.he.radius,'he',false);continue;}
       }else{
+        const vh=J.Vehicles.hitProjectile(s,b);if(vh)continue;
         nearMissSuppression(s,b);if(hitBullet(s,b))continue;
         if(b.travel>=b.maxTravel){soilImpact(s,b);continue;}
         if(b.x<-15||b.x>s.viewport.w+15||b.y<-15||b.y>s.viewport.h+15||b.life<=0)b.active=false;
