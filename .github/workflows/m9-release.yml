@@ -21,7 +21,7 @@ jobs:
           ref: jbd-m9-release
       - name: Reconstruct exact tested standalone
         run: |
-          cat jbd_rebuild_v1/release_m9/chunk0.b64 jbd_rebuild_v1/release_m9/chunk1.b64 jbd_rebuild_v1/release_m9/chunk2.b64 | base64 -d > /tmp/jbd-m9.html.gz
+          cat jbd_rebuild_v1/release_m9/chunk0.b64 jbd_rebuild_v1/release_m9/chunk1a.b64 jbd_rebuild_v1/release_m9/chunk1b.b64 jbd_rebuild_v1/release_m9/chunk1c.b64 jbd_rebuild_v1/release_m9/chunk1d.b64 jbd_rebuild_v1/release_m9/chunk2.b64 | base64 -d > /tmp/jbd-m9.html.gz
           gzip -dc /tmp/jbd-m9.html.gz > jbd_rebuild_v1/dist/index.html
           echo "05f265b14faf09c1a11ae0637521d79b2b38bd2125b66cef8824bf997008b9af  jbd_rebuild_v1/dist/index.html" | sha256sum -c -
       - name: Verify bundled JavaScript syntax
