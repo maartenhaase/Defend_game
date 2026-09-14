@@ -1,0 +1,26 @@
+'use strict';
+var $=function(id){return document.getElementById(id)},cv=$('game'),cx=cv.getContext('2d'),W=0,H=0,DPR=1,last=performance.now();
+var S={level:1,sup:0,hp:180,maxHp:180,armor:60,phase:'brief',caliber:1,burst:2,charge:1,blast:1,reload:1,enemies:[],shots:[],fx:[],smoke:[],fires:[],gore:[],debris:[],planes:[],civ:[],barrage:[],spawned:0,total:0,waveT:0,shake:0,red:0,combo:0,comboT:0,lastKill:0,levelKills:0,cooldown:0,plan:null};
+var hold={on:false,t0:0,x:0,y:0};
+var map={theme:'jungle',roads:[],river:null,bridges:[],rail:null,building:null,trenches:[],scatter:[]};
+var SC=[
+{name:'FOOT PATROL',theme:'jungle',desc:'Alleen infantry in korte golven.',plan:function(){return [['rifle',5],['storm',4],['rifle',5]];}},
+{name:'AIRBORNE STORM',theme:'jungle',desc:'Transportvliegtuigen droppen paratroopers.',plan:function(){return [['plane',1],['para',7],['plane',1],['para',8]];}},
+{name:'TRUCK COLUMN',theme:'jungle',desc:'Trucks lossen squads uit.',plan:function(){return [['truck',2],['rifle',4],['truck',2],['storm',4]];}},
+{name:'DESERT PUSH',theme:'desert',desc:'Snelle stormers in open terrein.',plan:function(){return [['storm',6],['rifle',6],['storm',5]];}},
+{name:'TANK HUNT',theme:'desert',desc:'Pantser op twee assen.',plan:function(){return [['tank',2],['storm',3],['technical',2],['rifle',4]];}},
+{name:'IRON RAIL',theme:'desert',desc:'Een armored train steekt het veld over.',plan:function(){return [['train',1],['rifle',5],['storm',5],['halftrack',1]];}},
+{name:'ICE RAID',theme:'polar',desc:'Halftracks en flanken over ijs.',plan:function(){return [['halftrack',2],['rifle',4],['technical',2],['storm',4]];}},
+{name:'ENGINEER SIEGE',theme:'polar',desc:'Engineer trucks bouwen forward cover.',plan:function(){return [['engineertruck',2],['rifle',5],['tank',1],['storm',4]];}},
+{name:'FINAL ASSAULT',theme:'polar',desc:'Alles tegelijk in een slotgevecht.',plan:function(){return [['plane',1],['para',6],['tank',2],['truck',2],['storm',6],['technical',2]];}}
+];
+function sc(){return SC[(S.level-1)%SC.length]} function cl(v,a,b){return Math.max(a,Math.min(b,v))} function rnd(a,b){return a+Math.random()*(b-a)} function lerp(a,b,t){return a+(b-a)*t}
+function rs(){var r=cv.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,Math.round(r.width*DPR));cv.height=Math.max(1,Math.round(r.height*DPR));cx.setTransform(DPR,0,0,DPR,0,0);W=r.width;H=r.height}
+window.addEventListener('resize',rs,{passive:true}); if(window.visualViewport)visualViewport.addEventListener('resize',function(){requestAnimationFrame(rs)},{passive:true});
+function cols(){var t=sc().theme; if(t==='desert')return{sky:'#7f6138',g1:'#b88e56',g2:'#a97d47',road:'#8a5f34',edge:'#5b3e22',river:'#8f9a9a',fol:'#8b8d61'}; if(t==='polar')return{sky:'#788e95',g1:'#c1d2d2',g2:'#b0c4c4',road:'#8e9698',edge:'#687074',river:'#9ec4cc',fol:'#7e9aa0'}; return{sky:'#1f3b2f',g1:'#62835a',g2:'#56744e',road:'#6f5c3e',edge:'#4a3a28',river:'#588a95',fol:'#3d6941'}}
+function aud(k){try{var AC=window.AudioContext||window.webkitAudioContext;if(!aud.c)aud.c=new AC();var a=aud.c;if(a.state==='suspended')a.resume();var o=a.createOscillator(),g=a.createGain(),t=a.currentTime;o.connect(g);g.connect(a.destination);if(k==='mg'){o.type='square';o.frequency.setValueAtTime(170,t);o.frequency.exponentialRampToValueAtTime(85,t+.05);g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.06);o.start(t);o.stop(t+.07)}else if(k==='ap'){o.type='sawtooth';o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(45,t+.16);g.gain.setValueAtTime(.08,t);g.gain.exponentialRampToValueAtTime(.001,t+.17);o.start(t);o.stop(t+.18)}else if(k==='he'||k==='boom'){o.type='triangle';o.frequency.setValueAtTime(80,t);o.frequency.exponentialRampToValueAtTime(25,t+.32);g.gain.setValueAtTime(k==='boom'?.18:.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.34);o.start(t);o.stop(t+.35)}else{o.type='square';o.frequency.setValueAtTime(240,t);g.gain.setValueAtTime(.03,t);g.gain.exponentialRampToValueAtTime(.001,t+.04);o.start(t);o.stop(t+.05)}}catch(e){}}
+function p2(x,y){return{x:x*W,y:y*H}} function pts(path){var o=[];for(var i=0;i<path.length;i++)o.push(p2(path[i].x,path[i].y));return o}
+function plen(path){var p=pts(path),t=0;for(var i=0;i<p.length-1;i++){var dx=p[i+1].x-p[i].x,dy=p[i+1].y-p[i].y;t+=Math.sqrt(dx*dx+dy*dy)}return Math.max(1,t)}
+function at(path,q){var p=pts(path),lens=[],tot=0,i;for(i=0;i<p.length-1;i++){var dx=p[i+1].x-p[i].x,dy=p[i+1].y-p[i].y,l=Math.sqrt(dx*dx+dy*dy);lens.push(l);tot+=l}var target=cl(q,0,.9999)*tot,run=0;for(i=0;i<lens.length;i++){if(run+lens[i]>=target){var a=p[i],b=p[i+1],u=(target-run)/lens[i];return{x:lerp(a.x,b.x,u),y:lerp(a.y,b.y,u),ang:Math.atan2(b.y-a.y,b.x-a.x)}}run+=lens[i]}var a=p[p.length-2],b=p[p.length-1];return{x:b.x,y:b.y,ang:Math.atan2(b.y-a.y,b.x-a.x)}}
+function bunk(){return{x:W*.5,y:H*.86}} function text(x,y,t,c){S.fx.push({k:'txt',x:x,y:y,t:1,text:t,col:c})}
+function gore(x,y,n){for(var i=0;i<n;i++)S.gore.push({x:x,y:y,vx:rnd(-55,55),vy:rnd(-80,5),t:rnd(.5,1.1),r:rnd(1,3)})}
