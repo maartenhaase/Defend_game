@@ -5,9 +5,6 @@ on:
     branches: ["main"]
     paths:
       - "web_v6/**"
-      - "jbd_rebuild_v1/src/**"
-      - "jbd_rebuild_v1/build.js"
-      - "jbd_rebuild_v1/dist/index.html"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -29,13 +26,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build JBD rebuild standalone release
-        run: |
-          cd jbd_rebuild_v1
-          node build.js
-          cd ..
-          mkdir -p web_v6/jbd_rebuild_v1
-          cp jbd_rebuild_v1/dist/index.html web_v6/jbd_rebuild_v1/index.html
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
