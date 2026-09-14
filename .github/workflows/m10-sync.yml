@@ -1,0 +1,48 @@
+name: Sync JBD Milestone 10 Long Front
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "m10_payload/**"
+      - ".github/workflows/m10-sync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Reassemble source payload
+        run: |
+          cat m10_payload/chunk_* > /tmp/jbd_m10.b64
+          base64 -d /tmp/jbd_m10.b64 > /tmp/jbd_m10.tar.xz
+          echo "0c6f08f804b5042b5a6d73a50d517de4abe0566983c612500b08dd6ba8c55122  /tmp/jbd_m10.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/jbd_m10.tar.xz -C .
+      - name: Build standalone release
+        run: |
+          cd jbd_rebuild_v1
+          node build.js
+          for f in src/*.js; do node --check "$f"; done
+      - name: Verify bundled JavaScript syntax
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('jbd_rebuild_v1/dist/index.html','utf8');
+          const m=html.match(/<script>([\s\S]*)<\/script>/);
+          if(!m) throw new Error('Bundled script not found');
+          fs.writeFileSync('/tmp/jbd-m10-bundle.js',m[1]);
+          NODE
+          node --check /tmp/jbd-m10-bundle.js
+      - name: Publish Milestone 10
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jbd_rebuild_v1
+          git rm -r m10_payload
+          git rm .github/workflows/m10-sync.yml
+          git commit -m "Release JBD Milestone 10 Long Front"
+          git push
