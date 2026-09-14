@@ -1,0 +1,43 @@
+name: Sync JBD Milestone 9.1 source
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "jbd_rebuild_v1/m91_source.tar.gz"
+      - ".github/workflows/m91-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Extract, build and verify source
+        run: |
+          tar -xzf jbd_rebuild_v1/m91_source.tar.gz -C .
+          cd jbd_rebuild_v1
+          node build.js
+          for f in src/*.js; do node --check "$f"; done
+      - name: Verify bundled JavaScript syntax
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('jbd_rebuild_v1/dist/index.html','utf8');
+          const m=html.match(/<script>([\s\S]*)<\/script>/);
+          if(!m) throw new Error('Bundled script not found');
+          fs.writeFileSync('/tmp/jbd-m91-bundle.js',m[1]);
+          NODE
+          node --check /tmp/jbd-m91-bundle.js
+      - name: Publish Milestone 9.1
+        run: |
+          rm -f jbd_rebuild_v1/m91_source.tar.gz .github/workflows/m91-sync.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Release Milestone 9.1 infantry visual pass"
+          git push
