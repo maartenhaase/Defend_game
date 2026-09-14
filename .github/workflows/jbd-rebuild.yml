@@ -1,0 +1,45 @@
+name: Build JBD rebuild dist
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "jbd_rebuild_v1/src/**"
+      - "jbd_rebuild_v1/build.js"
+      - ".github/workflows/jbd-rebuild.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build standalone release
+        run: |
+          cd jbd_rebuild_v1
+          node build.js
+      - name: Verify bundled JavaScript syntax
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('jbd_rebuild_v1/dist/index.html','utf8');
+          const m = html.match(/<script>([\s\S]*)<\/script>/);
+          if (!m) throw new Error('Bundled script not found');
+          fs.writeFileSync('/tmp/jbd-bundle.js', m[1]);
+          NODE
+          node --check /tmp/jbd-bundle.js
+      - name: Commit generated dist
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jbd_rebuild_v1/dist/index.html
+          if git diff --cached --quiet; then
+            echo "dist already current"
+            exit 0
+          fi
+          git commit -m "Build JBD rebuild v1 standalone dist"
+          git push
