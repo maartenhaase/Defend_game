@@ -12,12 +12,12 @@
     if(s.mode==='playing'){
       J.Combat.updateArtillery(s,dt);
       if(s.artillery.t>C.artillery.introDelay+C.artillery.duration*.72&&s.spawn.count<C.level.spawnCount){s.spawn.t-=dt;if(s.spawn.t<=0){J.Infantry.spawn(s);s.spawn.count++;s.spawn.t=C.level.spawnDuration/C.level.spawnCount*(.68+s.rng()*.48);}}
-      J.Infantry.update(s,dt);J.Vehicles.update(s,dt);J.Combat.update(s,dt);
+      J.Infantry.update(s,dt);J.Vehicles.update(s,dt);J.Airborne.update(s,dt);J.Combat.update(s,dt);
       const infantryDone=s.spawn.count>=C.level.spawnCount&&s.enemies.every(e=>e.state==='DEAD');
-      if(infantryDone&&J.Vehicles.allResolved(s)){s.completeT+=dt;if(s.completeT>C.level.completeDelay&&!s.levelComplete){s.levelComplete=true;s.mode='complete';showComplete();}}else s.completeT=0;
-    } else if(s.mode==='gameover'){J.Infantry.update(s,dt);J.Vehicles.update(s,dt);J.Combat.update(s,dt);showGameOver();}
+      if(infantryDone&&J.Vehicles.allResolved(s)&&J.Airborne.allResolved(s)){s.completeT+=dt;if(s.completeT>C.level.completeDelay&&!s.levelComplete){s.levelComplete=true;s.mode='complete';showComplete();}}else s.completeT=0;
+    } else if(s.mode==='gameover'){J.Infantry.update(s,dt);J.Vehicles.update(s,dt);J.Airborne.update(s,dt);J.Combat.update(s,dt);showGameOver();}
   }
-  function showComplete(){title.textContent='ARMOR TRIAL SECURE';sub.innerHTML=`Milestone 6 cleared · ${s.stats.kills} infantry · ${s.stats.vehicleKills} vehicles<br><span>Technicals, troop trucks, halftracks, StuG/tank, damage states en wreck-cover actief.</span>`;deploy.style.display='none';restart.style.display='inline-flex';restart.textContent='PLAY AGAIN';overlay.classList.remove('hidden');}
+  function showComplete(){title.textContent='AIRBORNE SECTOR SECURE';sub.innerHTML=`Milestone 7 cleared · ${s.stats.kills} infantry · ${s.stats.vehicleKills} vehicles · ${s.stats.airKills} airborne<br><span>Kleinere mobile scale, rustigere infantry, transport aircraft en parachutisten actief.</span>`;deploy.style.display='none';restart.style.display='inline-flex';restart.textContent='PLAY AGAIN';overlay.classList.remove('hidden');}
   function showGameOver(){if(!overlay.classList.contains('hidden'))return;title.textContent='BUNKER OVERRUN';sub.textContent='De linie is gebroken.';deploy.style.display='none';restart.style.display='inline-flex';restart.textContent='REDEPLOY';overlay.classList.remove('hidden');}
   function loop(ts){if(!s.lastTs)s.lastTs=ts;let frame=Math.min(C.maxFrameDelta,(ts-s.lastTs)/1000);s.lastTs=ts;s.accumulator+=frame;const inst=1/Math.max(.001,frame);s.fpsSmoothed=U.lerp(s.fpsSmoothed,inst,.05);s.quality=s.fpsSmoothed<48?Math.max(.55,s.quality-.005):Math.min(1,s.quality+.002);let steps=0;while(s.accumulator>=C.step&&steps<6){update(C.step);s.accumulator-=C.step;steps++;}J.Render.render(s,ctx);requestAnimationFrame(loop);}
   window.addEventListener('DOMContentLoaded',setup);

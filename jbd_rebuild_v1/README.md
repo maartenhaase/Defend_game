@@ -1,38 +1,32 @@
-# JBD — Bunker Defense rebuild v1
+# JBD — Bunker Defense · Rebuild v1
 
-A clean rebuild of JBD focused on a polished portrait-first combat slice. Source stays modular; `dist/index.html` is a single standalone release with no external runtime dependencies.
+Milestone 7 vertical slice: **mobile scale + airborne**.
 
-## Current milestone
-Milestones 1–6 are represented in the current Armor Trial slice:
-- fixed 60 Hz simulation step + RAF render loop;
-- portrait-first pointer/touch aiming;
-- quick tap MG / short hold AP / long hold HE;
-- bunker aim, recoil and muzzle flash;
-- procedural audio and ambience;
-- artillery intro with persistent irregular craters;
-- infantry animation, suppression and crater-cover AI;
-- synchronized assault whistle: crater infantry leave cover together after a short hold and sprint exposed;
-- crater cover reduces HE damage significantly, creating a deliberate post-whistle MG window;
-- persistent blood/scorch/soil marks;
-- pooled dirt, smoke, fire, debris, ember, spark and muzzle particles;
-- trauma-based shake and hit vignette;
-- vehicle subsystem with technical, troop truck, halftrack, StuG and tank;
-- cached vector-style vehicle body/turret sprites with animated tracks/wheels;
-- independent tank/vehicle turret aim and visible recoil/muzzle flashes;
-- armor-specific MG/AP/HE effectiveness, ricochets and armor-break feedback;
-- visual vehicle damage states with smoke/sparks;
-- procedural looping vehicle motors plus distinct mounted-MG/tank-gun audio;
-- truck/halftrack brake-and-deploy infantry behavior;
-- survivors can escape a transport destroyed before its troop drop;
-- destroyed vehicles remain as burning/scorched wrecks and become infantry cover nodes;
-- debug mode via `?debug=1` and stress mode via `?stress=1`.
+## Speelbaar
+
+Open `dist/index.html`. De release is standalone en heeft geen externe runtime-assets nodig.
+
+## Milestone 7
+
+- Mobile-first entity scale: 72% op smalle schermen; desktop 86%.
+- Hitboxes blijven bewust ruimer dan de visuals voor touch-aim.
+- Rustigere infantry: walk 22 px/s, sprint 50 px/s, assault rush 61 px/s.
+- Mobile Canvas DPR cap 1.65 voor lagere fill-rate op iPhone-achtige schermen.
+- Transport aircraft pass met draaiende propellers en procedurele motor-audio.
+- 6 parachutisten per airborne wave.
+- Canopy sway, drift, descent en individuele landingshoogte.
+- Parachutisten zijn tijdens de afdaling te raken met MG/AP/HE.
+- Correcte landing: parachutist wordt normale infantry.
+- Neergeschoten parachutist levert geen infantry op.
+- Ingezakte parachutes blijven tijdelijk zichtbaar op het slagveld.
+- Milestone 6 voertuigen, wreck-cover en crater assault blijven actief.
+
+## Debug
+
+Voeg `?debug=1` toe voor state/FPS overlays. `?stress=1` blijft beschikbaar voor de bestaande stress-start.
 
 ## Build
-```bash
-node build.js
-```
 
-Output: `dist/index.html`.
+`node build.js`
 
-## Next milestone
-Milestone 7: airborne — WW2 transport aircraft, animated propellers, parachutes, landing/collapse sequence and paratrooper deployment — while preserving the current vehicle/infantry performance budget.
+Genereert `dist/index.html` uit de modules in `src/`.

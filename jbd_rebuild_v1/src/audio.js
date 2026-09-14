@@ -1,6 +1,6 @@
 (() => {
   const J=window.JBD, C=J.CONFIG;
-  const A={ctx:null,master:null,buses:{},noise:null,ambience:null,wind:null,vehicleLoops:new Map()};
+  const A={ctx:null,master:null,buses:{},noise:null,ambience:null,wind:null,vehicleLoops:new Map(),aircraftLoops:new Map()};
 
   function unlock(s){
     try{
@@ -65,6 +65,14 @@
       osc('sine',2350*r,1450*r,.16,.095,'ui',x,0);osc('sine',2550*r,1650*r,.17,.105,'ui',x,.22);noise(.05,.028,5200,'ui',x,.001,'highpass',0);noise(.05,.03,5200,'ui',x,.001,'highpass',.22);
     }else if(name==='troopDrop'){
       noise(.08,.055,1600,'vehicles',x);osc('triangle',88*r,62,.12,.032,'vehicles',x);
+    }else if(name==='planeApproach'){
+      noise(.42,.055,620,'vehicles',x,.02);osc('sawtooth',72*r,62,.55,.045,'vehicles',x);
+    }else if(name==='chuteOpen'){
+      noise(.15,.045,1900,'vehicles',x,.008,'bandpass');
+    }else if(name==='paraLand'){
+      noise(.08,.05,760,'vehicles',x,.004);
+    }else if(name==='planeFade'){
+      osc('sine',78*r,52,.5,.025,'vehicles',x);
     }else if(name==='hit'){
       noise(.045,.12,2100,'weapons',x);
     }else if(name==='cloth'){
@@ -93,11 +101,23 @@
     const heavy=type==='tank'||type==='stug'||type==='halftrack',base=heavy?38:48,f=base+Math.min(38,speed*.52);h.o1.frequency.setTargetAtTime(f,now,.08);h.o2.frequency.setTargetAtTime(f*2.02,now,.08);h.lp.frequency.setTargetAtTime(heavy?360:520,now,.12);h.gain.gain.setTargetAtTime((heavy?.035:.026)*(speed<8?.55:1),now,.09);if(h.p.pan)h.p.pan.setTargetAtTime(J.U.clamp((x/(innerWidth||390))*2-1,-1,1),now,.08);
   }
 
+
+  function aircraftMotor(id,{x=innerWidth/2,active=true}={}){
+    if(!A.ctx||!A.buses.vehicles)return;const now=A.ctx.currentTime;let h=A.aircraftLoops.get(id);
+    if(!active){if(h){try{h.gain.gain.cancelScheduledValues(now);h.gain.gain.setTargetAtTime(.0001,now,.16);h.o1.stop(now+.55);h.o2.stop(now+.55);h.no.stop(now+.55);}catch(_){}A.aircraftLoops.delete(id);}return;}
+    if(!h){
+      const p=panNode(x),gain=A.ctx.createGain(),lp=A.ctx.createBiquadFilter(),o1=A.ctx.createOscillator(),o2=A.ctx.createOscillator(),no=A.ctx.createBufferSource(),nf=A.ctx.createBiquadFilter();
+      gain.gain.value=.0001;lp.type='lowpass';lp.frequency.value=520;o1.type='sawtooth';o2.type='triangle';o1.frequency.value=73;o2.frequency.value=146;no.buffer=A.noise;no.loop=true;nf.type='bandpass';nf.frequency.value=680;nf.Q.value=.5;
+      o1.connect(lp);o2.connect(lp);lp.connect(gain);no.connect(nf).connect(gain);gain.connect(p).connect(A.buses.vehicles);o1.start();o2.start();no.start();h={p,gain,o1,o2,no};A.aircraftLoops.set(id,h);
+    }
+    h.gain.gain.setTargetAtTime(.032,now,.12);if(h.p.pan)h.p.pan.setTargetAtTime(J.U.clamp((x/(innerWidth||390))*2-1,-1,1),now,.08);
+  }
+
   function startAmbience(){
     if(!A.ctx||A.ambience)return;const src=A.ctx.createBufferSource(),band=A.ctx.createBiquadFilter(),g=A.ctx.createGain();src.buffer=A.noise;src.loop=true;band.type='bandpass';band.frequency.value=620;band.Q.value=.35;g.gain.value=.026;src.connect(band).connect(g).connect(A.buses.ambience);src.start();A.ambience=src;
     const wind=A.ctx.createBufferSource(),lp=A.ctx.createBiquadFilter(),wg=A.ctx.createGain();wind.buffer=A.noise;wind.loop=true;lp.type='lowpass';lp.frequency.value=240;wg.gain.value=.018;wind.connect(lp).connect(wg).connect(A.buses.ambience);wind.start();A.wind=wind;
     const insect=A.ctx.createOscillator(),ig=A.ctx.createGain();insect.type='sine';insect.frequency.value=3250;ig.gain.value=.0022;insect.connect(ig).connect(A.buses.ambience);insect.start();
   }
 
-  J.Audio={unlock,play,vehicleMotor};
+  J.Audio={unlock,play,vehicleMotor,aircraftMotor};
 })();

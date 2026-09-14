@@ -3,7 +3,7 @@
   J.CONFIG = Object.freeze({
     step: 1 / 60,
     maxFrameDelta: 0.10,
-    render: { maxDpr: 2, particles: 620, bullets: 180 },
+    render: { maxDpr: 2, mobileMaxDpr: 1.65, particles: 680, bullets: 190, mobileScale: 0.72, desktopScale: 0.86 },
     input: { apCharge: 0.22, heCharge: 0.62, maxCharge: 1.05 },
     bunker: { hp: 100, yPadding: 104, barrelLength: 48 },
     weapons: {
@@ -13,10 +13,10 @@
     },
     artillery: { count: 14, introDelay: 0.34, duration: 2.55, minRadius: 22, maxRadius: 38 },
     infantry: {
-      hp: 100, speed: 27, sprint: 62, range: 310, fireInterval: 1.18,
+      hp: 100, speed: 22, sprint: 50, range: 310, fireInterval: 1.22,
       coverSearchRadius: 205, coverMinY: 105, suppressionDecay: 0.20,
       coverWaveHold: 3.8, assaultSignalLead: 0.68, assaultRushDuration: 2.45,
-      assaultSprint: 76, reseekDelay: 2.4,
+      assaultSprint: 61, reseekDelay: 2.55,
       corpseFadeStart: 10, corpseLifetime: 16
     },
     vehicles: {
@@ -38,6 +38,12 @@
       dropYRatio: .43,
       exitPadding: 85,
       wreckLifetime: 999
+    },
+    airborne: {
+      startTime: 24.2, planeSpeed: 96, planeYRatio: 0.15, dropCount: 6,
+      dropStartRatio: 0.22, dropEndRatio: 0.72, descentSpeed: 31,
+      swayAmp: 14, swayFreq: 2.15, drift: 2.4, hp: 52, hitRadius: 13,
+      landingMinRatio: 0.34, landingMaxRatio: 0.53, collapsedLife: 18
     },
     level: { seed: 731942, spawnCount: 14, spawnDuration: 14.5, completeDelay: 2.0 },
     audio: { master: 0.68 },

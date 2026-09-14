@@ -1,7 +1,7 @@
 (() => {
   const J=window.JBD, C=J.CONFIG, U=J.U;
   function resize(s,canvas){
-    const vv=window.visualViewport; const w=Math.max(320,Math.floor(vv?vv.width:innerWidth)),h=Math.max(520,Math.floor(vv?vv.height:innerHeight)); const dpr=Math.min(C.render.maxDpr,devicePixelRatio||1);
+    const vv=window.visualViewport; const w=Math.max(320,Math.floor(vv?vv.width:innerWidth)),h=Math.max(520,Math.floor(vv?vv.height:innerHeight)); const dpr=Math.min(w<=520?C.render.mobileMaxDpr:C.render.maxDpr,devicePixelRatio||1);
     const probe=document.getElementById('safeProbe'); const cs=probe?getComputedStyle(probe):null; s.safe={top:cs?parseFloat(cs.paddingTop)||0:0,bottom:cs?parseFloat(cs.paddingBottom)||0:0};
     s.viewport={w,h,dpr}; canvas.style.width=w+'px';canvas.style.height=h+'px';canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
     s.battlefield.top=s.safe.top;s.battlefield.bottom=h-s.safe.bottom-82;s.bunker.x=w*.5;s.bunker.y=h-s.safe.bottom-C.bunker.yPadding;

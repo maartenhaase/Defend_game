@@ -1,77 +1,52 @@
-# JBD rebuild v1 — Milestone 6 test report
+# JBD rebuild v1 — Milestone 7 test report
 
-Date: 2026-09-14
-Scope: Milestone 6 vehicle subsystem on top of the Milestone 5 infantry/crater vertical slice.
+Datum: 2026-09-14
 
-## Automated / syntax checks
-- Standalone build: `node build.js` passed.
-- Bundled JavaScript: `node --check` passed.
-- Browser runtime: no observed uncaught JavaScript error events in the final test runs.
+## Scope
 
-## Vehicle mechanics verified
-- All five requested vehicle classes instantiate and render:
-  - technical;
-  - transport truck;
-  - halftrack;
-  - StuG;
-  - tank.
-- Hull movement and lane following run independently from turret aim.
-- Tank/StuG guns recoil visibly after firing.
-- Track phase advances with movement on tracked vehicles.
-- Wheel phase advances with movement on wheeled vehicles.
-- Vehicle damage stages trigger light/heavy smoke and sparks.
-- Destroyed vehicles remain as wrecks and add a `wreck` cover node.
-- Infantry cover search successfully selected a newly-created wreck cover node.
+Milestone 7 voegt mobile readability/performance en Airborne toe bovenop Milestone 6.
 
-## Player weapon / armor test
-Pointer input was used through the actual canvas input system at 390×844, DPR 2.
+## Syntax / standalone
 
-Technical:
-- one aimed MG burst destroyed a fresh technical in the test configuration.
+- Alle `src/*.js` bestanden: `node -c` geslaagd.
+- `node build.js` geslaagd.
+- Gebundelde JavaScript uit `dist/index.html`: syntaxcheck geslaagd.
+- Standalone release bevat geen externe runtime-assets.
 
-Tank:
-- fresh HP: 140;
-- AP hit 1 -> 100.85 HP;
-- AP hit 2 -> 61.70 HP;
-- AP hit 3 -> 22.55 HP;
-- AP hit 4 -> DESTROYED;
-- resulting tank wreck registered as cover.
+## Mobile scale
 
-This verifies the intended interaction: MG works on light vehicles; AP is the efficient heavy-armor choice.
+- Chromium device metrics: 390 × 844, deviceScaleFactor 2.
+- Interne Canvas DPR op mobile: 1.65.
+- Entity render scale op mobile: 0.72.
+- Infantry movement: walk 22, sprint 50, assault 61 px/s.
+- Collision/hit radii zijn niet evenredig verkleind; touch aim blijft vergevingsgezind.
 
-## Transport behavior
-Stress/runtime test:
-- truck completed its brake/deploy sequence and released 3 infantry;
-- halftrack completed its brake/deploy sequence and released 2 infantry.
+## Airborne functional tests
 
-Destroyed-before-drop test:
-- a truck destroyed before deployment produced 2 surviving infantry in that seeded test run;
-- the truck then remained as wreck cover.
+- Transport aircraft start na de armor-wave timing.
+- Plane pass en propeller phase geverifieerd in runtime.
+- 6/6 parachutisten werden gedropt.
+- Fast deterministic sim: 6/6 landden correct.
+- Elke landing maakte exact één nieuwe infantry unit.
+- 6 collapsed parachutes bleven als tijdelijke battlefield marks aanwezig.
+- Twee MG-damage hits op een descending paratrooper: airborne kill, geen landing/spawn.
+- HE blast path is gekoppeld aan descending airborne targets.
+- Geen uncaught JavaScript exceptions in de final functional runs.
 
-## Stress / performance sample
-Chromium headless, emulated viewport 390×844, DPR 2. The standalone HTML was injected directly into the browser document because localhost/file navigation is blocked by the runtime administrator policy.
+## Runtime / performance
 
-At ~11.6 seconds with stress mode:
-- 25 initial infantry plus 5 deployed transport troops = 30 living infantry;
-- 5 active vehicles simultaneously;
-- 21 active particles at the sampled frame;
-- ~60.0 FPS;
-- quality scalar: 1.0;
-- bunker remained operational;
-- 0 observed uncaught JS errors.
+Headless Chromium, 390 × 844, emulated deviceScaleFactor 2, internal DPR 1.65:
 
-A separate earlier effect-heavy sample immediately after deploy contained >300 active particles with all five vehicle types present and remained in the high-50s FPS range before returning to ~60 FPS as the transient particle load cleared.
+- Representative scene: 12 infantry + 1 tank + 6 descending paratroopers: ~60 FPS, quality 1.0.
+- Heavy stress sample: 25 infantry + 5 vehicles + 6 descending paratroopers + ~300 pooled particles: ~58–59 FPS, quality 1.0.
+- Stress sample had 0 observed uncaught JavaScript exceptions.
 
-## Visual quality check
-A dedicated non-debug portrait screenshot was inspected with all five vehicle types separated on the battlefield. Checked:
-- trucks read as trucks with cab/cargo distinction;
-- technical reads as a light pickup with exposed gun mount;
-- halftrack has front wheels + rear tracks;
-- StuG uses a fixed casemate silhouette;
-- tank has a separate rotating turret;
-- tracked vehicles are not simple rectangles;
-- perspective is consistent with the existing top-down / 3/4 infantry and bunker view.
+Deze waarden zijn browser/headless-metingen, geen fysieke iPhone Safari benchmark.
 
-## Not claimed
-- No physical iPhone Safari test was performed.
-- Audio synthesis and motor loops executed in browser runtime without errors, but subjective speaker/headphone quality still requires a human listen test.
+## Visual check
+
+`milestone7_mobile_final.png` is opgenomen op een 390 × 844 device viewport en toont de kleinere mobile scale, transport aircraft, parachutes, infantry, halftrack, bunker en compactere HUD.
+
+## Belangrijke beperking
+
+Een fysieke iPhone Safari is nog niet rechtstreeks getest vanuit deze runtime. De gebruiker heeft de vorige Milestone 6 build wel als soepel op mobiel gerapporteerd; deze build verlaagt de render scale en mobile DPR om de extra Airborne-last te compenseren.

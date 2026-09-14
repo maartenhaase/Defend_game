@@ -10,9 +10,10 @@
     assault:{armed:false,t:0,whistle:false,pulse:0,lastReleased:0},
     enemies:[], vehicles:[], vehicleShots:[], wrecks:[], bullets:[], explosions:[], fires:[], cover:[], corpses:[],
     vehicleWave:{started:false,t:0,index:0,finished:false},
+    airborne:{started:false,t:0,finished:false,plane:null,paratroopers:[],collapsed:[],dropped:0},
     spawn:{t:0,count:0}, particles:[], particleCursor:0,
     trauma:0, quality:1, fps:60, fpsSmoothed:60, levelComplete:false, completeT:0,
-    stats:{shots:0,kills:0,hits:0,vehicleKills:0,armorHits:0}, debug:C.debug,
+    stats:{shots:0,kills:0,hits:0,vehicleKills:0,armorHits:0,airKills:0,landedParas:0}, debug:C.debug,
     staticCanvas:null, damageCanvas:null, staticCtx:null, damageCtx:null,
     statusText:'TAP DEPLOY', statusSub:'Level 1 · FOOT PATROL',
     ui:{messageT:0,message:''}, audioReady:false
