@@ -3,14 +3,14 @@
   let nextId=1;
   const COVER_STATES=new Set(['ENTER_COVER','FIRE_FROM_COVER']);
 
-  function spawn(s,x=null){
+  function spawn(s,x=null,y=null,opts={}){
     const r=s.rng,w=s.viewport.w;
     const e={
-      id:nextId++,type:'rifleman',x:x??(28+r()*(w-56)),y:20+r()*18,vx:0,vy:0,
+      id:nextId++,type:opts.type||'rifleman',x:x??(28+r()*(w-56)),y:y??(20+r()*18),vx:0,vy:0,
       angle:Math.PI/2,hp:C.infantry.hp,state:'ADVANCE',stateT:0,
       speed:C.infantry.speed*(.9+r()*.18),anim:r()*10,phase:r()*10,
       fireT:r()*.6,suppression:0,cover:null,coverT:0,hitT:0,deathT:0,
-      fallDir:r()<.5?-1:1,alpha:1,coverIntent:r()<.72,reCoverT:0,
+      fallDir:r()<.5?-1:1,alpha:1,coverIntent:opts.coverIntent??(r()<.72),reCoverT:opts.reCoverT||0,
       assaultT:0,muzzleT:0,recoilT:0
     };
     s.enemies.push(e);return e;
@@ -50,7 +50,6 @@
       s.assault.whistle=false;
     }
     if(!s.assault.armed)return;
-
     s.assault.t-=dt;
     if(!s.assault.whistle&&s.assault.t<=C.infantry.assaultSignalLead){
       s.assault.whistle=true;
@@ -80,39 +79,31 @@
     e.hitT=Math.max(0,e.hitT-dt);e.muzzleT=Math.max(0,e.muzzleT-dt);e.recoilT=Math.max(0,e.recoilT-dt);
     e.assaultT=Math.max(0,e.assaultT-dt);e.reCoverT=Math.max(0,e.reCoverT-dt);
     e.suppression=Math.max(0,e.suppression-C.infantry.suppressionDecay*dt);
-
     if(e.state==='DEAD'){
       e.deathT+=dt;
       e.alpha=e.deathT>C.infantry.corpseFadeStart?U.clamp(1-(e.deathT-C.infantry.corpseFadeStart)/(C.infantry.corpseLifetime-C.infantry.corpseFadeStart),0,1):1;
       return;
     }
-
     if(!e.cover&&e.reCoverT<=0&&e.state==='ADVANCE'&&!e.coverIntent&&e.assaultT<=0&&e.suppression>.34)e.coverIntent=true;
-
     if(e.state==='ADVANCE'&&(e.suppression>.30||(e.coverIntent&&e.y>72&&e.stateT>1.05))&&e.assaultT<=0){
       const c=findCover(s,e);
       if(c){e.cover=c;e.coverIntent=false;c.occupiedBy=e.id;transition(e,'SPRINT_TO_COVER');}
     }
-
     let tx=s.bunker.x,ty=s.bunker.y-28,spd=e.assaultT>0?C.infantry.assaultSprint:e.speed;
-
     if(e.state==='SPRINT_TO_COVER'&&e.cover){
       tx=e.cover.x;ty=e.cover.y;spd=C.infantry.sprint;
       if(Math.hypot(tx-e.x,ty-e.y)<7){transition(e,'ENTER_COVER');e.coverT=.20;}
     }
-
     if(e.state==='ENTER_COVER'){
       e.coverT-=dt;
       if(e.coverT<=0)transition(e,'FIRE_FROM_COVER');
       return;
     }
-
     if(e.state==='FIRE_FROM_COVER'){
       e.fireT-=dt;
       if(e.fireT<=0){enemyFire(s,e,true);e.fireT=C.infantry.fireInterval*(.82+Math.random()*.5)*(1+e.suppression*.8);}
       return;
     }
-
     if(e.state==='ADVANCE'||e.state==='SPRINT_TO_COVER'){
       const dx=tx-e.x,dy=ty-e.y,d=Math.hypot(dx,dy)||1;
       e.vx=dx/d*spd;e.vy=dy/d*spd;e.x+=e.vx*dt;e.y+=e.vy*dt;e.angle=Math.atan2(e.vy,e.vx);
