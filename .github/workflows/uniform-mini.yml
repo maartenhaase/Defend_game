@@ -14,49 +14,21 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full history
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Restore exact Milestone 9.1 source archive
-        run: |
-          mkdir -p /tmp/m91
-          git show bd27302b2ddada452459bdf54cf821372d493da2:jbd_rebuild_v1/m91_source.tar.gz > /tmp/m91.tar.gz
-          tar -xzf /tmp/m91.tar.gz -C /tmp/m91
-          BASE=$(find /tmp/m91 -type f -name build.js -print -quit | xargs dirname)
-          echo "Restoring from $BASE"
-          test -f "$BASE/build.js"
-          test -d "$BASE/src"
-          rm -rf jbd_rebuild_v1/src
-          cp "$BASE/build.js" jbd_rebuild_v1/build.js
-          cp -R "$BASE/src" jbd_rebuild_v1/src
-          rm -f jbd_rebuild_v1/src/scale.js
-
-      - name: Apply uniform mini scale
+      - name: Apply fixed mini scale to current game
         run: python jbd_rebuild_v1/apply_uniform_mini.py
 
-      - name: Verify exact tested source hashes
+      - name: Verify uniform scale settings
         run: |
-          check() { actual=$(git hash-object "$1"); test "$actual" = "$2" || { echo "HASH MISMATCH $1 $actual"; exit 1; }; }
-          check jbd_rebuild_v1/build.js 48841817bdc892864f14004d09f0055a26d2f204
-          check jbd_rebuild_v1/src/airborne.js 511b3b67b2f7aa2d74be58f33875b5c987691555
-          check jbd_rebuild_v1/src/audio.js f6784ea9cdbac0d151145c75d53918f532393651
-          check jbd_rebuild_v1/src/combat.js aeb40ccbb89d6f0e8d1b68da616e689cfb463a45
-          check jbd_rebuild_v1/src/config.js 77062d95a3d6db5fca6dc64a08a18ebf0c2009f9
-          check jbd_rebuild_v1/src/infantry.js 7932e135c5b7be11a82f051f715bdbae9cec3d3f
-          check jbd_rebuild_v1/src/input.js 6e7255311b5c3757da610f08feee6c0822ba1810
-          check jbd_rebuild_v1/src/main.js 51364d306d4be508839415549caf02f2a568bfcc
-          check jbd_rebuild_v1/src/particles.js 06089ab4d5cb838e9e9cbcadf21910936a67766a
-          check jbd_rebuild_v1/src/render.js 310e3e08f9929c6c47be9d7af861ded46412028c
-          check jbd_rebuild_v1/src/scenarios.js b31ffd4e07b2bb1acefe852aea3340d63c40148c
-          check jbd_rebuild_v1/src/sprites.js f6764d427fde96b78d366ce56c2f6da780c22a67
-          check jbd_rebuild_v1/src/state.js 4d0bb33a0cc3c229ed0be1aba3237c1617cac0b4
-          check jbd_rebuild_v1/src/util.js bba6e75b8c6ecf9a476bc17b7ff75016586d2369
-          check jbd_rebuild_v1/src/vehicles.js ba9ab8b51c4cc40e30e223e4782073e38281181b
-          check jbd_rebuild_v1/src/world.js a818840eb827c442c62f54017efc0e178d3a38c8
+          grep -q "function progress(){return 1;}" jbd_rebuild_v1/src/scale.js
+          grep -q "mobileScale: 0.44" jbd_rebuild_v1/src/config.js
+          grep -q "speed: 16" jbd_rebuild_v1/src/config.js
+          grep -q "dustRevealEnd: 0.00" jbd_rebuild_v1/src/config.js
+          grep -q "MINI FRONT" jbd_rebuild_v1/build.js
 
-      - name: Build standalone iPhone release
+      - name: Build and syntax check
         run: |
           cd jbd_rebuild_v1
           node build.js
@@ -75,5 +47,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add jbd_rebuild_v1/build.js jbd_rebuild_v1/src jbd_rebuild_v1/dist/index.html
+          if git diff --cached --quiet; then
+            echo "uniform mini build already current"
+            exit 0
+          fi
           git commit -m "Replace Long Front LOD with uniform mini scale"
           git push
