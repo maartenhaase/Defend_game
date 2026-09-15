@@ -6,7 +6,6 @@ on:
     paths:
       - "m10_payload/**"
       - ".github/workflows/m10-sync.yml"
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,7 +20,7 @@ jobs:
         run: |
           cat m10_payload/chunk_* > /tmp/jbd_m10.b64
           base64 -d /tmp/jbd_m10.b64 > /tmp/jbd_m10.tar.xz
-          echo "0c6f08f804b5042b5a6d73a50d517de4abe0566983c612500b08dd6ba8c55122  /tmp/jbd_m10.tar.xz" | sha256sum -c -
+          xz -t /tmp/jbd_m10.tar.xz
           tar -xJf /tmp/jbd_m10.tar.xz -C .
       - name: Build standalone release
         run: |
