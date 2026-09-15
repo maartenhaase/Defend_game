@@ -19,10 +19,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Restore pre-LOD gameplay source
+      - name: Restore exact Milestone 9.1 source archive
         run: |
-          git checkout bd27302b2ddada452459bdf54cf821372d493da2 -- jbd_rebuild_v1/build.js jbd_rebuild_v1/src
-          git rm -f jbd_rebuild_v1/src/scale.js 2>/dev/null || true
+          mkdir -p /tmp/m91
+          git show bd27302b2ddada452459bdf54cf821372d493da2:jbd_rebuild_v1/m91_source.tar.gz > /tmp/m91.tar.gz
+          tar -xzf /tmp/m91.tar.gz -C /tmp/m91
+          BASE=$(find /tmp/m91 -type f -name build.js -print -quit | xargs dirname)
+          echo "Restoring from $BASE"
+          test -f "$BASE/build.js"
+          test -d "$BASE/src"
+          rm -rf jbd_rebuild_v1/src
+          cp "$BASE/build.js" jbd_rebuild_v1/build.js
+          cp -R "$BASE/src" jbd_rebuild_v1/src
+          rm -f jbd_rebuild_v1/src/scale.js
 
       - name: Apply uniform mini scale
         run: python jbd_rebuild_v1/apply_uniform_mini.py
