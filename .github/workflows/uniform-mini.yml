@@ -1,0 +1,70 @@
+name: Apply JBD Uniform Mini Scale
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/uniform-mini.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore pre-LOD gameplay source
+        run: |
+          git checkout bd27302b2ddada452459bdf54cf821372d493da2 -- jbd_rebuild_v1/build.js jbd_rebuild_v1/src
+          git rm -f jbd_rebuild_v1/src/scale.js 2>/dev/null || true
+
+      - name: Apply uniform mini scale
+        run: python jbd_rebuild_v1/apply_uniform_mini.py
+
+      - name: Verify exact tested source hashes
+        run: |
+          check() { actual=$(git hash-object "$1"); test "$actual" = "$2" || { echo "HASH MISMATCH $1 $actual"; exit 1; }; }
+          check jbd_rebuild_v1/build.js 48841817bdc892864f14004d09f0055a26d2f204
+          check jbd_rebuild_v1/src/airborne.js 511b3b67b2f7aa2d74be58f33875b5c987691555
+          check jbd_rebuild_v1/src/audio.js f6784ea9cdbac0d151145c75d53918f532393651
+          check jbd_rebuild_v1/src/combat.js aeb40ccbb89d6f0e8d1b68da616e689cfb463a45
+          check jbd_rebuild_v1/src/config.js 77062d95a3d6db5fca6dc64a08a18ebf0c2009f9
+          check jbd_rebuild_v1/src/infantry.js 7932e135c5b7be11a82f051f715bdbae9cec3d3f
+          check jbd_rebuild_v1/src/input.js 6e7255311b5c3757da610f08feee6c0822ba1810
+          check jbd_rebuild_v1/src/main.js 51364d306d4be508839415549caf02f2a568bfcc
+          check jbd_rebuild_v1/src/particles.js 06089ab4d5cb838e9e9cbcadf21910936a67766a
+          check jbd_rebuild_v1/src/render.js 310e3e08f9929c6c47be9d7af861ded46412028c
+          check jbd_rebuild_v1/src/scenarios.js b31ffd4e07b2bb1acefe852aea3340d63c40148c
+          check jbd_rebuild_v1/src/sprites.js f6764d427fde96b78d366ce56c2f6da780c22a67
+          check jbd_rebuild_v1/src/state.js 4d0bb33a0cc3c229ed0be1aba3237c1617cac0b4
+          check jbd_rebuild_v1/src/util.js bba6e75b8c6ecf9a476bc17b7ff75016586d2369
+          check jbd_rebuild_v1/src/vehicles.js ba9ab8b51c4cc40e30e223e4782073e38281181b
+          check jbd_rebuild_v1/src/world.js a818840eb827c442c62f54017efc0e178d3a38c8
+
+      - name: Build standalone iPhone release
+        run: |
+          cd jbd_rebuild_v1
+          node build.js
+          for f in src/*.js; do node --check "$f"; done
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('dist/index.html','utf8');
+          const m=html.match(/<script>"use strict";\n([\s\S]*)\n<\/script>/);
+          if(!m) throw new Error('bundle missing');
+          fs.writeFileSync('/tmp/jbd-uniform-mini.js',m[1]);
+          NODE
+          node --check /tmp/jbd-uniform-mini.js
+
+      - name: Publish uniform mini build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jbd_rebuild_v1/build.js jbd_rebuild_v1/src jbd_rebuild_v1/dist/index.html
+          git commit -m "Replace Long Front LOD with uniform mini scale"
+          git push
