@@ -2,9 +2,9 @@
   const J=window.JBD,C=J.CONFIG,U=J.U;
 
   const THEMES={
-    jungle:{label:'JUNGLE', sight:0.84, cover:1.28, vehicleSpeed:0.84, infantrySpeed:0.90, vegetation:1.35, openness:0.76},
-    desert:{label:'DESERT', sight:1.12, cover:0.76, vehicleSpeed:1.00, infantrySpeed:1.00, vegetation:0.48, openness:1.18},
-    polar:{label:'POLAR', sight:1.04, cover:0.84, vehicleSpeed:1.12, infantrySpeed:1.03, vegetation:0.62, openness:1.16}
+    jungle:{label:'JUNGLE', sight:0.84, cover:1.28, vehicleSpeed:0.82, infantrySpeed:0.88, vegetation:1.35, openness:0.76},
+    desert:{label:'DESERT', sight:1.12, cover:0.76, vehicleSpeed:0.94, infantrySpeed:0.94, vegetation:0.48, openness:1.18},
+    polar:{label:'POLAR', sight:1.04, cover:0.84, vehicleSpeed:1.02, infantrySpeed:0.98, vegetation:0.62, openness:1.16}
   };
 
   const VEHICLE_PHASES={
@@ -36,9 +36,9 @@
     const phaseTimes=[5.2,13.2,21.4];
     for(let p=0;p<phases.length;p++)for(let k=0;k<phases[p].length;k++){
       const lane=[-.30,.24,-.08,.32,-.22,.10][idx%6];
-      out.push({time:phaseTimes[p]+k*1.55,type:phases[p][k],lane});idx++;
+      out.push({time:phaseTimes[p]+k*2.15,type:phases[p][k],lane});idx++;
     }
-    if(cycle>1&&out.length<8)out.push({time:16.9,type:cycle%2?'stug':'halftrack',lane:.18});
+    if(cycle>1&&out.length<8)out.push({time:31.0,type:cycle%2?'stug':'halftrack',lane:.18});
     return out.slice(0,8);
   }
 

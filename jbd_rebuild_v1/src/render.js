@@ -5,6 +5,7 @@
   const sDebug=()=>_state&&_state.debug;
 
   function drawRangeField(ctx,s){
+    return;
     const {w,h}=s.viewport;
     ctx.save();
     const haze=ctx.createLinearGradient(0,35,0,h*.46);
@@ -106,7 +107,7 @@
   function drawParatroopers(ctx,s){for(const p of s.airborne.paratroopers){const sc=J.Scale.entity(s,p.y,'air');ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.scale(sc,sc);ctx.globalAlpha=p.alpha;ctx.fillStyle='#c8c2a5';ctx.strokeStyle='#6d6858';ctx.beginPath();ctx.moveTo(-19,-14);ctx.quadraticCurveTo(0,-31,19,-14);ctx.quadraticCurveTo(0,-7,-19,-14);ctx.fill();ctx.stroke();ctx.fillStyle='#5f6944';ctx.beginPath();ctx.roundRect(-4,-3,8,10,2);ctx.fill();ctx.restore();}}
 
   function drawBunker(ctx,s){
-    const b=s.bunker,spr=J.Sprites.bunker,sc=baseScale(s)*.72,profile=s.profile||{};ctx.save();ctx.translate(b.x,b.y);ctx.scale(sc,sc);ctx.drawImage(spr,-spr.width/2,-56);
+    const b=s.bunker,spr=J.Sprites.bunker,sc=Math.max(baseScale(s)*1.18,.50),profile=s.profile||{};ctx.save();ctx.translate(b.x,b.y);ctx.scale(sc,sc);ctx.drawImage(spr,-spr.width/2,-56);
     if((profile.sandbags||0)>0){ctx.fillStyle='#9b8a60';ctx.strokeStyle='#5b5038';ctx.lineWidth=1;const rows=Math.min(4,profile.sandbags);for(let r=0;r<rows;r++){for(let i=0;i<6+r;i++){const xx=-34+i*12-r*6,yy=4-r*7;ctx.beginPath();ctx.roundRect(xx,yy,11,7,3);ctx.fill();ctx.stroke();}}}
     const a=b.aim,recoil=b.recoil,barrel=profile.barrelLength||C.bunker.barrelLength;ctx.save();ctx.translate(Math.cos(a)*(-recoil),-9+Math.sin(a)*(-recoil));ctx.rotate(a);ctx.fillStyle='#4f5651';ctx.strokeStyle='#171b19';ctx.lineWidth=2;ctx.fillRect(3,-3.4,barrel,6.8);ctx.strokeRect(3,-3.4,barrel,6.8);ctx.beginPath();ctx.roundRect(-10,-7,22,14,6);ctx.fill();ctx.stroke();if(b.muzzle>0)muzzleStar(ctx,barrel+9,0,b.muzzleKind==='mg'?.65:b.muzzleKind==='ap'?.95:1.12);ctx.restore();ctx.restore();
   }

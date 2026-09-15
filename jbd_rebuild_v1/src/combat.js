@@ -39,7 +39,7 @@
     for(const e of s.enemies){
       if(e.state==='DEAD')continue;
       const t=U.clamp(((e.x-ax)*dx+(e.y-ay)*dy)/l2,0,1),px=ax+dx*t,py=ay+dy*t,d=Math.hypot(e.x-px,e.y-py);
-      const farAssist=U.lerp(15,9,J.Scale.progress(s,e.y)),r=J.Infantry.isCraterCovered(e)?Math.max(7,farAssist*.72):farAssist;
+      const farAssist=12,r=J.Infantry.isCraterCovered(e)?Math.max(7,farAssist*.72):farAssist;
       if(d<r&&d<bestD){best=e;bestD=d;}
     }
     if(best){

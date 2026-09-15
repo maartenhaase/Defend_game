@@ -1,19 +1,19 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#20261b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>JBD — Long Front</title><style>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#20261b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>JBD — Mini Front</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#1a1f17;color:#ece5cf;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}body{position:fixed;inset:0}#game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;background:#555b40}.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:max(22px,env(safe-area-inset-top)) 22px max(22px,env(safe-area-inset-bottom));background:linear-gradient(rgba(15,18,13,.42),rgba(15,18,13,.78));backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);transition:opacity .22s ease;z-index:4}.overlay.hidden{opacity:0;pointer-events:none}.panel{width:min(92vw,430px);border:1px solid rgba(235,224,189,.24);background:linear-gradient(180deg,rgba(39,45,31,.94),rgba(24,28,21,.97));box-shadow:0 18px 55px rgba(0,0,0,.45);border-radius:18px;padding:24px 22px;text-align:center;max-height:min(92vh,820px);overflow:auto;-webkit-overflow-scrolling:touch}.eyebrow{font-size:10px;letter-spacing:.22em;color:#b7b99c;font-weight:800}.panel h1{font-size:28px;line-height:1.0;margin:8px 0 10px;letter-spacing:-.03em}.panel p{margin:0 auto 16px;max-width:330px;color:#c1c2ae;font-size:13px;line-height:1.5}.panel p span{font-size:11px;color:#929984}.action{appearance:none;-webkit-appearance:none;border:0;border-radius:12px;background:#d5b966;color:#1d2118;font-weight:900;letter-spacing:.08em;font-size:13px;padding:14px 24px;min-width:170px;min-height:48px;box-shadow:inset 0 1px rgba(255,255,255,.35),0 5px 18px rgba(0,0,0,.32);touch-action:manipulation}.action:active{transform:translateY(1px)}#restart{display:none}.hint{margin-top:14px;font-size:10px;color:#818873;letter-spacing:.04em}.shop{display:none;margin:0 0 16px}.shopTitle{font-size:11px;font-weight:800;letter-spacing:.16em;color:#bdc29d;margin-bottom:10px}.shopGrid{display:grid;grid-template-columns:1fr;gap:8px}.shopBtn{width:100%;appearance:none;-webkit-appearance:none;border:1px solid rgba(235,224,189,.16);background:rgba(55,62,44,.88);color:#ece5cf;text-align:left;border-radius:12px;padding:11px 12px}.shopBtn.disabled{opacity:.5}.shopTop{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;margin-bottom:5px}.shopMeta{font-size:11px;line-height:1.35;color:#b7baa6}.shopCost{margin-top:7px;font-size:11px;color:#e2c46e;font-weight:800;letter-spacing:.04em}#safeProbe{position:fixed;pointer-events:none;visibility:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-</style></head><body><div id="safeProbe"></div><canvas id="game"></canvas><div id="overlay" class="overlay"><div class="panel"><div class="eyebrow">JBD · BUNKER DEFENSE</div><h1 id="title">LONG FRONT</h1><p id="sub">Contact begint ver aan de horizon en bouwt op naar close pressure.<br><span>Tik = BURST · kort vasthouden = AP · lang vasthouden = HE</span></p><button id="deploy" class="action" type="button">DEPLOY</button><button id="restart" class="action" type="button">PLAY AGAIN</button><div class="hint">Aim direct op het slagveld · sleep tijdens charge om bij te sturen</div></div></div><script>"use strict";
+</style></head><body><div id="safeProbe"></div><canvas id="game"></canvas><div id="overlay" class="overlay"><div class="panel"><div class="eyebrow">JBD · BUNKER DEFENSE</div><h1 id="title">MINI FRONT</h1><p id="sub">Hetzelfde slagveld, maar op één vaste kleinere schaal.<br><span>Tik = BURST · kort vasthouden = AP · lang vasthouden = HE</span></p><button id="deploy" class="action" type="button">DEPLOY</button><button id="restart" class="action" type="button">PLAY AGAIN</button><div class="hint">Aim direct op het slagveld · sleep tijdens charge om bij te sturen</div></div></div><script>"use strict";
 /* ===== config.js ===== */
 (() => {
   const J = window.JBD = window.JBD || {};
   J.CONFIG = Object.freeze({
     step: 1 / 60,
     maxFrameDelta: 0.10,
-    render: { maxDpr: 2, mobileMaxDpr: 1.65, particles: 680, bullets: 190, mobileScale: 0.60, desktopScale: 0.72 },
+    render: { maxDpr: 2, mobileMaxDpr: 1.65, particles: 640, bullets: 190, mobileScale: 0.44, desktopScale: 0.52 },
     scale: {
-      apparentRangeMeters: 900, farBandEnd: 0.30, midBandEnd: 0.66, perspectivePower: 1.72,
+      apparentRangeMeters: 450, farBandEnd: 0.00, midBandEnd: 0.00, perspectivePower: 1.00,
       infantryFarScale: 0.13, vehicleFarScale: 0.16, airFarScale: 0.38,
-      terrainFarScale: 0.34, terrainNearScale: 0.70,
-      farMoveFactor: 0.48, nearMoveFactor: 1.08, effectFarScale: 0.28,
-      dustRevealEnd: 0.30, silhouetteRevealEnd: 0.56, craterVisualScale: 0.48
+      terrainFarScale: 0.62, terrainNearScale: 0.62, fixedTerrainScale: 0.62, fixedEffectScale: 0.62,
+      farMoveFactor: 1.00, nearMoveFactor: 1.00, effectFarScale: 0.62,
+      dustRevealEnd: 0.00, silhouetteRevealEnd: 0.00, craterVisualScale: 0.58
     },
     input: { apCharge: 0.22, heCharge: 0.62, maxCharge: 1.05 },
     bunker: { hp: 100, yPadding: 104, barrelLength: 48 },
@@ -24,10 +24,10 @@
     },
     artillery: { count: 14, introDelay: 0.34, duration: 2.55, minRadius: 22, maxRadius: 38 },
     infantry: {
-      hp: 100, speed: 22, sprint: 50, range: 310, fireInterval: 1.22,
+      hp: 100, speed: 16, sprint: 32, range: 310, fireInterval: 1.22,
       coverSearchRadius: 205, coverMinY: 105, suppressionDecay: 0.20,
       coverWaveHold: 3.8, assaultSignalLead: 0.68, assaultRushDuration: 2.45,
-      assaultSprint: 61, reseekDelay: 2.55,
+      assaultSprint: 39, reseekDelay: 2.55,
       corpseFadeStart: 10, corpseLifetime: 16,
       weaponDeployTime: 0.95, weaponRange: 355, weaponFireInterval: 0.58, weaponDamage: 2.8,
       weaponHitBase: 0.72, maxMountedWeapons: 2
@@ -35,26 +35,26 @@
     vehicles: {
       maxActive: 8,
       waveSchedule: [
-        { time: 3.8, type: 'technical', lane: -0.25 },
-        { time: 7.4, type: 'truck', lane: 0.20 },
-        { time: 11.2, type: 'halftrack', lane: -0.08 },
-        { time: 15.7, type: 'stug', lane: 0.28 },
-        { time: 20.6, type: 'tank', lane: -0.28 }
+        { time: 5.0, type: 'technical', lane: -0.25 },
+        { time: 10.0, type: 'truck', lane: 0.20 },
+        { time: 16.0, type: 'halftrack', lane: -0.08 },
+        { time: 23.0, type: 'stug', lane: 0.28 },
+        { time: 31.0, type: 'tank', lane: -0.28 }
       ],
       types: {
-        technical: { hp: 62, speed: 64, radius: 20, range: 330, fireInterval: .72, damage: 1.15, armor: { mg:.55, ap:1.42, he:.78 }, cover: .52 },
-        truck:     { hp: 82, speed: 48, radius: 24, range: 0,   fireInterval: 99,  damage: 0,    armor: { mg:.34, ap:1.28, he:.92 }, cover: .64, passengers:3 },
-        halftrack: { hp: 104,speed: 42, radius: 25, range: 350, fireInterval: .86, damage: 1.35, armor: { mg:.14, ap:1.35, he:.44 }, cover: .72, passengers:2 },
-        stug:      { hp: 118,speed: 31, radius: 27, range: 430, fireInterval: 3.2, damage: 6.2,  armor: { mg:.035,ap:1.30, he:.24 }, cover: .82 },
-        tank:      { hp: 140,speed: 28, radius: 29, range: 445, fireInterval: 3.55,damage: 7.4,  armor: { mg:.025,ap:1.35, he:.21 }, cover: .88 }
+        technical: { hp: 62, speed: 42, radius: 20, range: 330, fireInterval: .72, damage: 1.15, armor: { mg:.55, ap:1.42, he:.78 }, cover: .52 },
+        truck:     { hp: 82, speed: 34, radius: 24, range: 0,   fireInterval: 99,  damage: 0,    armor: { mg:.34, ap:1.28, he:.92 }, cover: .64, passengers:3 },
+        halftrack: { hp: 104,speed: 30, radius: 25, range: 350, fireInterval: .86, damage: 1.35, armor: { mg:.14, ap:1.35, he:.44 }, cover: .72, passengers:2 },
+        stug:      { hp: 118,speed: 23, radius: 27, range: 430, fireInterval: 3.2, damage: 6.2,  armor: { mg:.035,ap:1.30, he:.24 }, cover: .82 },
+        tank:      { hp: 140,speed: 20, radius: 29, range: 445, fireInterval: 3.55,damage: 7.4,  armor: { mg:.025,ap:1.35, he:.21 }, cover: .88 }
       },
       dropYRatio: .43,
       exitPadding: 85,
       wreckLifetime: 999
     },
     airborne: {
-      startTime: 24.2, planeSpeed: 96, planeYRatio: 0.15, dropCount: 6,
-      dropStartRatio: 0.22, dropEndRatio: 0.72, descentSpeed: 31,
+      startTime: 29.0, planeSpeed: 78, planeYRatio: 0.15, dropCount: 6,
+      dropStartRatio: 0.22, dropEndRatio: 0.72, descentSpeed: 24,
       swayAmp: 14, swayFreq: 2.15, drift: 2.4, hp: 52, hitRadius: 13,
       landingMinRatio: 0.34, landingMaxRatio: 0.53, collapsedLife: 18
     },
@@ -68,7 +68,7 @@
         armor:{label:'ARMOR', max:4, costs:[35,55,80,110]}
       }
     },
-    level: { seed: 731942, spawnCount: 14, spawnDuration: 14.5, completeDelay: 2.0 },
+    level: { seed: 731942, spawnCount: 14, spawnDuration: 19.0, completeDelay: 2.0 },
     audio: { master: 0.68 },
     debug: new URLSearchParams(location.search).get('debug') === '1',
     stress: new URLSearchParams(location.search).get('stress') === '1'
@@ -98,53 +98,16 @@
 
 /* ===== scale.js ===== */
 (() => {
-  const J=window.JBD,C=J.CONFIG,U=J.U;
-
-  function progress(s,y){
-    const top=(s.safe?.top||0)+34;
-    const bottom=Math.max(top+1,(s.bunker?.y||s.viewport.h*.86)-54);
-    return U.clamp((y-top)/(bottom-top),0,1);
-  }
-
-  function band(s,y){
-    const p=progress(s,y);
-    if(p<C.scale.farBandEnd)return 'far';
-    if(p<C.scale.midBandEnd)return 'mid';
-    return 'near';
-  }
-
-  function perspective(s,y,kind='infantry'){
-    const p=progress(s,y);
-    const shaped=Math.pow(p,C.scale.perspectivePower);
-    const min=kind==='vehicle'?C.scale.vehicleFarScale:kind==='air'?C.scale.airFarScale:C.scale.infantryFarScale;
-    return U.lerp(min,1,shaped);
-  }
-
-  function entity(s,y,kind='infantry'){
-    const base=s.viewport.w<=520?C.render.mobileScale:C.render.desktopScale;
-    return base*perspective(s,y,kind);
-  }
-
-  function terrain(s,y){
-    const p=progress(s,y);
-    return U.lerp(C.scale.terrainFarScale,C.scale.terrainNearScale,Math.pow(p,.92));
-  }
-
-  function moveFactor(s,y){
-    const p=progress(s,y);
-    return U.lerp(C.scale.farMoveFactor,C.scale.nearMoveFactor,Math.pow(p,1.12));
-  }
-
-  function effect(s,y){
-    const p=progress(s,y);
-    return U.lerp(C.scale.effectFarScale,1,Math.pow(p,1.1));
-  }
-
-  function distanceMeters(s,y){
-    const p=progress(s,y);
-    return Math.round(U.lerp(C.scale.apparentRangeMeters,35,Math.pow(p,.82)));
-  }
-
+  const J=window.JBD,C=J.CONFIG;
+  const base=s=>s.viewport.w<=520?C.render.mobileScale:C.render.desktopScale;
+  function progress(){return 1;}
+  function band(){return 'near';}
+  function perspective(){return 1;}
+  function entity(s){return base(s);}
+  function terrain(){return C.scale.fixedTerrainScale;}
+  function moveFactor(){return 1;}
+  function effect(){return C.scale.fixedEffectScale;}
+  function distanceMeters(){return 220;}
   J.Scale={progress,band,perspective,entity,terrain,moveFactor,effect,distanceMeters};
 })();
 
@@ -154,9 +117,9 @@
   const J=window.JBD,C=J.CONFIG,U=J.U;
 
   const THEMES={
-    jungle:{label:'JUNGLE', sight:0.84, cover:1.28, vehicleSpeed:0.84, infantrySpeed:0.90, vegetation:1.35, openness:0.76},
-    desert:{label:'DESERT', sight:1.12, cover:0.76, vehicleSpeed:1.00, infantrySpeed:1.00, vegetation:0.48, openness:1.18},
-    polar:{label:'POLAR', sight:1.04, cover:0.84, vehicleSpeed:1.12, infantrySpeed:1.03, vegetation:0.62, openness:1.16}
+    jungle:{label:'JUNGLE', sight:0.84, cover:1.28, vehicleSpeed:0.82, infantrySpeed:0.88, vegetation:1.35, openness:0.76},
+    desert:{label:'DESERT', sight:1.12, cover:0.76, vehicleSpeed:0.94, infantrySpeed:0.94, vegetation:0.48, openness:1.18},
+    polar:{label:'POLAR', sight:1.04, cover:0.84, vehicleSpeed:1.02, infantrySpeed:0.98, vegetation:0.62, openness:1.16}
   };
 
   const VEHICLE_PHASES={
@@ -188,9 +151,9 @@
     const phaseTimes=[5.2,13.2,21.4];
     for(let p=0;p<phases.length;p++)for(let k=0;k<phases[p].length;k++){
       const lane=[-.30,.24,-.08,.32,-.22,.10][idx%6];
-      out.push({time:phaseTimes[p]+k*1.55,type:phases[p][k],lane});idx++;
+      out.push({time:phaseTimes[p]+k*2.15,type:phases[p][k],lane});idx++;
     }
-    if(cycle>1&&out.length<8)out.push({time:16.9,type:cycle%2?'stug':'halftrack',lane:.18});
+    if(cycle>1&&out.length<8)out.push({time:31.0,type:cycle%2?'stug':'halftrack',lane:.18});
     return out.slice(0,8);
   }
 
@@ -989,8 +952,8 @@
     if(s.vehicles.filter(isThreat).length>=C.vehicles.maxActive)return null;
     const cfg=typeCfg(type),w=s.viewport.w;
     const x=U.clamp(w*.5+lane*w*.62,44,w-44),startY=(s.safe?.top||0)+48;
-    const v={id:nextId++,type,x,y:startY,spawnX:x,lane,hp:cfg.hp*(s.scenario?.vehicleHpMult||1),maxHp:cfg.hp*(s.scenario?.vehicleHpMult||1),radius:cfg.radius,speed:cfg.speed*(s.scenario?.vehicleSpeedMult||1),state:'ADVANCE',stateT:0,hullAngle:Math.PI/2,turretAngle:Math.PI/2,trackPhase:0,wheelPhase:0,suspension:Math.random()*6.28,recoil:0,muzzle:0,fireT:.7+s.rng()*1.1,smokeT:0,motorT:0,damageStage:0,armorBroken:false,deadT:0,dropDone:false,dropT:0,dropY:s.viewport.h*C.vehicles.dropYRatio,passengers:cfg.passengers||0,passengersDropped:0,targetX:s.bunker.x,targetY:s.bunker.y-18,coverNode:null,flash:0,departing:false,contactIdentified:false};
-    s.vehicles.push(v);J.Audio.vehicleMotor(v.id,{x:v.x,speed:v.speed,type:v.type,active:true,distance:J.Scale.progress(s,v.y)});if(s.ui.messageT<.25){s.ui.message='DUST CONTACT · LONG RANGE';s.ui.messageT=.82;}return v;
+    const v={id:nextId++,type,x,y:startY,spawnX:x,lane,hp:cfg.hp*(s.scenario?.vehicleHpMult||1),maxHp:cfg.hp*(s.scenario?.vehicleHpMult||1),radius:cfg.radius,speed:cfg.speed*(s.scenario?.vehicleSpeedMult||1),state:'ADVANCE',stateT:0,hullAngle:Math.PI/2,turretAngle:Math.PI/2,trackPhase:0,wheelPhase:0,suspension:Math.random()*6.28,recoil:0,muzzle:0,fireT:.7+s.rng()*1.1,smokeT:0,motorT:0,damageStage:0,armorBroken:false,deadT:0,dropDone:false,dropT:0,dropY:s.viewport.h*C.vehicles.dropYRatio,passengers:cfg.passengers||0,passengersDropped:0,targetX:s.bunker.x,targetY:s.bunker.y-18,coverNode:null,flash:0,departing:false,contactIdentified:true};
+    s.vehicles.push(v);J.Audio.vehicleMotor(v.id,{x:v.x,speed:v.speed,type:v.type,active:true,distance:J.Scale.progress(s,v.y)});if(s.ui.messageT<.25){s.ui.message='VEHICLE CONTACT';s.ui.messageT=.82;}return v;
   }
 
   function updateWave(s,dt){if(!s.artillery.finished)return;if(!s.vehicleWave.started){s.vehicleWave.started=true;s.vehicleWave.t=0;s.vehicleWave.index=0;}s.vehicleWave.t+=dt;const q=s.scenario?.vehicleSchedule||C.vehicles.waveSchedule;while(s.vehicleWave.index<q.length&&s.vehicleWave.t>=q[s.vehicleWave.index].time){const item=q[s.vehicleWave.index++];spawn(s,item.type,item.lane);}s.vehicleWave.finished=s.vehicleWave.index>=q.length;}
@@ -1154,7 +1117,7 @@
     for(const e of s.enemies){
       if(e.state==='DEAD')continue;
       const t=U.clamp(((e.x-ax)*dx+(e.y-ay)*dy)/l2,0,1),px=ax+dx*t,py=ay+dy*t,d=Math.hypot(e.x-px,e.y-py);
-      const farAssist=U.lerp(15,9,J.Scale.progress(s,e.y)),r=J.Infantry.isCraterCovered(e)?Math.max(7,farAssist*.72):farAssist;
+      const farAssist=12,r=J.Infantry.isCraterCovered(e)?Math.max(7,farAssist*.72):farAssist;
       if(d<r&&d<bestD){best=e;bestD=d;}
     }
     if(best){
@@ -1257,6 +1220,7 @@
   const sDebug=()=>_state&&_state.debug;
 
   function drawRangeField(ctx,s){
+    return;
     const {w,h}=s.viewport;
     ctx.save();
     const haze=ctx.createLinearGradient(0,35,0,h*.46);
@@ -1358,7 +1322,7 @@
   function drawParatroopers(ctx,s){for(const p of s.airborne.paratroopers){const sc=J.Scale.entity(s,p.y,'air');ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.scale(sc,sc);ctx.globalAlpha=p.alpha;ctx.fillStyle='#c8c2a5';ctx.strokeStyle='#6d6858';ctx.beginPath();ctx.moveTo(-19,-14);ctx.quadraticCurveTo(0,-31,19,-14);ctx.quadraticCurveTo(0,-7,-19,-14);ctx.fill();ctx.stroke();ctx.fillStyle='#5f6944';ctx.beginPath();ctx.roundRect(-4,-3,8,10,2);ctx.fill();ctx.restore();}}
 
   function drawBunker(ctx,s){
-    const b=s.bunker,spr=J.Sprites.bunker,sc=baseScale(s)*.72,profile=s.profile||{};ctx.save();ctx.translate(b.x,b.y);ctx.scale(sc,sc);ctx.drawImage(spr,-spr.width/2,-56);
+    const b=s.bunker,spr=J.Sprites.bunker,sc=Math.max(baseScale(s)*1.18,.50),profile=s.profile||{};ctx.save();ctx.translate(b.x,b.y);ctx.scale(sc,sc);ctx.drawImage(spr,-spr.width/2,-56);
     if((profile.sandbags||0)>0){ctx.fillStyle='#9b8a60';ctx.strokeStyle='#5b5038';ctx.lineWidth=1;const rows=Math.min(4,profile.sandbags);for(let r=0;r<rows;r++){for(let i=0;i<6+r;i++){const xx=-34+i*12-r*6,yy=4-r*7;ctx.beginPath();ctx.roundRect(xx,yy,11,7,3);ctx.fill();ctx.stroke();}}}
     const a=b.aim,recoil=b.recoil,barrel=profile.barrelLength||C.bunker.barrelLength;ctx.save();ctx.translate(Math.cos(a)*(-recoil),-9+Math.sin(a)*(-recoil));ctx.rotate(a);ctx.fillStyle='#4f5651';ctx.strokeStyle='#171b19';ctx.lineWidth=2;ctx.fillRect(3,-3.4,barrel,6.8);ctx.strokeRect(3,-3.4,barrel,6.8);ctx.beginPath();ctx.roundRect(-10,-7,22,14,6);ctx.fill();ctx.stroke();if(b.muzzle>0)muzzleStar(ctx,barrel+9,0,b.muzzleKind==='mg'?.65:b.muzzleKind==='ap'?.95:1.12);ctx.restore();ctx.restore();
   }
