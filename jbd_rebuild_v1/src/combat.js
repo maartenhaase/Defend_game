@@ -20,7 +20,8 @@
     const spread=U.gaussian()*W.spread*(kind==='mg'?(1+index*.16):1), a=base+spread;
     const sx=s.bunker.x+Math.cos(a)*(s.profile?.barrelLength||C.bunker.barrelLength)*0.8, sy=s.bunker.y-8+Math.sin(a)*(s.profile?.barrelLength||C.bunker.barrelLength)*0.8;
     const targetDist=Math.max(24,Math.hypot(targetX-sx,targetY-sy));
-    Object.assign(b,{active:true,kind,x:sx,y:sy,px:sx,py:sy,vx:Math.cos(a)*W.speed,vy:Math.sin(a)*W.speed,life:kind==='he'?1.8:1.2,targetX,targetY,travel:0,maxTravel:targetDist*(kind==='he'?1.03:1.08)});
+    const rangedTarget=Math.min(targetDist*(kind==='he'?1.03:1.08),W.range||targetDist*1.08);
+    Object.assign(b,{active:true,kind,x:sx,y:sy,px:sx,py:sy,vx:Math.cos(a)*W.speed,vy:Math.sin(a)*W.speed,life:kind==='he'?1.8:1.2,targetX,targetY,travel:0,maxTravel:rangedTarget});
     s.bunker.recoil=kind==='mg'?5:kind==='ap'?10:13; s.bunker.muzzle=kind==='mg'?.07:kind==='ap'?.10:.12; s.bunker.muzzleKind=kind; s.stats.shots++;
     J.Audio.play(kind==='mg'?'mg':kind==='ap'?'ap':'heLaunch',{x:s.bunker.x,variation:Math.random()});
     J.Particles.emit(s,'muzzle',sx,sy,kind==='mg'?3:5,{angle:a,arc:.22,speedMin:35,speedMax:125,life:.10,size:kind==='mg'?2.1:3.3});
@@ -39,7 +40,7 @@
     for(const e of s.enemies){
       if(e.state==='DEAD')continue;
       const t=U.clamp(((e.x-ax)*dx+(e.y-ay)*dy)/l2,0,1),px=ax+dx*t,py=ay+dy*t,d=Math.hypot(e.x-px,e.y-py);
-      const farAssist=12,r=J.Infantry.isCraterCovered(e)?Math.max(7,farAssist*.72):farAssist;
+      const farAssist=U.lerp(15,9,J.Scale.progress(s,e.y)),r=J.Infantry.isCraterCovered(e)?Math.max(7,farAssist*.72):farAssist;
       if(d<r&&d<bestD){best=e;bestD=d;}
     }
     if(best){
