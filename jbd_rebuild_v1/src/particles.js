@@ -19,24 +19,26 @@
   }
   function render(s,ctx){
     for(const p of s.particles){
-      if(!p.active)continue;const t=p.life/p.maxLife;ctx.globalAlpha=Math.min(1,t*1.7)*p.alpha;
+      if(!p.active)continue;
+      const t=p.life/p.maxLife,sc=J.Scale?J.Scale.effect(s,p.y):1,ps=Math.max(.35,p.size*sc);
+      ctx.globalAlpha=Math.min(1,t*1.7)*p.alpha;
       switch(p.type){
         case 'spark':
-          ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle='#ffd176';ctx.fillRect(-p.size*1.2,-.45,p.size*2.4,.9);ctx.restore();break;
+          ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle='#ffd176';ctx.fillRect(-ps*1.2,-.45*sc,ps*2.4,.9*sc);ctx.restore();break;
         case 'dirt':
-          ctx.fillStyle=t>.5?'#755932':'#3f3425';ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,6.28);ctx.fill();break;
+          ctx.fillStyle=t>.5?'#755932':'#3f3425';ctx.beginPath();ctx.arc(p.x,p.y,ps,0,6.28);ctx.fill();break;
         case 'blood':
-          ctx.fillStyle='#6c1612';ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,6.28);ctx.fill();break;
+          ctx.fillStyle='#6c1612';ctx.beginPath();ctx.arc(p.x,p.y,ps,0,6.28);ctx.fill();break;
         case 'smoke':
-          ctx.fillStyle=t>.58?'rgba(58,58,48,.67)':'rgba(38,40,35,.48)';ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,6.28);ctx.fill();break;
+          ctx.fillStyle=t>.58?'rgba(58,58,48,.67)':'rgba(38,40,35,.48)';ctx.beginPath();ctx.arc(p.x,p.y,ps,0,6.28);ctx.fill();break;
         case 'fire':
-          ctx.fillStyle=t>.62?'#ffe07a':t>.28?'#e9802e':'#b74321';ctx.beginPath();ctx.ellipse(p.x,p.y,p.size*.72,p.size*1.18,p.rot,0,6.28);ctx.fill();break;
+          ctx.fillStyle=t>.62?'#ffe07a':t>.28?'#e9802e':'#b74321';ctx.beginPath();ctx.ellipse(p.x,p.y,ps*.72,ps*1.18,p.rot,0,6.28);ctx.fill();break;
         case 'debris':
-          ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle='#403a2d';ctx.fillRect(-p.size,-p.size*.45,p.size*2,p.size*.9);ctx.restore();break;
+          ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle='#403a2d';ctx.fillRect(-ps,-ps*.45,ps*2,ps*.9);ctx.restore();break;
         case 'ember':
-          ctx.fillStyle=t>.45?'#ffcf58':'#d85d26';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.6,p.size*t),0,6.28);ctx.fill();break;
+          ctx.fillStyle=t>.45?'#ffcf58':'#d85d26';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.45,ps*t),0,6.28);ctx.fill();break;
         case 'muzzle':
-          ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(p.vy,p.vx));ctx.globalCompositeOperation='screen';ctx.fillStyle=t>.5?'#fff0aa':'#ff9f3f';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-p.size*3,p.size*.65);ctx.lineTo(-p.size*2.1,-p.size*.65);ctx.closePath();ctx.fill();ctx.restore();break;
+          ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.atan2(p.vy,p.vx));ctx.globalCompositeOperation='screen';ctx.fillStyle=t>.5?'#fff0aa':'#ff9f3f';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-ps*3,ps*.65);ctx.lineTo(-ps*2.1,-ps*.65);ctx.closePath();ctx.fill();ctx.restore();break;
       }
     }
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';

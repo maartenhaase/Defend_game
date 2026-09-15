@@ -92,15 +92,14 @@
     }
   }
 
-  function vehicleMotor(id,{x=innerWidth/2,speed=0,type='truck',active=true}={}){
+  function vehicleMotor(id,{x=innerWidth/2,speed=0,type='truck',active=true,distance=1}={}){
     if(!A.ctx||!A.buses.vehicles)return;const now=A.ctx.currentTime;let h=A.vehicleLoops.get(id);
     if(!active){if(h){try{h.gain.gain.cancelScheduledValues(now);h.gain.gain.setTargetAtTime(.0001,now,.08);h.o1.stop(now+.35);h.o2.stop(now+.35);}catch(_){}A.vehicleLoops.delete(id);}return;}
     if(!h){
       const p=panNode(x),lp=A.ctx.createBiquadFilter(),gain=A.ctx.createGain(),o1=A.ctx.createOscillator(),o2=A.ctx.createOscillator();lp.type='lowpass';lp.frequency.value=420;gain.gain.value=.0001;o1.type='sawtooth';o2.type='triangle';o1.connect(lp);o2.connect(lp);lp.connect(gain).connect(p).connect(A.buses.vehicles);o1.start();o2.start();h={p,lp,gain,o1,o2};A.vehicleLoops.set(id,h);
     }
-    const heavy=type==='tank'||type==='stug'||type==='halftrack',base=heavy?38:48,f=base+Math.min(38,speed*.52);h.o1.frequency.setTargetAtTime(f,now,.08);h.o2.frequency.setTargetAtTime(f*2.02,now,.08);h.lp.frequency.setTargetAtTime(heavy?360:520,now,.12);h.gain.gain.setTargetAtTime((heavy?.035:.026)*(speed<8?.55:1),now,.09);if(h.p.pan)h.p.pan.setTargetAtTime(J.U.clamp((x/(innerWidth||390))*2-1,-1,1),now,.08);
+    const heavy=type==='tank'||type==='stug'||type==='halftrack',base=heavy?38:48,f=base+Math.min(38,speed*.52);h.o1.frequency.setTargetAtTime(f,now,.08);h.o2.frequency.setTargetAtTime(f*2.02,now,.08);const dist=J.U.clamp(distance,0,1),presence=.16+.84*Math.pow(dist,1.35);h.lp.frequency.setTargetAtTime((heavy?360:520)*(.56+.44*dist),now,.12);h.gain.gain.setTargetAtTime((heavy?.035:.026)*(speed<8?.55:1)*presence,now,.09);if(h.p.pan)h.p.pan.setTargetAtTime(J.U.clamp((x/(innerWidth||390))*2-1,-1,1),now,.08);
   }
-
 
   function aircraftMotor(id,{x=innerWidth/2,active=true}={}){
     if(!A.ctx||!A.buses.vehicles)return;const now=A.ctx.currentTime;let h=A.aircraftLoops.get(id);

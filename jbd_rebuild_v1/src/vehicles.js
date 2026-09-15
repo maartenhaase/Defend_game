@@ -8,176 +8,38 @@
   function spawn(s,type,lane=0){
     if(s.vehicles.filter(isThreat).length>=C.vehicles.maxActive)return null;
     const cfg=typeCfg(type),w=s.viewport.w;
-    const x=U.clamp(w*.5+lane*w*.62,44,w-44);
-    const v={
-      id:nextId++,type,x,y:-48,spawnX:x,lane,hp:cfg.hp*(s.scenario?.vehicleHpMult||1),maxHp:cfg.hp*(s.scenario?.vehicleHpMult||1),radius:cfg.radius,
-      speed:cfg.speed*(s.scenario?.vehicleSpeedMult||1),state:'ADVANCE',stateT:0,hullAngle:Math.PI/2,turretAngle:Math.PI/2,
-      trackPhase:0,wheelPhase:0,suspension:Math.random()*6.28,recoil:0,muzzle:0,fireT:.7+s.rng()*1.1,
-      smokeT:0,motorT:0,damageStage:0,armorBroken:false,deadT:0,dropDone:false,dropT:0,
-      dropY:s.viewport.h*C.vehicles.dropYRatio,passengers:cfg.passengers||0,passengersDropped:0,
-      targetX:s.bunker.x,targetY:s.bunker.y-18,coverNode:null,flash:0,departing:false
-    };
-    s.vehicles.push(v);
-    J.Audio.vehicleMotor(v.id,{x:v.x,speed:v.speed,type:v.type,active:true});
-    s.ui.message=type==='tank'?'HEAVY ARMOR':type==='stug'?'ASSAULT GUN':type==='truck'?'TROOP TRUCK':'VEHICLE CONTACT';
-    s.ui.messageT=.85;
-    return v;
+    const x=U.clamp(w*.5+lane*w*.62,44,w-44),startY=(s.safe?.top||0)+48;
+    const v={id:nextId++,type,x,y:startY,spawnX:x,lane,hp:cfg.hp*(s.scenario?.vehicleHpMult||1),maxHp:cfg.hp*(s.scenario?.vehicleHpMult||1),radius:cfg.radius,speed:cfg.speed*(s.scenario?.vehicleSpeedMult||1),state:'ADVANCE',stateT:0,hullAngle:Math.PI/2,turretAngle:Math.PI/2,trackPhase:0,wheelPhase:0,suspension:Math.random()*6.28,recoil:0,muzzle:0,fireT:.7+s.rng()*1.1,smokeT:0,motorT:0,damageStage:0,armorBroken:false,deadT:0,dropDone:false,dropT:0,dropY:s.viewport.h*C.vehicles.dropYRatio,passengers:cfg.passengers||0,passengersDropped:0,targetX:s.bunker.x,targetY:s.bunker.y-18,coverNode:null,flash:0,departing:false,contactIdentified:false};
+    s.vehicles.push(v);J.Audio.vehicleMotor(v.id,{x:v.x,speed:v.speed,type:v.type,active:true,distance:J.Scale.progress(s,v.y)});if(s.ui.messageT<.25){s.ui.message='DUST CONTACT · LONG RANGE';s.ui.messageT=.82;}return v;
   }
 
-  function updateWave(s,dt){
-    if(!s.artillery.finished)return;
-    if(!s.vehicleWave.started){s.vehicleWave.started=true;s.vehicleWave.t=0;s.vehicleWave.index=0;}
-    s.vehicleWave.t+=dt;
-    const q=s.scenario?.vehicleSchedule||C.vehicles.waveSchedule;
-    while(s.vehicleWave.index<q.length&&s.vehicleWave.t>=q[s.vehicleWave.index].time){
-      const item=q[s.vehicleWave.index++];spawn(s,item.type,item.lane);
-    }
-    s.vehicleWave.finished=s.vehicleWave.index>=q.length;
-  }
-
-  function laneTarget(s,v){
-    const progress=U.clamp((v.y+50)/(s.bunker.y-60),0,1);
-    const bend=Math.sin(progress*Math.PI*1.35+v.lane*5)*s.viewport.w*.055;
-    const center=s.viewport.w*.5+v.lane*s.viewport.w*.42;
-    return U.clamp(center+bend,38,s.viewport.w-38);
-  }
-
-  function aimAtBunker(s,v,dt){
-    const desired=Math.atan2(s.bunker.y-v.y,s.bunker.x-v.x);
-    if(v.type==='stug'){
-      const rel=((desired-v.hullAngle+Math.PI*3)%(Math.PI*2))-Math.PI;
-      const clamped=v.hullAngle+U.clamp(rel,-.22,.22);
-      v.turretAngle=U.angleLerp(v.turretAngle,clamped,Math.min(1,dt*3.3));
-    }else v.turretAngle=U.angleLerp(v.turretAngle,desired,Math.min(1,dt*(v.type==='tank'?2.3:4.5)));
-  }
-
-  function fire(s,v){
-    const cfg=typeCfg(v.type);if(!cfg.range)return;
-    const dx=s.bunker.x-v.x,dy=s.bunker.y-v.y,d=Math.hypot(dx,dy);
-    if(d>cfg.range)return;
-    const heavy=v.type==='tank'||v.type==='stug';
-    v.recoil=heavy?11:5;v.muzzle=heavy?.12:.07;
-    const spread=heavy?.025:.07,ang=v.turretAngle+U.gaussian()*spread;
-    const sx=v.x+Math.cos(ang)*(heavy?31:24),sy=v.y+Math.sin(ang)*(heavy?31:24);
-    s.vehicleShots.push({x:sx,y:sy,px:sx,py:sy,ang,kind:heavy?'shell':'mg',speed:heavy?430:680,life:1.5,owner:v.id,damage:cfg.damage*(s.scenario?.vehicleDamageMult||1)});
-    J.Audio.play(heavy?'tankGun':'vehicleMg',{x:v.x,variation:Math.random()});
-    J.Particles.emit(s,'muzzle',sx,sy,heavy?6:3,{angle:ang,arc:.22,speedMin:32,speedMax:130,life:.11,size:heavy?3.8:2.2});
-    J.Particles.emit(s,'smoke',sx,sy,heavy?3:1,{angle:ang+Math.PI,arc:.7,speedMin:7,speedMax:26,life:.6,size:4});
-  }
-
-  function deployTroops(s,v,count){
-    if(count<=0)return;
-    for(let i=0;i<count;i++){
-      const side=(i-(count-1)/2)*15;
-      const e=J.Infantry.spawn(s,U.clamp(v.x+side,22,s.viewport.w-22),v.y+10+i*3,{coverIntent:true,reCoverT:.3});
-      e.assaultT=.55+i*.08;e.stateT=0;e.suppression=.12;
-    }
-    v.passengersDropped+=count;
-    J.Audio.play('troopDrop',{x:v.x,variation:Math.random()});
-    s.ui.message='TROOPS DEPLOYING';s.ui.messageT=.7;
-  }
-
-  function updateDrop(s,v,dt){
-    if(v.dropDone||!v.passengers)return false;
-    if(v.y<v.dropY)return false;
-    if(v.state!=='DROPPING'){v.state='DROPPING';v.stateT=0;v.dropT=.68;return true;}
-    v.dropT-=dt;
-    if(v.dropT<=0){deployTroops(s,v,v.passengers);v.passengers=0;v.dropDone=true;v.state='ADVANCE';v.departing=v.type==='truck';v.stateT=0;}
-    return true;
-  }
+  function updateWave(s,dt){if(!s.artillery.finished)return;if(!s.vehicleWave.started){s.vehicleWave.started=true;s.vehicleWave.t=0;s.vehicleWave.index=0;}s.vehicleWave.t+=dt;const q=s.scenario?.vehicleSchedule||C.vehicles.waveSchedule;while(s.vehicleWave.index<q.length&&s.vehicleWave.t>=q[s.vehicleWave.index].time){const item=q[s.vehicleWave.index++];spawn(s,item.type,item.lane);}s.vehicleWave.finished=s.vehicleWave.index>=q.length;}
+  function laneTarget(s,v){const progress=U.clamp((v.y+50)/(s.bunker.y-60),0,1),bend=Math.sin(progress*Math.PI*1.35+v.lane*5)*s.viewport.w*.055,center=s.viewport.w*.5+v.lane*s.viewport.w*.42;return U.clamp(center+bend,38,s.viewport.w-38);}
+  function aimAtBunker(s,v,dt){const desired=Math.atan2(s.bunker.y-v.y,s.bunker.x-v.x);if(v.type==='stug'){const rel=((desired-v.hullAngle+Math.PI*3)%(Math.PI*2))-Math.PI,clamped=v.hullAngle+U.clamp(rel,-.22,.22);v.turretAngle=U.angleLerp(v.turretAngle,clamped,Math.min(1,dt*3.3));}else v.turretAngle=U.angleLerp(v.turretAngle,desired,Math.min(1,dt*(v.type==='tank'?2.3:4.5)));}
+  function fire(s,v){const cfg=typeCfg(v.type);if(!cfg.range)return;const dx=s.bunker.x-v.x,dy=s.bunker.y-v.y,d=Math.hypot(dx,dy);if(d>cfg.range)return;const heavy=v.type==='tank'||v.type==='stug';v.recoil=heavy?11:5;v.muzzle=heavy?.12:.07;const spread=heavy?.025:.07,ang=v.turretAngle+U.gaussian()*spread,sx=v.x+Math.cos(ang)*(heavy?31:24),sy=v.y+Math.sin(ang)*(heavy?31:24);s.vehicleShots.push({x:sx,y:sy,px:sx,py:sy,ang,kind:heavy?'shell':'mg',speed:heavy?430:680,life:1.5,owner:v.id,damage:cfg.damage*(s.scenario?.vehicleDamageMult||1)});J.Audio.play(heavy?'tankGun':'vehicleMg',{x:v.x,variation:Math.random()});J.Particles.emit(s,'muzzle',sx,sy,heavy?6:3,{angle:ang,arc:.22,speedMin:32,speedMax:130,life:.11,size:heavy?3.8:2.2});J.Particles.emit(s,'smoke',sx,sy,heavy?3:1,{angle:ang+Math.PI,arc:.7,speedMin:7,speedMax:26,life:.6,size:4});}
+  function deployTroops(s,v,count){if(count<=0)return;for(let i=0;i<count;i++){const side=(i-(count-1)/2)*15,e=J.Infantry.spawn(s,U.clamp(v.x+side,22,s.viewport.w-22),v.y+10+i*3,{coverIntent:true,reCoverT:.3});e.assaultT=.55+i*.08;e.stateT=0;e.suppression=.12;}v.passengersDropped+=count;J.Audio.play('troopDrop',{x:v.x,variation:Math.random()});s.ui.message='TROOPS DEPLOYING';s.ui.messageT=.7;}
+  function updateDrop(s,v,dt){if(v.dropDone||!v.passengers)return false;if(v.y<v.dropY)return false;if(v.state!=='DROPPING'){v.state='DROPPING';v.stateT=0;v.dropT=.68;return true;}v.dropT-=dt;if(v.dropT<=0){deployTroops(s,v,v.passengers);v.passengers=0;v.dropDone=true;v.state='ADVANCE';v.departing=v.type==='truck';v.stateT=0;}return true;}
 
   function updateOne(s,v,dt){
     v.stateT+=dt;v.recoil=Math.max(0,v.recoil-dt*45);v.muzzle=Math.max(0,v.muzzle-dt);v.flash=Math.max(0,v.flash-dt);
-    if(v.state==='DESTROYED'){
-      v.deadT+=dt;v.smokeT-=dt;
-      if(v.smokeT<=0){v.smokeT=.18+Math.random()*.16;J.Particles.emit(s,'smoke',v.x+U.rnd(-8,8),v.y+U.rnd(-5,5),1,{speedMin:4,speedMax:18,life:1.45,size:6,vy:-18});if(v.deadT<7&&Math.random()<.35)J.Particles.emit(s,'fire',v.x,v.y,1,{speedMin:5,speedMax:18,life:.38,size:3.3,vy:-10});}
-      J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});return;
-    }
+    if(v.state==='DESTROYED'){v.deadT+=dt;v.smokeT-=dt;if(v.smokeT<=0){v.smokeT=.18+Math.random()*.16;J.Particles.emit(s,'smoke',v.x+U.rnd(-8,8),v.y+U.rnd(-5,5),1,{speedMin:4,speedMax:18,life:1.45,size:6,vy:-18});if(v.deadT<7&&Math.random()<.35)J.Particles.emit(s,'fire',v.x,v.y,1,{speedMin:5,speedMax:18,life:.38,size:3.3,vy:-10});}J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});return;}
     if(v.state==='DEPARTED'){J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});return;}
-
-    if(updateDrop(s,v,dt)){J.Audio.vehicleMotor(v.id,{x:v.x,speed:4,type:v.type,active:true});return;}
-
-    const cfg=typeCfg(v.type),fallbackX=v.departing?v.x:laneTarget(s,v),fallbackY=v.departing?s.viewport.h+C.vehicles.exitPadding:s.bunker.y-80;
-    const wp=J.World.vehicleWaypoint(s,v,fallbackX,fallbackY),targetX=wp.x,targetY=wp.y;
-    const dx=targetX-v.x,dy=targetY-v.y,d=Math.hypot(dx,dy)||1;
-    const moveSpeed=v.departing?v.speed*1.05:v.speed;
-    const canStop=(v.type==='tank'||v.type==='stug'||v.type==='halftrack'||v.type==='technical');
-    const bunkerDist=Math.hypot(s.bunker.x-v.x,s.bunker.y-v.y);
-    const stopForFire=canStop&&cfg.range&&bunkerDist<cfg.range*.86;
-    const actualSpeed=stopForFire?moveSpeed*.18:moveSpeed;
-    v.x+=dx/d*actualSpeed*dt;v.y+=dy/d*actualSpeed*dt;
-    const desiredHull=Math.atan2(dy,dx);v.hullAngle=U.angleLerp(v.hullAngle,desiredHull,Math.min(1,dt*2.6));
-    v.trackPhase+=actualSpeed*dt*.11;v.wheelPhase+=actualSpeed*dt*.065;
-    aimAtBunker(s,v,dt);
-
+    if(updateDrop(s,v,dt)){J.Audio.vehicleMotor(v.id,{x:v.x,speed:4,type:v.type,active:true,distance:J.Scale.progress(s,v.y)});return;}
+    const cfg=typeCfg(v.type),fallbackX=v.departing?v.x:laneTarget(s,v),fallbackY=v.departing?s.viewport.h+C.vehicles.exitPadding:s.bunker.y-80,wp=J.World.vehicleWaypoint(s,v,fallbackX,fallbackY),targetX=wp.x,targetY=wp.y,dx=targetX-v.x,dy=targetY-v.y,d=Math.hypot(dx,dy)||1,moveSpeed=v.departing?v.speed*1.05:v.speed,canStop=(v.type==='tank'||v.type==='stug'||v.type==='halftrack'||v.type==='technical'),bunkerDist=Math.hypot(s.bunker.x-v.x,s.bunker.y-v.y),stopForFire=canStop&&cfg.range&&bunkerDist<cfg.range*.86,actualSpeed=(stopForFire?moveSpeed*.18:moveSpeed)*J.Scale.moveFactor(s,v.y);
+    v.x+=dx/d*actualSpeed*dt;v.y+=dy/d*actualSpeed*dt;const desiredHull=Math.atan2(dy,dx);v.hullAngle=U.angleLerp(v.hullAngle,desiredHull,Math.min(1,dt*2.6));v.trackPhase+=actualSpeed*dt*.11;v.wheelPhase+=actualSpeed*dt*.065;aimAtBunker(s,v,dt);
+    if(!v.contactIdentified&&J.Scale.progress(s,v.y)>=C.scale.dustRevealEnd){v.contactIdentified=true;if(s.ui.messageT<.35){s.ui.message=v.type==='tank'?'ARMOR IDENTIFIED':v.type==='stug'?'ASSAULT GUN IDENTIFIED':v.type==='truck'?'TRANSPORT IDENTIFIED':'VEHICLE IDENTIFIED';s.ui.messageT=.72;}}
     if(v.departing&&v.y>s.viewport.h+C.vehicles.exitPadding*.65){v.state='DEPARTED';J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});return;}
-
-    v.fireT-=dt;
-    if(cfg.range&&v.fireT<=0&&bunkerDist<cfg.range){fire(s,v);v.fireT=cfg.fireInterval*(.82+s.rng()*.38)/(s.scenario?.vehicleFireRateMult||1);}
-    J.Audio.vehicleMotor(v.id,{x:v.x,speed:actualSpeed,type:v.type,active:true});
-
-    const hpRatio=v.hp/v.maxHp;
-    v.damageStage=hpRatio>.65?0:hpRatio>.35?1:2;
-    if(v.damageStage>0){v.smokeT-=dt;if(v.smokeT<=0){v.smokeT=v.damageStage===2?.12:.27;J.Particles.emit(s,'smoke',v.x+U.rnd(-7,7),v.y+U.rnd(-7,7),1,{speedMin:3,speedMax:16,life:v.damageStage===2?1.3:.9,size:v.damageStage===2?6:4.5,vy:-16});if(v.damageStage===2&&Math.random()<.22)J.Particles.emit(s,'spark',v.x,v.y,1,{speedMin:20,speedMax:55,life:.16,size:1});}}
+    v.fireT-=dt;if(cfg.range&&v.fireT<=0&&bunkerDist<cfg.range){fire(s,v);v.fireT=cfg.fireInterval*(.82+s.rng()*.38)/(s.scenario?.vehicleFireRateMult||1);}J.Audio.vehicleMotor(v.id,{x:v.x,speed:actualSpeed,type:v.type,active:true,distance:J.Scale.progress(s,v.y)});
+    const hpRatio=v.hp/v.maxHp;v.damageStage=hpRatio>.65?0:hpRatio>.35?1:2;if(v.damageStage>0){v.smokeT-=dt;if(v.smokeT<=0){v.smokeT=v.damageStage===2?.12:.27;J.Particles.emit(s,'smoke',v.x+U.rnd(-7,7),v.y+U.rnd(-7,7),1,{speedMin:3,speedMax:16,life:v.damageStage===2?1.3:.9,size:v.damageStage===2?6:4.5,vy:-16});if(v.damageStage===2&&Math.random()<.22)J.Particles.emit(s,'spark',v.x,v.y,1,{speedMin:20,speedMax:55,life:.16,size:1});}}
   }
 
-  function segmentCircle(b,v){
-    const ax=b.px,ay=b.py,bx=b.x,by=b.y,dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1;
-    const t=U.clamp(((v.x-ax)*dx+(v.y-ay)*dy)/l2,0,1),px=ax+dx*t,py=ay+dy*t;
-    return Math.hypot(v.x-px,v.y-py)<=v.radius;
-  }
-
-  function hitProjectile(s,b){
-    let best=null,bestDist=1e9;
-    for(const v of s.vehicles){if(!isThreat(v))continue;if(!segmentCircle(b,v))continue;const d=Math.hypot(v.x-b.px,v.y-b.py);if(d<bestDist){best=v;bestDist=d;}}
-    if(!best)return false;
-    if(b.kind==='he')return {vehicle:best,detonate:true};
-    damage(s,best,C.weapons[b.kind].damage,b.kind,b.x,b.y);
-    b.active=false;return {vehicle:best,detonate:false};
-  }
-
-  function blastDamage(s,x,y,radius,baseDamage){
-    for(const v of s.vehicles){if(!isThreat(v))continue;const d=Math.hypot(v.x-x,v.y-y);if(d>radius+v.radius*.5)continue;const fall=U.clamp(1-d/(radius+v.radius*.5),0,1);damage(s,v,baseDamage*(.28+.72*fall),'he',v.x,v.y);}
-  }
-
-  function damage(s,v,amount,kind,x,y){
-    if(!isThreat(v))return false;const cfg=typeCfg(v.type),mult=cfg.armor[kind]??1,prev=v.hp/v.maxHp;
-    const final=amount*mult;v.hp-=final;v.flash=.10;s.stats.armorHits++;
-    if(mult<.12&&kind==='mg'){
-      J.Audio.play('ricochet',{x:v.x,variation:Math.random()});J.Particles.emit(s,'spark',x??v.x,y??v.y,4,{speedMin:45,speedMax:120,life:.22,size:1.2});
-    }else{
-      J.Audio.play('armorImpact',{x:v.x,variation:Math.random()});J.Particles.emit(s,'spark',x??v.x,y??v.y,kind==='ap'?7:4,{speedMin:35,speedMax:135,life:.24,size:1.35});
-    }
-    const now=v.hp/v.maxHp;
-    if(prev>.35&&now<=.35&&!v.armorBroken){v.armorBroken=true;J.Audio.play('armorBreak',{x:v.x,variation:Math.random()});s.ui.message='ARMOR BREAK';s.ui.messageT=.65;J.Particles.emit(s,'debris',v.x,v.y,6,{speedMin:35,speedMax:105,life:.55,gravity:80,size:1.8});}
-    if(v.hp<=0){destroy(s,v,kind);return true;}
-    return false;
-  }
-
-  function destroy(s,v,kind){
-    if(v.state==='DESTROYED')return;v.state='DESTROYED';v.deadT=0;v.hp=0;v.recoil=0;s.stats.vehicleKills++;
-    J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});
-    J.Audio.play(v.type==='tank'||v.type==='stug'?'vehicleExplosion':'explosion',{x:v.x,variation:Math.random()});
-    const heavy=v.type==='tank'||v.type==='stug';s.explosions.push({x:v.x,y:v.y,t:0,dur:heavy?1.05:.82,radius:heavy?88:66,seed:U.hash(v.id*31),big:heavy});
-    s.trauma=Math.min(1,s.trauma+(heavy?.42:.26));J.World.scorchMark(s,v.x,v.y,heavy?32:23,1.45);
-    J.Particles.emit(s,'debris',v.x,v.y,heavy?14:9,{speedMin:45,speedMax:190,life:1.0,gravity:145,size:2.4});
-    J.Particles.emit(s,'smoke',v.x,v.y,heavy?14:9,{speedMin:12,speedMax:65,life:1.65,size:8,vy:-23});
-    J.Particles.emit(s,'fire',v.x,v.y,heavy?10:6,{speedMin:10,speedMax:75,life:.65,size:4});
-    if(v.passengers>0&&!v.dropDone){const survivors=Math.min(v.passengers,1+(s.rng()<.55?1:0));deployTroops(s,v,survivors);v.passengers=0;}
-    const cfg=typeCfg(v.type);v.coverNode={id:s.cover.length+1,x:v.x,y:v.y,radius:v.radius*.88,coverStrength:cfg.cover,occupiedBy:null,danger:.5,age:0,wreck:true,vehicleId:v.id};s.cover.push(v.coverNode);
-    s.ui.message=heavy?'VEHICLE DESTROYED':'VEHICLE KILL';s.ui.messageT=.8;
-  }
-
-  function updateShots(s,dt){
-    for(const q of s.vehicleShots){q.life-=dt;q.px=q.x;q.py=q.y;q.x+=Math.cos(q.ang)*q.speed*dt;q.y+=Math.sin(q.ang)*q.speed*dt;
-      if(Math.hypot(q.x-s.bunker.x,q.y-s.bunker.y)<34||q.y>s.viewport.h+20||q.life<=0){
-        q.life=0;if(Math.hypot(q.x-s.bunker.x,q.y-s.bunker.y)<55){s.bunker.hp=Math.max(0,s.bunker.hp-q.damage);s.bunker.flash=q.kind==='shell'?.28:.12;s.trauma=Math.min(1,s.trauma+(q.kind==='shell'?.16:.025));J.Audio.play(q.kind==='shell'?'bunkerShellHit':'bunkerHit',{x:s.bunker.x,variation:Math.random()});J.Particles.emit(s,q.kind==='shell'?'debris':'spark',s.bunker.x+U.rnd(-24,24),s.bunker.y-22,q.kind==='shell'?9:3,{speedMin:35,speedMax:130,life:.4,gravity:q.kind==='shell'?70:0,size:1.5});if(s.bunker.hp<=0)s.mode='gameover';}}
-    }
-    s.vehicleShots=s.vehicleShots.filter(q=>q.life>0);
-  }
-
+  function segmentCircle(b,v){const ax=b.px,ay=b.py,bx=b.x,by=b.y,dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1,t=U.clamp(((v.x-ax)*dx+(v.y-ay)*dy)/l2,0,1),px=ax+dx*t,py=ay+dy*t;return Math.hypot(v.x-px,v.y-py)<=v.radius;}
+  function hitProjectile(s,b){let best=null,bestDist=1e9;for(const v of s.vehicles){if(!isThreat(v))continue;if(!segmentCircle(b,v))continue;const d=Math.hypot(v.x-b.px,v.y-b.py);if(d<bestDist){best=v;bestDist=d;}}if(!best)return false;if(b.kind==='he')return {vehicle:best,detonate:true};damage(s,best,C.weapons[b.kind].damage,b.kind,b.x,b.y);b.active=false;return {vehicle:best,detonate:false};}
+  function blastDamage(s,x,y,radius,baseDamage){for(const v of s.vehicles){if(!isThreat(v))continue;const d=Math.hypot(v.x-x,v.y-y);if(d>radius+v.radius*.5)continue;const fall=U.clamp(1-d/(radius+v.radius*.5),0,1);damage(s,v,baseDamage*(.28+.72*fall),'he',v.x,v.y);}}
+  function damage(s,v,amount,kind,x,y){if(!isThreat(v))return false;const cfg=typeCfg(v.type),mult=cfg.armor[kind]??1,prev=v.hp/v.maxHp,final=amount*mult;v.hp-=final;v.flash=.10;s.stats.armorHits++;if(mult<.12&&kind==='mg'){J.Audio.play('ricochet',{x:v.x,variation:Math.random()});J.Particles.emit(s,'spark',x??v.x,y??v.y,4,{speedMin:45,speedMax:120,life:.22,size:1.2});}else{J.Audio.play('armorImpact',{x:v.x,variation:Math.random()});J.Particles.emit(s,'spark',x??v.x,y??v.y,kind==='ap'?7:4,{speedMin:35,speedMax:135,life:.24,size:1.35});}const now=v.hp/v.maxHp;if(prev>.35&&now<=.35&&!v.armorBroken){v.armorBroken=true;J.Audio.play('armorBreak',{x:v.x,variation:Math.random()});s.ui.message='ARMOR BREAK';s.ui.messageT=.65;J.Particles.emit(s,'debris',v.x,v.y,6,{speedMin:35,speedMax:105,life:.55,gravity:80,size:1.8});}if(v.hp<=0){destroy(s,v,kind);return true;}return false;}
+  function destroy(s,v,kind){if(v.state==='DESTROYED')return;v.state='DESTROYED';v.deadT=0;v.hp=0;v.recoil=0;s.stats.vehicleKills++;J.Audio.vehicleMotor(v.id,{x:v.x,speed:0,type:v.type,active:false});J.Audio.play(v.type==='tank'||v.type==='stug'?'vehicleExplosion':'explosion',{x:v.x,variation:Math.random()});const heavy=v.type==='tank'||v.type==='stug';s.explosions.push({x:v.x,y:v.y,t:0,dur:heavy?1.05:.82,radius:heavy?88:66,seed:U.hash(v.id*31),big:heavy});s.trauma=Math.min(1,s.trauma+(heavy?.42:.26));J.World.scorchMark(s,v.x,v.y,heavy?32:23,1.45);J.Particles.emit(s,'debris',v.x,v.y,heavy?14:9,{speedMin:45,speedMax:190,life:1.0,gravity:145,size:2.4});J.Particles.emit(s,'smoke',v.x,v.y,heavy?14:9,{speedMin:12,speedMax:65,life:1.65,size:8,vy:-23});J.Particles.emit(s,'fire',v.x,v.y,heavy?10:6,{speedMin:10,speedMax:75,life:.65,size:4});if(v.passengers>0&&!v.dropDone){const survivors=Math.min(v.passengers,1+(s.rng()<.55?1:0));deployTroops(s,v,survivors);v.passengers=0;}const cfg=typeCfg(v.type);v.coverNode={id:s.cover.length+1,x:v.x,y:v.y,radius:v.radius*.88,coverStrength:cfg.cover,occupiedBy:null,danger:.5,age:0,wreck:true,vehicleId:v.id};s.cover.push(v.coverNode);s.ui.message=heavy?'VEHICLE DESTROYED':'VEHICLE KILL';s.ui.messageT=.8;}
+  function updateShots(s,dt){for(const q of s.vehicleShots){q.life-=dt;q.px=q.x;q.py=q.y;q.x+=Math.cos(q.ang)*q.speed*dt;q.y+=Math.sin(q.ang)*q.speed*dt;if(Math.hypot(q.x-s.bunker.x,q.y-s.bunker.y)<34||q.y>s.viewport.h+20||q.life<=0){q.life=0;if(Math.hypot(q.x-s.bunker.x,q.y-s.bunker.y)<55){s.bunker.hp=Math.max(0,s.bunker.hp-q.damage);s.bunker.flash=q.kind==='shell'?.28:.12;s.trauma=Math.min(1,s.trauma+(q.kind==='shell'?.16:.025));J.Audio.play(q.kind==='shell'?'bunkerShellHit':'bunkerHit',{x:s.bunker.x,variation:Math.random()});J.Particles.emit(s,q.kind==='shell'?'debris':'spark',s.bunker.x+U.rnd(-24,24),s.bunker.y-22,q.kind==='shell'?9:3,{speedMin:35,speedMax:130,life:.4,gravity:q.kind==='shell'?70:0,size:1.5});if(s.bunker.hp<=0)s.mode='gameover';}}}s.vehicleShots=s.vehicleShots.filter(q=>q.life>0);}
   function update(s,dt){updateWave(s,dt);for(const v of s.vehicles)updateOne(s,v,dt);updateShots(s,dt);}
   function allResolved(s){return s.vehicleWave.finished&&s.vehicles.every(v=>v.state==='DESTROYED'||v.state==='DEPARTED');}
-
   J.Vehicles={spawn,update,damage,hitProjectile,blastDamage,isThreat,allResolved,typeCfg};
 })();

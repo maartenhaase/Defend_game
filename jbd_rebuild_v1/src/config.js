@@ -3,7 +3,14 @@
   J.CONFIG = Object.freeze({
     step: 1 / 60,
     maxFrameDelta: 0.10,
-    render: { maxDpr: 2, mobileMaxDpr: 1.65, particles: 680, bullets: 190, mobileScale: 0.72, desktopScale: 0.86 },
+    render: { maxDpr: 2, mobileMaxDpr: 1.65, particles: 680, bullets: 190, mobileScale: 0.60, desktopScale: 0.72 },
+    scale: {
+      apparentRangeMeters: 900, farBandEnd: 0.30, midBandEnd: 0.66, perspectivePower: 1.72,
+      infantryFarScale: 0.13, vehicleFarScale: 0.16, airFarScale: 0.38,
+      terrainFarScale: 0.34, terrainNearScale: 0.70,
+      farMoveFactor: 0.48, nearMoveFactor: 1.08, effectFarScale: 0.28,
+      dustRevealEnd: 0.30, silhouetteRevealEnd: 0.56, craterVisualScale: 0.48
+    },
     input: { apCharge: 0.22, heCharge: 0.62, maxCharge: 1.05 },
     bunker: { hp: 100, yPadding: 104, barrelLength: 48 },
     weapons: {
@@ -17,7 +24,9 @@
       coverSearchRadius: 205, coverMinY: 105, suppressionDecay: 0.20,
       coverWaveHold: 3.8, assaultSignalLead: 0.68, assaultRushDuration: 2.45,
       assaultSprint: 61, reseekDelay: 2.55,
-      corpseFadeStart: 10, corpseLifetime: 16
+      corpseFadeStart: 10, corpseLifetime: 16,
+      weaponDeployTime: 0.95, weaponRange: 355, weaponFireInterval: 0.58, weaponDamage: 2.8,
+      weaponHitBase: 0.72, maxMountedWeapons: 2
     },
     vehicles: {
       maxActive: 8,
@@ -44,6 +53,16 @@
       dropStartRatio: 0.22, dropEndRatio: 0.72, descentSpeed: 31,
       swayAmp: 14, swayFreq: 2.15, drift: 2.4, hp: 52, hitRadius: 13,
       landingMinRatio: 0.34, landingMaxRatio: 0.53, collapsedLife: 18
+    },
+    campaign: {
+      saveKey: 'jbd_rebuild_v1_m9_save',
+      upgrades: {
+        caliber:{label:'CALIBER', max:4, costs:[40,65,95,130]},
+        burst:{label:'BURST', max:4, costs:[35,55,80,110]},
+        charge:{label:'CHARGE SPEED', max:4, costs:[30,50,75,105]},
+        he:{label:'HE BLAST', max:4, costs:[40,60,85,120]},
+        armor:{label:'ARMOR', max:4, costs:[35,55,80,110]}
+      }
     },
     level: { seed: 731942, spawnCount: 14, spawnDuration: 14.5, completeDelay: 2.0 },
     audio: { master: 0.68 },

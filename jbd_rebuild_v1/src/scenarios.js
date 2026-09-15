@@ -33,7 +33,7 @@
 
   function vehicleSchedule(key,cycle){
     const phases=VEHICLE_PHASES[key],out=[];let idx=0;
-    const phaseTimes=[2.9,8.0,13.4];
+    const phaseTimes=[5.2,13.2,21.4];
     for(let p=0;p<phases.length;p++)for(let k=0;k<phases[p].length;k++){
       const lane=[-.30,.24,-.08,.32,-.22,.10][idx%6];
       out.push({time:phaseTimes[p]+k*1.55,type:phases[p][k],lane});idx++;
@@ -47,13 +47,13 @@
     const label=`${t.label} ${b.n}`;
     return {
       index:index%9,cycle,label,theme:b.theme,number:b.n,seed:b.seed+(cycle-1)*997,difficulty,
-      infantryCount:b.inf+Math.min(6,(cycle-1)*2),spawnDuration:b.dur,
+      infantryCount:b.inf+Math.min(6,(cycle-1)*2),spawnDuration:b.dur*1.45,
       infantrySpeedMult:t.infantrySpeed,infantryRange:C.infantry.range*t.sight,
       coverSearchRadius:C.infantry.coverSearchRadius*(b.theme==='jungle'?1.12:b.theme==='desert'?.90:.96),
       enemyHpMult:difficulty,enemyDamageMult:1+(cycle-1)*.09,enemyFireRateMult:1+(cycle-1)*.055,
       vehicleSpeedMult:t.vehicleSpeed,vehicleHpMult:difficulty,vehicleDamageMult:1+(cycle-1)*.10,vehicleFireRateMult:1+(cycle-1)*.05,
       vehicleSchedule:vehicleSchedule(b.veh,cycle),
-      airborneCount:b.air?Math.min(3,b.air):0,airborneStart:15.6,airborneHpMult:difficulty,
+      airborneCount:b.air?Math.min(3,b.air):0,airborneStart:23.5,airborneHpMult:difficulty,
       artilleryCount:b.art,artilleryDuration:2.15,
       riverBase:b.river,bridgeRatios:b.bridges,buildingSide:b.building,trenches:b.trenches,
       vegetation:t.vegetation,openness:t.openness
@@ -68,9 +68,9 @@
     s.enemies=[];s.vehicles=[];s.vehicleShots=[];s.wrecks=[];s.bullets=[];s.explosions=[];s.fires=[];s.cover=[];s.corpses=[];
     s.vehicleWave={started:false,t:0,index:0,finished:false};
     s.airborne={started:false,t:0,finished:false,plane:null,paratroopers:[],collapsed:[],dropped:0};
-    s.spawn={t:0,count:0};s.particles=[];s.particleCursor=0;s.trauma=0;s.quality=1;
+    s.spawn={t:0,count:0};s.particles=[];s.particleCursor=0;s.trauma=0;s.quality=1;s.levelRewardGranted=false;
     s.stats={shots:0,kills:0,hits:0,vehicleKills:0,armorHits:0,airKills:0,landedParas:0};
-    s.ui={messageT:0,message:''};s.map=null;
+    s.ui={messageT:0,message:'',shopDirty:false};s.map=null;
   }
 
   function apply(s,index=s.campaign.index,cycle=s.campaign.cycle){
