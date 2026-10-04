@@ -752,7 +752,7 @@ function resolveHit(b){
   for(i=0;i<gameState.vehicles.length;i++){
     v=gameState.vehicles[i];if(!v.alive)continue;
     d=pointSegDist(v.x,v.y,b.px,b.py,b.x,b.y);
-    var r=(v.type==='boss'?35:19)*DEVICE.hitRadius;
+    var r=19*DEVICE.hitRadius;
     if(d<r&&d<bd){best=v;type='vehicle';bd=d;}
   }
   for(i=0;i<gameState.paras.length;i++){
