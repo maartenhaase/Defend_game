@@ -504,9 +504,9 @@ function buildMap(){
 
   var edgeTrees=[[.05,.24],[.95,.23],[.05,.58],[.95,.59],[.05,.86],[.95,.84]];
   var treeUse=L.theme==='desert'?2:L.theme==='industrial'?3:5;
-  for(i=0;i<treeUse;i++)trees.push({x:clamp(W*(edgeTrees[i][0]+(rng()-.5)*.028),12,W-12),y:clamp(H*(edgeTrees[i][1]+(rng()-.5)*.040),safeTop+28,H-safeBottom-28),r:6.5+(i%3)*2+rng()*1.4,variant:(i+act)%5,dead:L.theme==='industrial'&&(i+act)%2===0,hitCount:0});
+  for(i=0;i<treeUse;i++)trees.push({x:clamp(W*(edgeTrees[i][0]+(rng()-.5)*.028),12,W-12),y:clamp(H*(edgeTrees[i][1]+(rng()-.5)*.040),safeTop+28,H-safeBottom-28),r:6.5+(i%3)*2+rng()*1.4,variant:(i+act)%5,dead:L.theme==='industrial'&&(i+act)%2===0,hitCount:0,integrity:(L.theme==='industrial'&&(i+act)%2===0)?1:5,stageHits:0});
   var rockLayout=[[.07,.39],[.93,.40],[.07,.64],[.93,.79]];
-  for(i=0;i<3;i++)rocks.push({x:clamp(W*(rockLayout[i][0]+(rng()-.5)*.025),14,W-14),y:clamp(H*(rockLayout[i][1]+(rng()-.5)*.035),safeTop+32,H-safeBottom-32),r:4.7+(i%2)*2+rng()*1.2,variant:(i+act)%3});
+  for(i=0;i<3;i++)rocks.push({x:clamp(W*(rockLayout[i][0]+(rng()-.5)*.025),14,W-14),y:clamp(H*(rockLayout[i][1]+(rng()-.5)*.035),safeTop+32,H-safeBottom-32),r:4.7+(i%2)*2+rng()*1.2,variant:(i+act)%3,integrity:5,stageHits:0});
 
   surface.push({x:roadX+(rng()-.5)*7,y:H*(.42+(rng()-.5)*.035),type:'trackStraight',rot:(rng()-.5)*.08,s:.68+rng()*.08,a:.14+rng()*.04},{x:roadX+7+(rng()-.5)*8,y:H*(.61+(rng()-.5)*.035),type:'trackStraight',rot:(rng()-.5)*.08,s:.68+rng()*.08,a:.13+rng()*.04});
   if(gameState.levelIndex>=3)surface.push({x:roadX+corridorHalf*.72,y:H*.48,type:'gravel',rot:.1,s:.72,a:.19});
@@ -1660,6 +1660,33 @@ function damageCover(c,power,source){
   }
   return c.integrity<old;
 }
+function terrainIntegrity(o){return o&&o.integrity!=null?o.integrity:5;}
+function terrainBlocksBullet(o){
+  var n=terrainIntegrity(o);if(n<=1)return false;if(n===2)return Math.random()<.40;return true;
+}
+function damageTerrainObject(o,kind,power,source){
+  if(!o||terrainIntegrity(o)<=1)return false;
+  power=power||1;source=source||'bullet';var old=terrainIntegrity(o),loss=0;
+  if(source==='he'||source==='blast'||source==='fire'){
+    loss=Math.max(1,Math.min(3,Math.round(power)));
+  }else{
+    o.stageHits=(o.stageHits||0)+1;
+    var needed=kind==='rock'?4:2;
+    if(o.stageHits>=needed){loss=1;o.stageHits=0;}
+  }
+  if(loss<=0)return false;
+  o.integrity=Math.max(1,old-loss);
+  if(kind==='tree'){
+    emitGroundImpact(o.x,o.y,old-o.integrity>1?1.1:.72);
+    for(var i=0;i<(IS_IPHONE?3:6);i++)pushEffect({type:'coverChip',x:o.x+rand(-4,4),y:o.y+rand(-6,5),vx:rand(-50,50),vy:rand(-74,-15),rot:rand(0,TAU),vr:rand(-9,9),t:0,life:rand(.30,.62),steel:false});
+    if(o.integrity<=1)o.dead=true;
+  }else{
+    emitRicochet(o.x,o.y,rand(-Math.PI,Math.PI),.55);AudioSys.tone('ground',.62);
+    for(var j=0;j<(IS_IPHONE?2:5);j++)pushEffect({type:'groundClod',x:o.x+rand(-4,4),y:o.y+rand(-3,4),vx:rand(-44,44),vy:rand(-55,-12),rot:rand(0,TAU),vr:rand(-8,8),t:0,life:rand(.28,.55)});
+  }
+  if(o.integrity<=1)emitDebris(o.x,o.y,kind==='rock'?5:4);
+  return true;
+}
 function damageCoverBlast(x,y,r,power){
   if(!gameState||!gameState.map)return;
   var a=gameState.map.cover||[];
@@ -1669,7 +1696,9 @@ function damageCoverBlast(x,y,r,power){
     damageCover(c,loss,'blast');
   }
   var trees=gameState.map.trees||[];
-  for(i=0;i<trees.length;i++){var t=trees[i];if(t.dead)continue;if(dist(x,y,t.x,t.y)<r*.72){t.hitCount=(t.hitCount||0)+2;if(t.hitCount>=3){t.dead=true;emitDebris(t.x,t.y,4);}}}
+  for(i=0;i<trees.length;i++){var t=trees[i];if(terrainIntegrity(t)<=1)continue;if(dist(x,y,t.x,t.y)<r*.72){var tf=1-clamp(dist(x,y,t.x,t.y)/(r*.72),0,1);damageTerrainObject(t,'tree',1+tf*2.4,'blast');}}
+  var rocks=gameState.map.rocks||[];
+  for(i=0;i<rocks.length;i++){var ro=rocks[i];if(terrainIntegrity(ro)<=1)continue;if(dist(x,y,ro.x,ro.y)<r*.62){var rf=1-clamp(dist(x,y,ro.x,ro.y)/(r*.62),0,1);damageTerrainObject(ro,'rock',1+rf*2.0,'blast');}}
 }
 function createFireZone(x,y,b,plasma){
   var duration=b.burnDuration||0,dps=b.burnDps||0;if(duration<=0||dps<=0)return;
@@ -1703,8 +1732,8 @@ function specialImpactAt(x,y,b){
 function heObstacleHit(b){
   var i,c,m=gameState.map,z=b.z||0;
   for(i=0;i<m.cover.length;i++){c=m.cover[i];if(coverIntegrity(c)>1&&z<=coverHeight(c)&&dist(b.x,b.y,c.x,c.y)<coverRadius(c)){damageCover(c,b.specialEffect==='impact'?1.25:2.15,'he');specialImpactAt(b.x,b.y,b);b.active=false;return true;}}
-  for(i=0;i<m.trees.length;i++){c=m.trees[i];if(c.dead)continue;if(z<=13&&dist(b.x,b.y,c.x,c.y)<Math.max(5,c.r*.72)){c.hitCount=(c.hitCount||0)+2;if(c.hitCount>=3){c.dead=true;emitDebris(c.x,c.y,4);}specialImpactAt(b.x,b.y,b);b.active=false;return true;}}
-  for(i=0;i<m.rocks.length;i++){c=m.rocks[i];if(z<=5&&dist(b.x,b.y,c.x,c.y)<Math.max(4,c.r+.8)){specialImpactAt(b.x,b.y,b);b.active=false;return true;}}
+  for(i=0;i<m.trees.length;i++){c=m.trees[i];if(terrainIntegrity(c)<=1)continue;if(z<=13&&dist(b.x,b.y,c.x,c.y)<Math.max(5,c.r*.72)){damageTerrainObject(c,'tree',2.2,'he');specialImpactAt(b.x,b.y,b);b.active=false;return true;}}
+  for(i=0;i<m.rocks.length;i++){c=m.rocks[i];if(terrainIntegrity(c)<=1)continue;if(z<=5&&dist(b.x,b.y,c.x,c.y)<Math.max(4,c.r+.8)){damageTerrainObject(c,'rock',2.0,'he');specialImpactAt(b.x,b.y,b);b.active=false;return true;}}
   var cp=m.compound;
   if(z<=24&&b.x>cp.x-cp.w/2-2&&b.x<cp.x+cp.w/2+2&&b.y>cp.y-cp.h/2-2&&b.y<cp.y+cp.h/2+2){specialImpactAt(b.x,b.y,b);b.active=false;return true;}
   return false;
@@ -1800,8 +1829,8 @@ function primaryObstacleHit(b){
       b.active=false;return true;
     }
   }
-  for(i=0;i<m.trees.length;i++){c=m.trees[i];if(c.dead)continue;if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r*.58)){c.hitCount=(c.hitCount||0)+1;emitGroundImpact(b.x,b.y,.72);if(c.hitCount>=3){c.dead=true;emitDebris(c.x,c.y,4);}b.active=false;return true;}}
-  for(i=0;i<m.rocks.length;i++){c=m.rocks[i];if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r+.5)){pushEffect({type:'impactFlash',x:b.x,y:b.y,r:3,t:0,life:.07});emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.72);AudioSys.tone('ground',.66);b.active=false;return true;}}
+  for(i=0;i<m.trees.length;i++){c=m.trees[i];if(terrainIntegrity(c)<=1||!terrainBlocksBullet(c))continue;if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r*.58)){damageTerrainObject(c,'tree',1,'bullet');b.active=false;return true;}}
+  for(i=0;i<m.rocks.length;i++){c=m.rocks[i];if(terrainIntegrity(c)<=1||!terrainBlocksBullet(c))continue;if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r+.5)){pushEffect({type:'impactFlash',x:b.x,y:b.y,r:3,t:0,life:.07});damageTerrainObject(c,'rock',1,'bullet');b.active=false;return true;}}
   var cp=m.compound;
   if(b.x>cp.x-cp.w/2&&b.x<cp.x+cp.w/2&&b.y>cp.y-cp.h/2&&b.y<cp.y+cp.h/2){pushEffect({type:'impactFlash',x:b.x,y:b.y,r:4,t:0,life:.08});if(level().theme==='industrial'){emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.85);AudioSys.tone('steel',.72);}else emitGroundImpact(b.x,b.y,.78);b.active=false;return true;}
   return false;
@@ -1902,6 +1931,8 @@ function enemyShotObstacleHit(b){
     var c=gameState.map.cover[ci];if(c.id===b.ownerCoverId||coverIntegrity(c)<=1||!coverBlocksBullet(c))continue;
     if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,coverRadius(c)*.56)){damageCover(c,.75,'enemy');return true;}
   }
+  for(var ti=0;ti<gameState.map.trees.length;ti++){var t=gameState.map.trees[ti];if(terrainIntegrity(t)<=1||!terrainBlocksBullet(t))continue;if(pointSegDist(t.x,t.y,b.px,b.py,b.x,b.y)<Math.max(4,t.r*.56)){damageTerrainObject(t,'tree',1,'enemy');return true;}}
+  for(var ri=0;ri<gameState.map.rocks.length;ri++){var ro=gameState.map.rocks[ri];if(terrainIntegrity(ro)<=1||!terrainBlocksBullet(ro))continue;if(pointSegDist(ro.x,ro.y,b.px,b.py,b.x,b.y)<Math.max(4,ro.r+.4)){damageTerrainObject(ro,'rock',1,'enemy');return true;}}
   return false;
 }
 function updateEnemyShots(dt){
@@ -2100,8 +2131,21 @@ function drawPatch(q,p){
   ctx.globalAlpha=q.a*.70;ctx.strokeStyle=tone(p.ground2,-.22);ctx.lineWidth=1.2;ctx.stroke();ctx.restore();
 }
 function drawEnvSprite(name,x,y,scale,rot,alpha){drawAtlas('env:'+name,x,y,scale||1,rot||0,alpha==null?1:alpha);}
-function drawTree(t,p){if(t.dead){drawEnvSprite(t.variant%2?'deadTree':'stump',t.x,t.y,.70+t.r*.035,t.variant*.2,1);return;}drawEnvSprite('bush'+(1+(t.variant%3)),t.x,t.y,(t.r/7.8)*.84,t.variant*.18,1);if(t.r>9)drawEnvSprite('bush2',t.x+2,t.y-3,(t.r/9)*.52,-.15,.90);}
-function drawRock(r,p){drawEnvSprite('boulder'+(1+(r.variant%3)),r.x,r.y,.50+r.r*.060,r.variant*.34,1);}
+function drawTree(t,p){
+  var n=terrainIntegrity(t);
+  if(n<=1||t.dead){drawEnvSprite(t.variant%2?'deadTree':'stump',t.x,t.y,.58+t.r*.030,t.variant*.2,.90);return;}
+  var sc=n===5?1:n===4?.96:n===3?.86:.68,al=n===5?1:n===4?.92:n===3?.78:.58;
+  drawEnvSprite('bush'+(1+(t.variant%3)),t.x,t.y,(t.r/7.8)*.84*sc,t.variant*.18,al);
+  if(t.r>9&&n>=3)drawEnvSprite('bush2',t.x+2,t.y-3,(t.r/9)*.52*sc,-.15,al*.90);
+  if(n===2)drawEnvSprite('stump',t.x+2,t.y+3,.42,t.variant*.13,.72);
+}
+function drawRock(r,p){
+  var n=terrainIntegrity(r);
+  if(n<=1){drawEnvSprite('rubbleConcrete',r.x,r.y,.34+r.r*.025,r.variant*.22,.68);return;}
+  var sc=n===5?1:n===4?.96:n===3?.87:.72,al=n===5?1:n===4?.94:n===3?.80:.62;
+  drawEnvSprite('boulder'+(1+(r.variant%3)),r.x,r.y,(.50+r.r*.060)*sc,r.variant*.34,al);
+  if(n<=3){ctx.save();ctx.globalAlpha=.45;ctx.strokeStyle='#272b27';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(r.x-4,r.y-3);ctx.lineTo(r.x+1,r.y+2);ctx.lineTo(r.x+5,r.y-2);ctx.stroke();ctx.restore();}
+}
 function drawDecor(d,p){drawEnvSprite(d.type,d.x,d.y,d.s,d.rot,.96);}
 function drawCover(c,p){
   var n=coverIntegrity(c),base=.68+Math.min(.30,(c.len||12)/65);
