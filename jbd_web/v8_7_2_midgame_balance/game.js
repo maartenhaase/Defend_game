@@ -654,7 +654,7 @@ function spawnInfantry(x,y,role,squad){
     role=pool[(Math.random()*pool.length)|0];
     if(role==='grenadier'&&!allowExplosiveInfantry())role='rifle';
   }
-  if(role==='grenadier'&&gameState.levelIndex>=10&&!allowExplosiveInfantry())role='rifle';
+  // Explicit squad/dismount roles are already balanced by their caller; avoid double-reducing rocket units.
   var baseHp=gameState.levelIndex===0?18:gameState.levelIndex===1?24:gameState.levelIndex===2?30:38;
   var hp=role==='lmg'?baseHp+8:role==='grenadier'?baseHp+5:role==='marksman'?Math.max(18,baseHp-2):baseHp;
   var speed=role==='lmg'?25:role==='grenadier'?26:role==='marksman'?26:28;
