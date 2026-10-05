@@ -227,13 +227,17 @@ function playerProfile(){
 var AudioSys=(function(){
   var URLS={
     rifle0:'audio/gun_rifle_0.wav',rifle1:'audio/gun_rifle_1.wav',rifle2:'audio/gun_rifle_2.wav',
-    sniper:'audio/gunshot_sniper.wav',smg0:'audio/gun_smg_0.wav',shotgun0:'audio/gun_shotgun_0.wav',
-    explosion:'audio/explosion.wav',metal:'audio/impactMetal_heavy_001.ogg',thud:'audio/metal_thud2.wav',clink:'audio/metal_clink1.wav'
+    sniper:'audio/gunshot_sniper.wav',smg0:'audio/gun_smg_0.wav',
+    cannon:'https://raw.githubusercontent.com/6WENHAO/DS-Games/532ea73974a0c9d22cde876c80fad2536143863a/冬眠の松鼠_/战争雷霆/assets/audio/cannon_fire.ogg',
+    explosion:'https://raw.githubusercontent.com/6WENHAO/DS-Games/532ea73974a0c9d22cde876c80fad2536143863a/冬眠の松鼠_/战争雷霆/assets/audio/explosion.wav',
+    metal:'https://raw.githubusercontent.com/6WENHAO/DS-Games/532ea73974a0c9d22cde876c80fad2536143863a/冬眠の松鼠_/战争雷霆/assets/audio/impactMetal_heavy_001.ogg',
+    thud:'https://raw.githubusercontent.com/6WENHAO/DS-Games/532ea73974a0c9d22cde876c80fad2536143863a/冬眠の松鼠_/战争雷霆/assets/audio/metal_thud2.wav',
+    clink:'https://raw.githubusercontent.com/6WENHAO/DS-Games/532ea73974a0c9d22cde876c80fad2536143863a/冬眠の松鼠_/战争雷霆/assets/audio/metal_clink1.wav'
   };
   var bank={},nativeProto={},ready=false,unlocked=false,last={},seed=8500;
   function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
   function pick(a){return a[Math.floor(rnd()*a.length)];}
-  function fmt(u){return u.split('.').pop().toLowerCase()==='ogg'?'ogg':'wav';}
+  function fmt(u){var x=u.split('?')[0].split('.').pop().toLowerCase();return x==='ogg'?'ogg':x==='mp3'?'mp3':'wav';}
   function build(){
     if(ready)return;ready=true;
     Object.keys(URLS).forEach(function(k){
@@ -259,8 +263,8 @@ var AudioSys=(function(){
     if(v<=2)return {main:pick(['rifle0','rifle1']),tail:'sniper',vol:.98,tailVol:.08,rate:1.00};
     if(v<=6)return {main:pick(['rifle1','rifle2']),tail:null,vol:.94,tailVol:0,rate:1.00};
     if(v<=10)return {main:'smg0',tail:null,vol:.88,tailVol:0,rate:.99};
-    if(p&&(p.primaryProjectile==='guided'||p.primaryProjectile==='howitzer'||p.primarySplash>=20))return {main:'shotgun0',tail:'explosion',vol:.98,tailVol:.13,rate:.93};
-    if(p&&(p.primaryProjectile==='shell'||p.primarySplash>0))return {main:'shotgun0',tail:null,vol:.94,tailVol:0,rate:.97};
+    if(p&&(p.primaryProjectile==='guided'||p.primaryProjectile==='howitzer'||p.primarySplash>=20))return {main:'cannon',tail:'explosion',vol:.98,tailVol:.13,rate:.96};
+    if(p&&(p.primaryProjectile==='shell'||p.primarySplash>0))return {main:'cannon',tail:null,vol:.94,tailVol:0,rate:1.00};
     return {main:'rifle2',tail:null,vol:.92,tailVol:0,rate:1.00};
   }
   function play(kind,volume,opts){
