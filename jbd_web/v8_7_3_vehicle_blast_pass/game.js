@@ -1018,15 +1018,15 @@ function blastNearbyFromVehicle(x,y,r,damage,source){
   blastCover(x,y,r*1.40,7.5);
   for(var i=0;i<gameState.vehicles.length;i++){
     var v=gameState.vehicles[i];if(!v.alive||v===source)continue;
-    var d=dist(x,y,v.x,v.y),reach=r*1.55;if(d>=reach)continue;
-    var fall=.30+.88*(1-d/reach);
-    var chainDamage=damage*.94*fall;
+    var d=dist(x,y,v.x,v.y),reach=r*1.65;if(d>=reach)continue;
+    var fall=.34+.92*(1-d/reach);
+    var chainDamage=damage*1.10*fall;
     damageVehicle(v,chainDamage,'he');
     if(v.alive){
-      v.ballisticHits=(v.ballisticHits||0)+(d<r*.80?5:3);
-      if(d<r*1.05)beginFuelLeak(v);
-      var igniteChance=d<r*.62?.88:d<r*.95?.62:.34;
-      if(v.fuelLeak&&Math.random()<igniteChance)igniteFuel(v,rand(.28,.95));
+      v.ballisticHits=(v.ballisticHits||0)+(d<r*.85?6:4);
+      if(d<r*1.32)beginFuelLeak(v);
+      var igniteChance=d<r*.72?.97:d<r*1.08?.82:.56;
+      if(v.fuelLeak&&Math.random()<igniteChance)igniteFuel(v,rand(.18,.72));
     }
   }
   for(i=0;i<gameState.wrecks.length;i++){
