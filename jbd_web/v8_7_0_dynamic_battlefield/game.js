@@ -819,7 +819,7 @@ function explode(x,y,r,crater){
   }
   gameState.shake=Math.max(gameState.shake||0,clamp(r*.18,2,7));gameState.screenFlash=Math.max(gameState.screenFlash||0,clamp(r/90,.05,.22));
   AudioSys.tone('boom');
-  if(gameState&&gameState.map)blastCover(x,y,r||18,(big?5.0:3.0));
+  if(gameState&&gameState.map)blastCover(x,y,r||18,((r||18)>=28?5.0:3.0));
 }
 function emitSmoke(x,y,heavy){
   pushEffect({type:'smoke',x:x+rand(-4,4),y:y+rand(-4,4),vx:rand(-7,7),vy:rand(-18,-9),r:heavy?rand(5,8):rand(3,5),t:0,life:heavy?rand(.8,1.25):rand(.55,.9),shade:Math.random()});
