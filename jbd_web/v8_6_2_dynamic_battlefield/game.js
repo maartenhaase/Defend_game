@@ -983,7 +983,7 @@ function registerVehicleImpact(o,points,source){
   return o.burning;
 }
 function vehicleBlastDamage(x,y,r,damage,source){
-  var i,e,v,w,d,fall;
+  var i,e,v,w,d,fall,priorWrecks=gameState.wrecks.slice();
   for(i=0;i<gameState.infantry.length;i++){
     e=gameState.infantry[i];if(!e.alive)continue;d=dist(x,y,e.x,e.y);if(d>=r)continue;
     fall=.25+.85*(1-d/r);damageInfantry(e,damage*fall,'he');
@@ -994,8 +994,8 @@ function vehicleBlastDamage(x,y,r,damage,source){
     v.hp-=damage*.72*fall;v.hitFlash=.12;vehicleHitFx(v,'he');
     if(v.hp<=0)neutralizeVehicle(v,'BLAST',false);
   }
-  for(i=0;i<gameState.wrecks.length;i++){
-    w=gameState.wrecks[i];if(w===source||w.exploded)continue;d=dist(x,y,w.x,w.y);if(d>=r*1.18)continue;
+  for(i=0;i<priorWrecks.length;i++){
+    w=priorWrecks[i];if(w===source||w.exploded)continue;d=dist(x,y,w.x,w.y);if(d>=r*1.18)continue;
     registerVehicleImpact(w,d<r*.55?4:2,'he');if(w.burning)w.cookoffT=Math.min(w.cookoffT||1,rand(.55,1.05));
   }
   damageCoverBlast(x,y,r,3.0);
