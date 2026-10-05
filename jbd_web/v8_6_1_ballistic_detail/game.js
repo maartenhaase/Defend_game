@@ -900,7 +900,7 @@ function vehicleComponentText(v,label){
   pushEffect({type:'damage',x:v.x,y:v.y-10,text:label,t:0,life:.58});
 }
 function emitGlassHit(v){
-  var first=!v.windowBroken;v.windowBroken=true,a=v.bodyAngle==null?Math.PI/2:v.bodyAngle;
+  var first=!v.windowBroken;v.windowBroken=true;var a=v.bodyAngle==null?Math.PI/2:v.bodyAngle;
   var gx=v.x+Math.cos(a)*9,gy=v.y+Math.sin(a)*9;
   var count=first?(IS_IPHONE?9:14):(IS_IPHONE?4:7);
   for(var i=0;i<count;i++)pushEffect({type:'glassShard',x:gx+rand(-6,6),y:gy+rand(-4,4),vx:rand(-58,58)+Math.cos(a)*18,vy:rand(-58,16)+Math.sin(a)*18,rot:rand(0,TAU),vr:rand(-17,17),t:0,life:rand(.36,.72)});
