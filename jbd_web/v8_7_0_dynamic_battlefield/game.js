@@ -970,12 +970,12 @@ function fuelHitProgress(obj,bulletPower,isHeavy){
   obj.ballisticHits=(obj.ballisticHits||0)+Math.max(1,bulletPower||1);
   var min=vehicleFuelThreshold(obj.type),leakStart=Math.max(4,min-2);
   if(!obj.fuelLeak&&obj.ballisticHits>=leakStart){
-    var leakChance=Math.min(.82,.14+(obj.ballisticHits-leakStart)*.13+(isHeavy?.12:0));
-    if(Math.random()<leakChance)beginFuelLeak(obj);
+    var leakChance=Math.min(.92,.14+(obj.ballisticHits-leakStart)*.13+(isHeavy?.12:0));
+    if(obj.ballisticHits>=leakStart+5||Math.random()<leakChance)beginFuelLeak(obj);
   }
   if(obj.fuelLeak&&!obj.fuelIgnited&&obj.ballisticHits>=min){
-    var fireChance=Math.min(.72,.08+(obj.ballisticHits-min)*.095+(isHeavy?.16:0));
-    if(Math.random()<fireChance)igniteFuel(obj,rand(1.55,2.65));
+    var fireChance=Math.min(.86,.08+(obj.ballisticHits-min)*.095+(isHeavy?.16:0));
+    if(obj.ballisticHits>=min+6||Math.random()<fireChance)igniteFuel(obj,rand(1.55,2.65));
   }
 }
 function blastNearbyFromVehicle(x,y,r,damage,source){
@@ -2000,7 +2000,8 @@ function update(dt){
   var liveInf=gameState.infantry.some(function(e){return e.alive;});
   var liveVeh=gameState.vehicles.some(function(v){return v.alive&&v.state!=='parked'&&v.state!=='parkedDisabled'&&v.state!=='disabled';});
   var liveAir=gameState.air.some(function(a){return a.alive;});
-  if(gameState.eventCursor>=gameState.events.length&&!liveInf&&!liveVeh&&!liveAir&&!gameState.paras.length&&gameState.levelTime>11.5)completeLevel();
+  var volatileWreck=gameState.wrecks.some(function(w){return w.fuelIgnited&&!w.exploded;});
+  if(gameState.eventCursor>=gameState.events.length&&!liveInf&&!liveVeh&&!liveAir&&!volatileWreck&&!gameState.paras.length&&gameState.levelTime>11.5)completeLevel();
 }
 
 /* ---------- PROGRESSION ---------- */
