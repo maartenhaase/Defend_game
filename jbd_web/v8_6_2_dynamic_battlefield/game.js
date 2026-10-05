@@ -990,18 +990,19 @@ function vehicleBlastDamage(x,y,r,damage,source){
   }
   for(i=0;i<gameState.vehicles.length;i++){
     v=gameState.vehicles[i];if(!v.alive||v===source)continue;d=dist(x,y,v.x,v.y);if(d>=r*1.15)continue;
-    fall=.20+.80*(1-d/(r*1.15));registerVehicleImpact(v,d<r*.50?4:2,'he');
+    fall=.20+.80*(1-d/(r*1.15));registerVehicleImpact(v,1,'he');
     v.hp-=damage*.72*fall;v.hitFlash=.12;vehicleHitFx(v,'he');
     if(v.hp<=0)neutralizeVehicle(v,'BLAST',false);
   }
   for(i=0;i<priorWrecks.length;i++){
     w=priorWrecks[i];if(w===source||w.exploded)continue;d=dist(x,y,w.x,w.y);if(d>=r*1.18)continue;
-    registerVehicleImpact(w,d<r*.55?4:2,'he');if(w.burning)w.cookoffT=Math.min(w.cookoffT||1,rand(.55,1.05));
+    registerVehicleImpact(w,1,'he');if(w.burning)w.cookoffT=Math.min(w.cookoffT||1,rand(.55,1.05));
   }
   damageCoverBlast(x,y,r,3.0);
 }
 function explodeLiveVehicle(v){
   if(!v||!v.alive)return false;
+  if((v.hitCount||0)<vehicleFuelThresholds(v.type).explode)return false;
   dismountDestroyed(v,'he');emitVehicleFragments(v,'he');v.alive=false;v.currentSpeed=0;v.hasMG=false;
   gameState.stats.vehicleKills++;gameState.eff=clamp(gameState.eff+.025,0,1);addStreak();
   var w={type:v.type,x:v.x,y:v.y,bodyAngle:v.bodyAngle,variant:v.id%4,burnT:rand(9,15),smokeCd:0,flameCd:0,disabled:true,softDisabled:false,exploded:true,hitCount:v.hitCount||0,fuelLeak:true,oilRadius:Math.max(8,v.oilRadius||0)};
@@ -1009,7 +1010,8 @@ function explodeLiveVehicle(v){
   explode(v.x,v.y,31,true);vehicleBlastDamage(v.x,v.y,82,68,v);return true;
 }
 function explodeDisabledWreck(w){
-  if(!w||w.exploded)return false;w.exploded=true;w.softDisabled=false;w.burning=false;w.fuelLeak=true;w.burnT=rand(9,15);w.smokeCd=0;w.flameCd=0;
+  if(!w||w.exploded)return false;
+  if((w.hitCount||0)<vehicleFuelThresholds(w.type).explode)return false;w.exploded=true;w.softDisabled=false;w.burning=false;w.fuelLeak=true;w.burnT=rand(9,15);w.smokeCd=0;w.flameCd=0;
   emitVehicleFragments(w,'he');explode(w.x,w.y,31,true);vehicleBlastDamage(w.x,w.y,82,68,w);return true;
 }
 function lineBlockedByWreck(x1,y1,x2,y2){
@@ -1032,7 +1034,7 @@ function resolveHEWreckHit(b){
   for(var i=0;i<gameState.wrecks.length;i++){
     var w=gameState.wrecks[i],rr=w.type==='halftrack'?20:w.type==='truck'||w.type==='trooptruck'?19:w.type==='lighttruck'?17:15;
     if(pointSegDist(w.x,w.y,b.px,b.py,b.x,b.y)<rr&&(b.z||0)<=8){
-      registerVehicleImpact(w,4,'he');specialImpactAt(b.x,b.y,b);if(w.burning)w.cookoffT=Math.min(w.cookoffT||1,.55);b.active=false;return true;
+      registerVehicleImpact(w,1,'he');specialImpactAt(b.x,b.y,b);if(w.burning)w.cookoffT=Math.min(w.cookoffT||1,.55);b.active=false;return true;
     }
   }
   return false;
@@ -1043,7 +1045,7 @@ function neutralizeVehicle(v,reason,fragments){
   if(fragments)emitVehicleFragments(v,'mg');
   v.alive=false;v.currentSpeed=0;v.state='disabled';v.hasMG=false;
   gameState.stats.vehicleKills++;gameState.eff=clamp(gameState.eff+.018,0,1);addStreak();
-  gameState.wrecks.push({type:v.type,x:v.x,y:v.y,bodyAngle:v.bodyAngle,variant:v.id%4,burnT:0,smokeCd:0,flameCd:0,disabled:true,softDisabled:true,disabledReason:reason||'MOBILITY',doorOpen:!!v.doorOpen,rearGateOpen:!!v.rearGateOpen,mirrorLeft:v.mirrorLeft!==false,mirrorRight:v.mirrorRight!==false,tireFlat:!!v.tireFlat,windowBroken:!!v.windowBroken,bulletHoles:v.bulletHoles||0,hitCount:v.hitCount||0,fuelLeak:!!v.fuelLeak,burning:!!v.burning,cookoffT:v.cookoffT||0,oilRadius:Math.max(v.oilRadius||0,v.fuelLeak?4:2.5),oilSeed:Math.random()*999});
+  gameState.wrecks.push({type:v.type,x:v.x,y:v.y,bodyAngle:v.bodyAngle,variant:v.id%4,burnT:0,smokeCd:0,flameCd:0,disabled:true,softDisabled:true,disabledReason:reason||'MOBILITY',doorOpen:!!v.doorOpen,rearGateOpen:!!v.rearGateOpen,mirrorLeft:v.mirrorLeft!==false,mirrorRight:v.mirrorRight!==false,tireFlat:!!v.tireFlat,windowBroken:!!v.windowBroken,bulletHoles:v.bulletHoles||0,hitCount:v.hitCount||0,fuelLeak:!!v.fuelLeak,burning:!!v.burning,cookoffT:v.cookoffT||0,oilRadius:v.fuelLeak?Math.max(v.oilRadius||0,4):0,oilSeed:Math.random()*999});
   if(gameState.wrecks.length>16)gameState.wrecks.shift();
   AudioSys.tone('metal',.42);gameState.shake=Math.max(gameState.shake||0,.8);
   vehicleComponentText(v,reason==='DRIVER'?'DISABLED':'MOBILITY KILL');
@@ -1071,7 +1073,7 @@ function smallArmsVehicleHit(v,b){
   else if(component==='mirror'){emitMirrorHit(v,lx<0?-1:1);}
   else if(component==='driver'){AudioSys.tone('flesh',.76);driverShotOut(v);}
   else{vehicleComponentText(v,'RICOCHET');emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.82);vehicleHitFx(v,'mg');}
-  // Bolt rifles and ordinary rifles can never ignite or destroy the truck body.
+  // Ordinary rifle hits do not body-HP detonate a vehicle; repeated impacts can damage fuel systems and eventually cook off a disabled vehicle.
   return false;
 }
 function primaryVehicleHit(v,b){
@@ -1093,8 +1095,9 @@ function primaryVehicleHit(v,b){
 function damageVehicle(v,dmg,kind){
   if(!v.alive)return false;
   var mgMult=v.type==='trooptruck'?1.15:v.type==='jeep'?1.0:v.type==='lighttruck'?.82:v.type==='truck'?.64:.24;
-  var dealt=dmg*(kind==='mg'?mgMult:1),points=kind==='he'?4:kind==='fire'?2:1;
-  registerVehicleImpact(v,points,kind==='fire'?'fire':kind==='he'?'he':'bullet');
+  var dealt=dmg*(kind==='mg'?mgMult:1),points=kind==='fire'?0:1;
+  if(points)registerVehicleImpact(v,1,kind==='he'?'he':'bullet');
+  else if(kind==='fire'&&v.fuelLeak&&(v.hitCount||0)>=vehicleFuelThresholds(v.type).explode&&!v.burning&&Math.random()<.18)igniteVehicleObject(v,'fire');
   v.hp-=dealt;v.hitFlash=.10;gameState.hitMarker=.20;gameState.hitPulse=1;pushEffect({type:'damage',x:v.x,y:v.y-8,text:String(Math.max(1,Math.round(dealt))),t:0,life:.52});vehicleHitFx(v,kind);
   if(v.hp<=0){neutralizeVehicle(v,kind==='he'?'STRUCTURAL':'GUNFIRE',false);return true;}
   v.smoke=.55;return false;
@@ -1644,11 +1647,8 @@ function damageCover(c,power,source){
     loss=source==='blast'?Math.max(1,Math.min(3,Math.round(power))):Math.max(1,Math.min(2,Math.round(power)));
   }else{
     c.stageHits=(c.stageHits||0)+1;
-    if(c.stageHits>=2){
-      var resist=(c.kind==='sandbag'||c.kind==='lowwall'||c.kind==='log')?.78:(c.kind==='barrel'||c.kind==='crate')?.92:1.0;
-      var chance=clamp((.42+(c.stageHits-2)*.18+Math.min(.16,power*.035))*resist,.18,1);
-      if(Math.random()<chance){loss=1;c.stageHits=0;}
-    }
+    var needed=(c.kind==='sandbag'||c.kind==='lowwall'||c.kind==='log')?3:2;
+    if(c.stageHits>=needed){loss=1;c.stageHits=0;}
   }
   if(loss>0){
     c.integrity=Math.max(1,c.integrity-loss);c.damageFlash=.20;
@@ -1941,7 +1941,7 @@ function updateEffects(dt){
   for(i=0;i<gameState.wrecks.length;i++){
     var w=gameState.wrecks[i];
     if(w.softDisabled){
-      w.oilRadius=Math.min(w.fuelLeak?24:8,(w.oilRadius||2)+dt*(w.fuelLeak?1.15:.28));
+      if(w.fuelLeak)w.oilRadius=Math.min(24,(w.oilRadius||2)+dt*1.15);
       if(w.burning&&!w.exploded){w.cookoffT-=dt;w.smokeCd=(w.smokeCd||0)-dt;w.flameCd=(w.flameCd||0)-dt;if(w.smokeCd<=0){w.smokeCd=rand(.10,.18);emitSmoke(w.x+rand(-7,7),w.y+rand(-6,6),true);}if(w.flameCd<=0){w.flameCd=rand(.09,.16);emitFlame(w.x+rand(-6,6),w.y+rand(-5,6),true);}if(w.cookoffT<=0){explodeDisabledWreck(w);continue;}}
     }
     if((w.burnT||0)>0){
@@ -2541,7 +2541,7 @@ function drawVehicle(v,wreck){
 
   if(wreck){
     if(v.softDisabled){
-      ctx.save();ctx.globalAlpha=v.fuelLeak?.50:.34;ctx.fillStyle=v.fuelLeak?'#3b2912':'#241d15';ctx.beginPath();ctx.ellipse(v.x+4,v.y+13,Math.max(3,v.oilRadius||3),Math.max(1.8,(v.oilRadius||3)*.42),(v.oilSeed||0)%1,0,TAU);ctx.fill();ctx.restore();
+      if(v.fuelLeak){ctx.save();ctx.globalAlpha=.50;ctx.fillStyle='#3b2912';ctx.beginPath();ctx.ellipse(v.x+4,v.y+13,Math.max(3,v.oilRadius||3),Math.max(1.8,(v.oilRadius||3)*.42),(v.oilSeed||0)%1,0,TAU);ctx.fill();ctx.globalAlpha=.16;ctx.fillStyle='#9a7130';ctx.beginPath();ctx.ellipse(v.x+2,v.y+11,Math.max(2,(v.oilRadius||3)*.62),Math.max(1,(v.oilRadius||3)*.18),0,0,TAU);ctx.fill();ctx.restore();}
       drawAtlas(type+':empty:0:hit',v.x,v.y,scale,rot,1);
       ctx.save();ctx.translate(v.x,v.y);ctx.rotate(rot);
       if(v.windowBroken){var wy=bodyL*.29;ctx.strokeStyle='rgba(205,230,225,.88)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(-5,wy-4);ctx.lineTo(5,wy+2);ctx.moveTo(4,wy-5);ctx.lineTo(-4,wy+2);ctx.stroke();}
