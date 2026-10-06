@@ -541,7 +541,7 @@ function resetLevel(){
   gameState.damageTarget=levelDamageBand(gameState.levelIndex,gameState.profile.maxHp);
   gameState.adaptiveEvaluated=false;
   gameState.enemyProfile=enemyProgression(gameState.levelIndex);
-  gameState.time=0;gameState.levelTime=0;gameState.levelComplete=false;gameState.stageIntroT=1.55;gameState.waveIntroT=0;gameState.waveIntroText='';gameState.recoveryT=0;gameState.runBonusSupply=0;
+  gameState.time=0;gameState.levelTime=0;gameState.levelComplete=false;gameState.stageIntroT=1.55;gameState.waveIntroT=0;gameState.waveIntroText='';gameState.recoveryT=0;gameState.runBonusSupply=0;gameState.bunkerGraceT=0;
   gameState.bunker.x=W*.5;gameState.bunker.y=H-Math.max(72,safeBottom+52);
   gameState.bunker.maxHp=gameState.profile.maxHp;gameState.bunker.hp=gameState.profile.maxHp;
   gameState.primaryAmmo=gameState.profile.primaryMag;gameState.primaryCooldown=0;gameState.primaryReloadT=0;
@@ -1103,7 +1103,10 @@ function spawnVehicle(type,count,vehicleId){
   var accel=(type==='trooptruck'?68:type==='jeep'?72:type==='scoutcar'?78:type==='lighttruck'?36:type==='truck'?27:26)*(spec.accel||1);
   var turn=(type==='trooptruck'?1.70:type==='jeep'?2.75:type==='scoutcar'?2.55:type==='lighttruck'?1.90:type==='truck'?1.50:1.32)*(spec.turn||1);
   var roadX=gameState.map.road.x,side=Math.random()<.5?-1:1,shoulder=clamp(roadX+side*(type==='halftrack'?rand(50,72):type==='trooptruck'?rand(34,48):type==='scoutcar'?rand(44,66):rand(38,60)),28,W-28);
-  var x=roadX+rand(-5,5),spawnY=type==='trooptruck'?H*.105:safeTop+48;
+  var routeBias=0,sec=gameState.map.road.secondary,style=gameState.map.road.style,half=gameState.map.corridorHalf||92;
+  if(gameState.levelIndex>=4&&(sec==='cross'||sec==='yard'||sec==='fork'||sec==='alley'))routeBias=(Math.random()<.5?-1:1)*Math.min(half*.28,24);
+  else if(style==='s'||style==='dogleg')routeBias=(Math.random()<.5?-1:1)*Math.min(half*.16,14);
+  var x=clamp(roadX+routeBias+rand(-5,5),roadX-half*.72,roadX+half*.72),spawnY=type==='trooptruck'?H*.105:safeTop+48;
   for(var vi=0;vi<gameState.vehicles.length;vi++){var ov=gameState.vehicles[vi];if(ov.alive&&ov.y<safeTop+125)spawnY=Math.min(spawnY,ov.y-72);}
   var aim=Math.atan2(gameState.bunker.y-spawnY,gameState.bunker.x-x),transport=!!spec.transport,dismountRun=transport||(type==='halftrack'&&Math.random()<.62);
   var hasMG=spec.hasMG!=null?!!spec.hasMG:type!=='trooptruck',passengerCount=transport?Math.max(1,count||cap):cap;
@@ -1477,11 +1480,11 @@ function damageAir(a,dmg){
 }
 function damageBunker(dmg){
   var real=dmg*gameState.profile.armorScale;
+  if((gameState.bunkerGraceT||0)>0)real*=.34;else gameState.bunkerGraceT=.115;
   gameState.bunker.hp-=real;gameState.stats.damageTaken+=real;gameState.eff=clamp(gameState.eff-.0052*real,0,1);
   gameState.recoveryT=Math.max(gameState.recoveryT||0,.45+Math.min(1.15,real*.055));
   pushEffect({type:'hit',x:gameState.bunker.x+rand(-18,18),y:gameState.bunker.y+rand(-10,10),t:0,life:.28});
-  AudioSys.tone('ground',.72);
-  if(gameState.bunker.hp<=0)endGame('BUNKER LOST');
+  AudioSys.tone('ground',.72);if(gameState.bunker.hp<=0)endGame('BUNKER LOST');
 }
 
 /* ---------- ENEMY AI ---------- */
@@ -2390,7 +2393,7 @@ function update(dt){
   }
   gameState.time+=dt;gameState.levelTime+=dt;AudioSys.ambience(dt);
   gameState.bunker.angle=Math.atan2(gameState.aim.y-gameState.bunker.y,gameState.aim.x-gameState.bunker.x);
-  gameState.messageT=Math.max(0,gameState.messageT-dt);gameState.stageIntroT=Math.max(0,(gameState.stageIntroT||0)-dt);gameState.waveIntroT=Math.max(0,(gameState.waveIntroT||0)-dt);gameState.recoveryT=Math.max(0,(gameState.recoveryT||0)-dt);gameState.hitMarker=Math.max(0,gameState.hitMarker-dt);gameState.hitPulse=Math.max(0,(gameState.hitPulse||0)-dt*7);gameState.bunkerKick=Math.max(0,(gameState.bunkerKick||0)-dt*18);gameState.shake=Math.max(0,(gameState.shake||0)-dt*20);gameState.screenFlash=Math.max(0,(gameState.screenFlash||0)-dt*1.9);
+  gameState.messageT=Math.max(0,gameState.messageT-dt);gameState.stageIntroT=Math.max(0,(gameState.stageIntroT||0)-dt);gameState.waveIntroT=Math.max(0,(gameState.waveIntroT||0)-dt);gameState.recoveryT=Math.max(0,(gameState.recoveryT||0)-dt);gameState.bunkerGraceT=Math.max(0,(gameState.bunkerGraceT||0)-dt);gameState.hitMarker=Math.max(0,gameState.hitMarker-dt);gameState.hitPulse=Math.max(0,(gameState.hitPulse||0)-dt*7);gameState.bunkerKick=Math.max(0,(gameState.bunkerKick||0)-dt*18);gameState.shake=Math.max(0,(gameState.shake||0)-dt*20);gameState.screenFlash=Math.max(0,(gameState.screenFlash||0)-dt*1.9);
   gameState.streakT=Math.max(0,gameState.streakT-dt);if(gameState.streakT<=0)gameState.streak=0;
   gameState.primaryCooldown=Math.max(0,gameState.primaryCooldown-dt);
   if(gameState.primaryReloadT>0){gameState.primaryReloadT=Math.max(0,gameState.primaryReloadT-dt);if(gameState.primaryReloadT===0){gameState.primaryAmmo=gameState.profile.primaryMag;gameState.message='LOADED '+gameState.primaryAmmo+'/'+gameState.profile.primaryMag;gameState.messageT=.30;}}
@@ -2419,14 +2422,14 @@ function completeLevel(){
   if(gameState.levelComplete)return;
   gameState.levelComplete=true;gameState.mode='shop';
   var mapNo=gameState.levelIndex+1,milestone=mapNo%5===0;
-  gameState.save.supply+=Math.round(48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0));
+  var baseSupply=Math.round(48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0)),chainBonus=gameState.runBonusSupply||0;gameState.save.supply+=baseSupply+chainBonus;
   var points=1;if(mapNo>=5)points++;if(mapNo>=15)points++;if(mapNo>=25)points++;if(milestone)points++;if(gameState.eff>=.90)points++;
   gameState.save.arsenalPoints=(gameState.save.arsenalPoints||0)+points;
   gameState.save.bestLevel=Math.max(gameState.save.bestLevel,Math.min(CAMPAIGN_LENGTH-1,gameState.levelIndex+1));
   var dyn=evaluateAdaptiveDifficulty(false);saveGame();
   overlay.classList.remove('hidden');titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'40 MAPS COMPLETE':'MAP CLEARED';
   subEl.textContent=(gameState.encounterName||'SECTOR')+' voltooid. Damage target '+dyn.band.min+'-'+dyn.band.max+' HP; resultaat '+Math.round(dyn.damage)+' HP ('+dyn.rating+'). Volgende map enemy '+adaptiveLabel(dyn.value)+'.';
-  summaryEl.style.display='block';summaryEl.textContent='EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · DMG '+Math.round(dyn.damage)+'/'+dyn.band.min+'-'+dyn.band.max+' · +'+points+' AP';
+  summaryEl.style.display='block';summaryEl.textContent='EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · DMG '+Math.round(dyn.damage)+'/'+dyn.band.min+'-'+dyn.band.max+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus)+(chainBonus?' (CHAIN +'+chainBonus+')':'');
   shopEl.style.display='block';restartBtn.style.display='none';deployBtn.style.display='block';deployBtn.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'MAP 1 AGAIN':'NEXT MAP';renderShop();
 }
 function weaponPreview(kind,lvl){
