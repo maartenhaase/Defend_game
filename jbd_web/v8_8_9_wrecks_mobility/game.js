@@ -1816,7 +1816,13 @@ function approachValue(v,target,maxDelta){
   if(v>target)return Math.max(target,v-maxDelta);
   return v;
 }
-function vehicleBodyRadius(v){return v.type==='halftrack'?18:v.type==='truck'?17:v.type==='scoutcar'?15:v.type==='lighttruck'?15:11;}
+function vehicleBodyRadius(v){
+  var fam=v&&v.vehicleSpec&&v.vehicleSpec.family||v&&v.vehicleFamily||'';
+  if(fam==='motorcycle')return 9;
+  if(fam==='quad')return 10;
+  if(fam==='cavalry')return 9;
+  return v.type==='halftrack'?18:v.type==='truck'||v.type==='trooptruck'?17:v.type==='scoutcar'?15:v.type==='lighttruck'?15:11;
+}
 function wreckBodyRadius(w){
   ensureWreckState(w);
   var fam=w.vehicleSpec&&w.vehicleSpec.family||w.vehicleFamily||'';
@@ -1838,12 +1844,26 @@ function wreckAhead(v){
   return best;
 }
 function chooseWreckSide(v,w){
-  var margin=32,need=vehicleBodyRadius(v)+wreckBodyRadius(w)+10;
-  var leftSpace=w.x-need-margin,rightSpace=W-margin-(w.x+need);
-  if(leftSpace<18&&rightSpace>=18)return 1;
-  if(rightSpace<18&&leftSpace>=18)return -1;
-  if(Math.abs(v.x-w.x)>8)return v.x<w.x?-1:1;
-  return leftSpace>rightSpace?-1:1;
+  var margin=27,need=vehicleBodyRadius(v)+wreckBodyRadius(w)+10;
+  function sideScore(side){
+    var tx=w.x+side*need,score=0;
+    if(tx<margin||tx>W-margin)score+=1000;
+    for(var i=0;i<gameState.wrecks.length;i++){
+      var o=gameState.wrecks[i];if(o===w)continue;
+      var dd=dist(tx,w.y,o.x,o.y),safe=vehicleBodyRadius(v)+wreckBodyRadius(o)+8;
+      if(dd<safe)score+=(safe-dd)*8+90;
+    }
+    for(i=0;i<gameState.vehicles.length;i++){
+      var ov=gameState.vehicles[i];if(!ov.alive||ov===v)continue;
+      var vd=dist(tx,w.y,ov.x,ov.y),vs=vehicleBodyRadius(v)+vehicleBodyRadius(ov)+7;
+      if(vd<vs)score+=(vs-vd)*5+40;
+    }
+    score+=Math.abs(tx-v.x)*.20;
+    return score;
+  }
+  var left=sideScore(-1),right=sideScore(1);
+  if(Math.abs(left-right)<4&&Math.abs(v.x-w.x)>8)return v.x<w.x?-1:1;
+  return left<=right?-1:1;
 }
 function beginWreckAvoid(v,w){
   if(v.state==='reverseWreck'||v.state==='evadeWreck')return;
@@ -1870,6 +1890,23 @@ function vehicleFollowScale(v){
     if(dy>0&&dy<92&&dx<vr+vehicleBodyRadius(o)+10)scale=Math.min(scale,clamp((dy-38)/48,0,.82));
   }
   return scale;
+}
+function separateVehiclesFromWrecks(){
+  for(var i=0;i<gameState.vehicles.length;i++){
+    var v=gameState.vehicles[i];if(!v.alive)continue;
+    var vr=vehicleBodyRadius(v);
+    for(var j=0;j<gameState.wrecks.length;j++){
+      var w=ensureWreckState(gameState.wrecks[j]),wr=wreckBodyRadius(w),min=vr+wr+3;
+      var dx=v.x-w.x,dy=v.y-w.y,d=Math.sqrt(dx*dx+dy*dy)||.001;
+      if(d>=min)continue;
+      var side=v.avoidSide||chooseWreckSide(v,w),push=Math.min(9,min-d+.8);
+      var nx=Math.abs(dx/d)>.18?dx/d:side,ny=dy/d;
+      v.x+=nx*push;v.y+=ny*push*.18;
+      v.currentSpeed=Math.min(v.currentSpeed,v.speed*.26);
+      v.sideVel=(v.sideVel||0)+side*push*2.1;
+      if(v.state!=='reverseWreck'&&v.state!=='evadeWreck'){v.avoidWreck=w;v.avoidSide=side;v.resumeState=v.state;v.avoidT=rand(.45,.70);v.state='reverseWreck';}
+    }
+  }
 }
 function separateVehicles(){
   var a=gameState.vehicles;
@@ -2029,7 +2066,7 @@ function updateVehicles(dt){
       pushEffect({type:'dust',x:v.x+rand(-8,8),y:v.y+14,r:rand(v.type==='halftrack'?4:3,v.type==='halftrack'?7:5),t:0,life:.60});
     }
   }
-  separateVehicles();
+  separateVehicles();separateVehiclesFromWrecks();
   delete gameState.dtForVehicle;
   gameState.vehicles=gameState.vehicles.filter(function(v){return v.alive;});
 }
