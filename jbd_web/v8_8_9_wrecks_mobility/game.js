@@ -1357,7 +1357,99 @@ function driverShotOut(v){
   vehicleComponentText(v,'DRIVER!');
 }
 function vehicleFuelThreshold(type){return type==='jeep'?5:type==='scoutcar'?8:type==='lighttruck'?8:(type==='trooptruck'||type==='truck')?10:12;}
-function wreckRadius(w){return w.type==='jeep'?12:w.type==='scoutcar'?16:w.type==='lighttruck'?16:(w.type==='trooptruck'||w.type==='truck')?19:21;}
+
+function ensureWreckState(w){
+  if(!w)return w;
+  if(w.wreckId==null)w.wreckId=(Math.random()*1e9)|0;
+  if(w.shellHits==null)w.shellHits=Math.max(0,w.ballisticHits||0);
+  if(w.wreckStage==null)w.wreckStage=w.exploded?1:0;
+  if(w.carcass==null)w.carcass=false;
+  if(w.panelLoss==null)w.panelLoss=0;
+  return w;
+}
+function wreckBlockChance(w){
+  ensureWreckState(w);
+  if(w.carcass)return .12;
+  var holes=Math.min(34,(w.bulletHoles||0)+(w.shellHits||0)*.45);
+  var stage=w.wreckStage||0;
+  return clamp(.94-stage*.20-holes*.018,.18,.95);
+}
+function wreckPassDamageScale(w){
+  ensureWreckState(w);
+  return w.carcass?.84:(w.wreckStage>=2?.70:w.wreckStage>=1?.57:.42);
+}
+function damageWreckShell(w,amount,kind,x,y){
+  ensureWreckState(w);amount=amount||1;
+  w.shellHits+=amount;
+  var old=w.wreckStage;
+  if(w.shellHits>=8)w.wreckStage=Math.max(w.wreckStage,1);
+  if(w.shellHits>=18)w.wreckStage=Math.max(w.wreckStage,2);
+  if(w.shellHits>=32){w.wreckStage=3;w.carcass=true;w.softDisabled=false;w.fuelIgnited=false;w.fuelBurnT=0;}
+  if(w.wreckStage>old){
+    w.panelLoss=Math.min(3,(w.panelLoss||0)+1);
+    var n=w.wreckStage===3?6:3;
+    for(var i=0;i<n;i++){
+      var a=rand(0,TAU),sp=rand(28,75);
+      pushEffect({type:'vehiclePart',part:i%2?'panel':'door',x:w.x+rand(-6,6),y:w.y+rand(-7,7),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-rand(12,38),rot:rand(0,TAU),vr:rand(-10,10),t:0,life:rand(.75,1.35),scale:rand(.62,.95)});
+    }
+    gameState.shake=Math.max(gameState.shake||0,w.wreckStage===3?2.2:1.1);
+  }
+  if(x!=null&&y!=null){
+    pushEffect({type:'impactFlash',x:x,y:y,r:4+(w.wreckStage||0),t:0,life:.08});
+    if(w.wreckStage>=2&&Math.random()<.55)pushEffect({type:'shrapnel',x:x,y:y,vx:rand(-70,70),vy:rand(-75,25),t:0,life:rand(.12,.28)});
+  }
+  return w.carcass;
+}
+function drawWreckHoles(w,rot,bodyW,bodyL){
+  ensureWreckState(w);
+  var holes=Math.min(14,Math.floor((w.bulletHoles||0)*.55+(w.shellHits||0)*.24));
+  if(!holes)return;
+  ctx.save();ctx.translate(w.x,w.y);ctx.rotate(rot);ctx.fillStyle='#0b0d0b';ctx.strokeStyle='#6f6c57';ctx.lineWidth=.45;
+  var seed=(w.wreckId||1)%997;
+  for(var i=0;i<holes;i++){
+    var xx=((seed*(i+3)*17)%100)/100*bodyW*1.28-bodyW*.64;
+    var yy=((seed*(i+7)*29)%100)/100*bodyL*1.16-bodyL*.58;
+    var rr=.72+(i%3)*.26+(w.wreckStage||0)*.10;
+    ctx.beginPath();ctx.arc(xx,yy,rr,0,TAU);ctx.fill();if(i%3===0)ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawWreckCarcass(w,type,rot){
+  ensureWreckState(w);
+  var fam=w.vehicleSpec&&w.vehicleSpec.family||w.vehicleFamily||'';
+  ctx.save();ctx.translate(w.x,w.y);ctx.rotate(rot);ctx.globalAlpha=.98;
+  if(fam==='cavalry'){
+    ctx.fillStyle='#382e25';ctx.beginPath();ctx.ellipse(0,1,6,13,.18,0,TAU);ctx.fill();
+    ctx.strokeStyle='#201d19';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-3,-7);ctx.lineTo(-10,-14);ctx.moveTo(3,-5);ctx.lineTo(10,-12);ctx.moveTo(-4,7);ctx.lineTo(-10,14);ctx.moveTo(4,7);ctx.lineTo(9,15);ctx.stroke();
+    ctx.fillStyle='#242822';ctx.fillRect(-5,-2,8,5);
+  }else if(fam==='motorcycle'){
+    ctx.strokeStyle='#171b17';ctx.lineWidth=2.3;ctx.beginPath();ctx.arc(0,-9,5,0,TAU);ctx.arc(0,10,5,0,TAU);ctx.stroke();
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(0,8);ctx.moveTo(-1,-2);ctx.lineTo(7,3);ctx.stroke();
+    ctx.strokeRect(5,0,7,8);
+  }else if(fam==='quad'){
+    ctx.strokeStyle='#171b17';ctx.lineWidth=2;for(var q=0;q<4;q++){var qx=q%2?-7:7,qy=q<2?-8:9;ctx.beginPath();ctx.arc(qx,qy,3.3,0,TAU);ctx.stroke();}
+    ctx.strokeRect(-6,-7,12,15);ctx.beginPath();ctx.moveTo(-6,-7);ctx.lineTo(6,8);ctx.moveTo(6,-7);ctx.lineTo(-6,8);ctx.stroke();
+  }else{
+    var wdt=type==='jeep'?9:type==='scoutcar'?13:type==='lighttruck'?13:type==='truck'?15:16;
+    var len=type==='jeep'?20:type==='scoutcar'?27:type==='lighttruck'?28:type==='truck'?31:32;
+    ctx.strokeStyle='#171b17';ctx.lineWidth=2.1;
+    ctx.strokeRect(-wdt*.72,-len*.58,wdt*1.44,len*1.16);
+    ctx.beginPath();ctx.moveTo(-wdt*.60,-len*.42);ctx.lineTo(wdt*.60,len*.42);ctx.moveTo(wdt*.60,-len*.42);ctx.lineTo(-wdt*.60,len*.42);ctx.stroke();
+    ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(-wdt*.95,-len*.28);ctx.lineTo(wdt*.95,-len*.28);ctx.moveTo(-wdt*.95,len*.30);ctx.lineTo(wdt*.95,len*.30);ctx.stroke();
+    ctx.fillStyle='#252923';ctx.fillRect(-wdt*.48,-3,wdt*.96,6);
+  }
+  ctx.fillStyle='#0f120f';for(var i=0;i<4;i++){ctx.beginPath();ctx.arc(rand(-6,6),rand(-9,9),1.1,0,TAU);ctx.fill();}
+  ctx.restore();
+}
+
+function wreckRadius(w){
+  ensureWreckState(w);
+  var fam=w.vehicleSpec&&w.vehicleSpec.family||w.vehicleFamily||'';
+  if(fam==='motorcycle')return 10;
+  if(fam==='quad')return 11;
+  if(fam==='cavalry')return 10;
+  return w.type==='jeep'?12:w.type==='scoutcar'?16:w.type==='lighttruck'?16:(w.type==='trooptruck'||w.type==='truck')?19:21;
+}
 function beginFuelLeak(obj){
   if(obj.fuelLeak)return;
   obj.fuelLeak=true;obj.oilRadius=Math.max(obj.oilRadius||2.5,4);obj.leakFxCd=0;
@@ -1416,19 +1508,28 @@ function explodeLiveVehicleFuel(v){
   return explodeWreck(w);
 }
 function hitDisabledWreck(w,b){
-  if(!w||w.exploded){
-    emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.62);AudioSys.tone('steel',.58);return true;
-  }
+  ensureWreckState(w);
   w.bulletHoles=(w.bulletHoles||0)+1;
-  fuelHitProgress(w,1,(b.visual||0)>=7);
-  emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.68);AudioSys.tone('steel',.62);
-  pushEffect({type:'impactFlash',x:b.x,y:b.y,r:5,t:0,life:.08});
-  return true;
+  damageWreckShell(w,1,'bullet',b.x,b.y);
+  if(!w.carcass){
+    fuelHitProgress(w,1,(b.visual||0)>=7);
+    if(w.wreckStage<2&&Math.random()<.08)emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.55);
+  }
+  var blocks=Math.random()<wreckBlockChance(w);
+  if(blocks){
+    emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),w.carcass?.30:.62);
+    AudioSys.tone('steel',w.carcass?.42:.60);
+    return true;
+  }
+  b.damage*=wreckPassDamageScale(w);
+  pushEffect({type:'spark',x:b.x,y:b.y,vx:b.vx*.06+rand(-18,18),vy:b.vy*.06+rand(-18,18),t:0,life:.12});
+  AudioSys.tone('steel',.32);
+  return false;
 }
 function lineBlockedByWreck(x1,y1,x2,y2){
   for(var i=0;i<gameState.wrecks.length;i++){
-    var w=gameState.wrecks[i],d=pointSegDist(w.x,w.y,x1,y1,x2,y2);
-    if(d<wreckRadius(w)*.72)return true;
+    var w=ensureWreckState(gameState.wrecks[i]),d=pointSegDist(w.x,w.y,x1,y1,x2,y2);
+    if(d<wreckRadius(w)*.72&&Math.random()<wreckBlockChance(w))return true;
   }
   return false;
 }
@@ -1716,7 +1817,14 @@ function approachValue(v,target,maxDelta){
   return v;
 }
 function vehicleBodyRadius(v){return v.type==='halftrack'?18:v.type==='truck'?17:v.type==='scoutcar'?15:v.type==='lighttruck'?15:11;}
-function wreckBodyRadius(w){return w.type==='halftrack'?19:w.type==='truck'?18:w.type==='scoutcar'?16:w.type==='lighttruck'?16:12;}
+function wreckBodyRadius(w){
+  ensureWreckState(w);
+  var fam=w.vehicleSpec&&w.vehicleSpec.family||w.vehicleFamily||'';
+  if(fam==='motorcycle')return 10;
+  if(fam==='quad')return 11;
+  if(fam==='cavalry')return 10;
+  return w.type==='halftrack'?19:w.type==='truck'||w.type==='trooptruck'?18:w.type==='scoutcar'?16:w.type==='lighttruck'?16:12;
+}
 function wreckAhead(v){
   var best=null,bestScore=9999,vr=vehicleBodyRadius(v);
   for(var i=0;i<gameState.wrecks.length;i++){
@@ -2124,10 +2232,10 @@ function specialImpactAt(x,y,b){
 function heObstacleHit(b){
   var i,c,m=gameState.map,z=b.z||0;
   for(i=0;i<gameState.wrecks.length;i++){
-    var w=gameState.wrecks[i];
+    var w=ensureWreckState(gameState.wrecks[i]);
     if(z<=9&&dist(b.x,b.y,w.x,w.y)<wreckRadius(w)){
-      w.ballisticHits=(w.ballisticHits||0)+4;beginFuelLeak(w);
-      if((b.specialEffect==='fire'||b.specialEffect==='plasma')||Math.random()<.72)igniteFuel(w,rand(.18,.75));
+      damageWreckShell(w,b.specialEffect==='blast'||b.specialEffect==='plasma'?9:6,'he',b.x,b.y);
+      if(!w.carcass){w.ballisticHits=(w.ballisticHits||0)+4;beginFuelLeak(w);if((b.specialEffect==='fire'||b.specialEffect==='plasma')||Math.random()<.72)igniteFuel(w,rand(.18,.75));}
       specialImpactAt(b.x,b.y,b);b.active=false;return true;
     }
   }
@@ -2231,9 +2339,13 @@ function emitGroundImpact(x,y,power){
 function primaryObstacleHit(b){
   var m=gameState.map,i,c,d;
   for(i=0;i<gameState.wrecks.length;i++){
-    var w=gameState.wrecks[i];
+    var w=ensureWreckState(gameState.wrecks[i]);
+    if(b.lastWreckId===w.wreckId)continue;
     d=pointSegDist(w.x,w.y,b.px,b.py,b.x,b.y);
-    if(d<wreckRadius(w)*.76){hitDisabledWreck(w,b);b.active=false;return true;}
+    if(d<wreckRadius(w)*.76){
+      b.lastWreckId=w.wreckId;
+      if(hitDisabledWreck(w,b)){b.active=false;return true;}
+    }
   }
   for(i=0;i<m.cover.length;i++){
     c=m.cover[i];d=pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y);
@@ -2241,8 +2353,7 @@ function primaryObstacleHit(b){
       var steel=coverMaterial(c)==='steel';
       pushEffect({type:'impactFlash',x:b.x,y:b.y,r:4,t:0,life:.08});
       damageCover(c,1,'bullet',b.x,b.y);
-      if(steel){emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),1);AudioSys.tone('steel',.72);}
-      else emitGroundImpact(b.x,b.y,.82);
+      if(steel){emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),1);AudioSys.tone('steel',.72);}else emitGroundImpact(b.x,b.y,.82);
       b.active=false;return true;
     }
   }
