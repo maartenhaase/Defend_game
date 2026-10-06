@@ -3308,6 +3308,19 @@ function drawHud(){
     var my=top+62;ctx.fillStyle='rgba(22,28,23,.92)';ctx.strokeStyle='#e6be55';roundRect(ctx,W*.5-82,my,164,22,7);ctx.fill();ctx.stroke();
     ctx.textAlign='center';ctx.fillStyle='#f1cc63';ctx.font='800 11px system-ui,-apple-system,sans-serif';ctx.fillText(gameState.message,W*.5,my+11);
   }
+  if((gameState.stageIntroT||0)>0){
+    var stageQ=clamp(gameState.stageIntroT/1.55,0,1),stageFade=Math.min(1,(1-stageQ)*5,stageQ*2.4);
+    ctx.globalAlpha=stageFade*.92;ctx.fillStyle='rgba(18,23,19,.88)';roundRect(ctx,W*.5-112,H*.28-26,224,52,8);ctx.fill();
+    ctx.textAlign='center';ctx.fillStyle='#f3efd8';ctx.font='900 10px system-ui,-apple-system,sans-serif';ctx.fillText('MAP '+(gameState.levelIndex+1),W*.5,H*.28-9);
+    ctx.font='900 16px system-ui,-apple-system,sans-serif';ctx.fillStyle='#e7c76a';ctx.fillText((gameState.map.layoutName||level().name).toUpperCase(),W*.5,H*.28+9);ctx.globalAlpha=1;
+  }
+  if((gameState.waveIntroT||0)>0){
+    var waveQ=clamp(gameState.waveIntroT/.62,0,1);
+    ctx.globalAlpha=Math.min(1,waveQ*1.6);ctx.textAlign='center';ctx.font='900 18px system-ui,-apple-system,sans-serif';
+    ctx.strokeStyle='rgba(22,28,23,.95)';ctx.lineWidth=4;ctx.strokeText(gameState.waveIntroText||'CONTACT',W*.5,H*.37);
+    ctx.fillStyle='#f3d36d';ctx.fillText(gameState.waveIntroText||'CONTACT',W*.5,H*.37);
+    ctx.globalAlpha=waveQ*.55;ctx.strokeStyle='#f3d36d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W*.5-72,H*.37+12);ctx.lineTo(W*.5+72,H*.37+12);ctx.stroke();ctx.globalAlpha=1;
+  }
   ctx.restore();
 }
 /* ---------- RENDER ---------- */
