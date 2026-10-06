@@ -360,10 +360,14 @@ var AudioSys=(function(){
   }
   function vehicleSound(v){
     if(!v)return;
+    var fam=v.vehicleSpec&&v.vehicleSpec.family||'';
+    if(fam==='cavalry')return;
     var ratio=clamp((v.currentSpeed||0)/Math.max(1,v.speed||40),0,1),pan=clamp((v.x-W*.5)/(W*.52),-.72,.72);
     var proximity=clamp(.28+.72*(v.y/H),.22,1),idle=(v.state==='unload'||v.state==='firestop'||v.state==='support');
     var vol=(idle?.12:.13+ratio*.15)*proximity,rate=.80+ratio*.46;
     var key=v.type==='halftrack'?'engineHalftrack':v.type==='scoutcar'?'engineScout':v.type==='jeep'?'engineJeep':'engineTruck';
+    if(fam==='motorcycle'){key='engineJeep';rate*=1.34;vol*=.86;}
+    else if(fam==='quad'){key='engineJeep';rate*=1.16;vol*=.90;}
     if(proc[key])procPlay(key,vol,rate,pan);
     if(v.type==='halftrack'&&ratio>.10&&proc.trackClatter)procPlay('trackClatter',Math.min(.17,vol*.72),.82+ratio*.55,pan);
   }
@@ -2084,6 +2088,8 @@ function updateVehicles(dt){
         }
       }
     }else if(v.state==='road'){
+      var mobileFam=v.vehicleSpec&&v.vehicleSpec.family||'';
+      if((mobileFam==='motorcycle'||mobileFam==='quad'||mobileFam==='cavalry')&&v.y>safeTop+72&&v.y<v.contactY-14)vehicleMG(v,turretState);
       v.currentSpeed=approachValue(v.currentSpeed,v.speed*traffic,v.accel*dt);
       var tireBias=v.tireChaosT>0?(v.tirePull||1)*(gameState.map.corridorHalf||92)*.58:0;
       var targetX=gameState.map.road.x+tireBias+Math.sin(v.zigT*v.zigFreq+v.zigPhase)*v.zigAmp;
