@@ -2945,6 +2945,22 @@ function drawAtlas(name,x,y,scale,angle,alpha){
 }
 function spritePose(e){if(!e.alive)return e.deadT<.22?'dead1':'dead2';if(e.state==='dismount')return ((e.stateT*12)|0)%2?'walk2':'walk3';if(e.state==='rocketAim')return 'standFire';if(e.state==='crawl'||e.state==='prone')return e.muzzle>0?'proneFire':'prone';if(e.state==='cover'||e.state==='covering'||e.state==='suppressed')return e.muzzle>0?'crouchFire':'crouch';if(e.state==='fire'){if(e.firePose==='prone')return e.muzzle>0?'proneFire':'prone';if(e.firePose==='crouch')return e.muzzle>0?'crouchFire':'crouch';return e.muzzle>0?'standFire':'idle';}if(e.state==='advance')return ['walk1','walk2','walk3','walk4'][((e.anim*3.15)|0)%4];return ((e.anim2*1.3)|0)%2?'idle2':'idle';}
 function spriteDirection(e){var dx,dy;if(e.alive&&(e.state==='advance'||e.state==='crawl'||e.state==='suppressed')){var t=tacticalPoint(e);dx=t.x-e.x;dy=t.y-e.y;}else{dx=gameState.bunker.x-e.x;dy=gameState.bunker.y-e.y;}if(Math.abs(dx)>Math.abs(dy))return dx<0?'left':'right';return dy<0?'up':'down';}
+function infantryThreatReady(e){
+  if(!e||!e.alive||e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='suppressed')return false;
+  return (e.fireCd||0)<(e.role==='marksman'?.34:e.role==='lmg'?.20:.13);
+}
+function drawInfantryThreatTell(e,x,y){
+  if(!infantryThreatReady(e)||e.rocketUnit)return;
+  var blink=((gameState.time*14)|0)&1;if(!blink&&e.role!=='marksman')return;
+  var a=e.angle||0,mx=x+Math.cos(a)*9,my=y-3+Math.sin(a)*9;
+  ctx.save();ctx.globalAlpha=e.role==='marksman'?.92:.68;ctx.strokeStyle=e.role==='marksman'?'#fff4c2':'#e4b657';ctx.lineWidth=e.role==='marksman'?1.4:1;
+  ctx.beginPath();ctx.moveTo(mx-3,my);ctx.lineTo(mx+3,my);ctx.moveTo(mx,my-3);ctx.lineTo(mx,my+3);ctx.stroke();ctx.restore();
+}
+function drawVehicleThreatTell(v){
+  if(!v||!v.alive||!v.hasMG||(v.fireCd||0)>.18)return;if(!(((gameState.time*16)|0)&1))return;
+  var m=vehicleMuzzle(v);ctx.save();ctx.globalAlpha=.82;ctx.strokeStyle='#f4cf79';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(m.x-3,m.y);ctx.lineTo(m.x+3,m.y);ctx.moveTo(m.x,m.y-3);ctx.lineTo(m.x,m.y+3);ctx.stroke();ctx.restore();
+}
 function drawSoldier(e){
   var pose=spritePose(e),dir=spriteDirection(e),skin=Math.abs(e.variant||0)%SPR.inf.skins,scale=(IS_IPHONE?1.04:1.00);
   var moving=e.alive&&(e.state==='advance'||e.state==='crawl'||e.state==='dismount'),gait=moving?Math.sin(e.anim*3.15):0,bob=moving&&pose.indexOf('prone')!==0?Math.abs(gait)*.85:0;
@@ -2961,6 +2977,7 @@ function drawSoldier(e){
   if(e.alive&&e.mgTeamGunner){ctx.strokeStyle='#252a23';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-5,4);ctx.lineTo(7,4);ctx.stroke();ctx.fillStyle='#6f5c3b';ctx.fillRect(-5,5,4,3);}ctx.restore();
   if(e.alive&&e.rocketUnit){var aa=e.state==='rocketAim'?(e.rocketAimAngle||e.angle):e.angle;ctx.save();ctx.translate(xx,yy-3);ctx.rotate(aa);ctx.strokeStyle='#151a16';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.strokeStyle='#52604a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.fillStyle='#8a7650';ctx.fillRect(-3,-2,3,4);ctx.restore();if(e.state==='rocketAim'){var rq=1-clamp(e.rocketAimT/Math.max(.01,e.rocketAimTotal),0,1);ctx.save();ctx.globalAlpha=.45+.35*Math.sin(gameState.time*16)*rq;ctx.strokeStyle='#e89a45';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(xx,yy-2,8+rq*4,0,TAU);ctx.stroke();ctx.restore();}}
   if(e.alive&&pose.indexOf('prone')!==0){ctx.save();ctx.globalAlpha=.42;ctx.fillStyle='#e2e0bd';ctx.beginPath();ctx.arc(xx-1.2,yy-5.2,1.05,0,TAU);ctx.fill();ctx.restore();}
+  drawInfantryThreatTell(e,xx,yy);
 }
 function drawVehicleSpecDetails(v,type,rot,bodyW,bodyL,shadowW,shadowH){
   var sp=v.vehicleSpec;if(!sp)return;var cls=v.vehicleClass||sp.class||1,vis=sp.visual||'';
@@ -3050,6 +3067,7 @@ function drawVehicle(v,wreck){
   }
   ctx.restore();
 
+  drawVehicleThreatTell(v);
   if(v.hitFlash>0){
     ctx.save();ctx.globalAlpha=clamp(v.hitFlash/.10,0,.30);ctx.fillStyle='#fff1ad';
     ctx.beginPath();ctx.ellipse(v.x,v.y,shadowW*.95,shadowH*.70,rot,0,TAU);ctx.fill();ctx.restore();
