@@ -1480,7 +1480,7 @@ function drawWreckCarcass(w,type,rot){
     ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(-wdt*.95,-len*.28);ctx.lineTo(wdt*.95,-len*.28);ctx.moveTo(-wdt*.95,len*.30);ctx.lineTo(wdt*.95,len*.30);ctx.stroke();
     ctx.fillStyle='#252923';ctx.fillRect(-wdt*.48,-3,wdt*.96,6);
   }
-  ctx.fillStyle='#0f120f';for(var i=0;i<4;i++){ctx.beginPath();ctx.arc(rand(-6,6),rand(-9,9),1.1,0,TAU);ctx.fill();}
+  ctx.fillStyle='#0f120f';var seed=(w.wreckId||17)%991;for(var i=0;i<4;i++){var hx=((seed*(i+5)*13)%100)/100*12-6,hy=((seed*(i+9)*23)%100)/100*18-9;ctx.beginPath();ctx.arc(hx,hy,1.1,0,TAU);ctx.fill();}
   ctx.restore();
 }
 
@@ -3291,8 +3291,8 @@ function drawSpecialMobility(v,wreck,rot){
     ctx.beginPath();ctx.moveTo(-3,-4);ctx.lineTo(-7-gait*.3,10);ctx.moveTo(3,-4);ctx.lineTo(7+gait*.3,10);ctx.moveTo(-3,5);ctx.lineTo(-8+gait*.3,15);ctx.moveTo(3,5);ctx.lineTo(8-gait*.3,15);ctx.stroke();
     if(!wreck){ctx.fillStyle='#303a2d';ctx.fillRect(-4,-5,8,7);ctx.fillStyle='#c7ae86';ctx.beginPath();ctx.arc(0,-7,2.7,0,TAU);ctx.fill();ctx.strokeStyle='#20251f';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(2,-4);ctx.lineTo(8,-11);ctx.stroke();if(cls>=3){ctx.fillStyle='#6d6247';ctx.fillRect(-5,2,10,3);}}
   }
-  if(wreck&&!v.carcass)drawWreckHoles(v,0,12,22);
   ctx.restore();
+  if(wreck&&!v.carcass)drawWreckHoles(v,rot,12,22);
   if(!wreck){drawVehicleThreatTell(v);if(v.hitFlash>0){ctx.save();ctx.globalAlpha=clamp(v.hitFlash/.10,0,.28);ctx.fillStyle='#fff1ad';ctx.beginPath();ctx.ellipse(v.x,v.y,13,20,rot,0,TAU);ctx.fill();ctx.restore();}}
 }
 function drawVehicle(v,wreck){
@@ -3329,7 +3329,8 @@ function drawVehicle(v,wreck){
       if(v.mirrorRight!==false){ctx.beginPath();ctx.moveTo(bodyW*.58,bodyL*.28);ctx.lineTo(bodyW*.88,bodyL*.33);ctx.stroke();ctx.fillRect(bodyW*.82,bodyL*.29,3.2,2.4);}
       if(v.rearGateOpen){ctx.save();ctx.translate(0,-bodyL*.68);ctx.rotate(.58);ctx.fillStyle='#53604a';ctx.fillRect(-bodyW*.72,0,bodyW*1.44,4);ctx.restore();}
       ctx.restore();
-    }else{drawAtlas(type+':wreck',v.x,v.y,scale,rot,.99);drawWreckHoles(v,rot,bodyW,bodyL);}
+    }else{drawAtlas(type+':wreck',v.x,v.y,scale,rot,.99);}
+    drawWreckHoles(v,rot,bodyW,bodyL);
     return;
   }
 
