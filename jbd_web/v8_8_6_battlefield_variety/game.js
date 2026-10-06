@@ -471,18 +471,18 @@ var MAP_LAYOUTS=[
 function mapLayoutForLevel(idx,L){var n=(idx*7+(L.seed||0)+(L.zone||0)*3+(L.stage||0)*5)%MAP_LAYOUTS.length;return MAP_LAYOUTS[Math.abs(n)|0];}
 function buildMap(){
   var L=level(),rng=seeded(L.seed+gameState.levelIndex*19),p=levelPalette(BASE_PALETTES[L.theme],L.stage);
-  var stage=L.stage,act=L.actStage||0,roadBase=[.49,.55,.45][stage];
-  var roadX=W*clamp(roadBase+(rng()-.5)*.065,.39,.61);
-  var bendX=clamp(roadX+[12,-18,20][stage]+(rng()-.5)*W*.12,W*.27,W*.73);
-  var junctionY=H*clamp(.34+stage*.035+(rng()-.5)*.07,.29,.47);
-  var leftCompound=((act+L.zone)%2===0);
-  var compound={x:W*clamp((leftCompound?.18:.82)+(rng()-.5)*.055,.10,.90),y:H*clamp(.37+stage*.025+(rng()-.5)*.075,.28,.56),w:70,h:46};
+  var layout=mapLayoutForLevel(gameState.levelIndex,L),stage=L.stage,act=L.actStage||0;
+  var roadBase=[.49,.55,.45][stage]+(layout.compound<0?-.015:.015);
+  var roadX=W*clamp(roadBase+(rng()-.5)*.085,.36,.64);
+  var bendX=clamp(roadX+layout.bend*W+(rng()-.5)*W*.055,W*.22,W*.78);
+  var junctionY=H*clamp(.31+stage*.045+(rng()-.5)*.095,.25,.50);
+  var leftCompound=layout.compound<0;
+  var compound={x:W*clamp((leftCompound?.16:.84)+(rng()-.5)*.065,.08,.92),y:H*clamp(.34+stage*.035+(rng()-.5)*.10,.24,.59),w:70,h:46};
   var patches=[],cover=[],decor=[],trees=[],rocks=[],surface=[],setpieces=[],cid=1;
-  var corridorHalf=Math.min(96,W*.245);
-
-  var patchLayout=[[.14,.27,58,30],[.86,.30,58,28],[.15,.67,64,34],[.85,.72,66,34]];
-  for(var i=0;i<patchLayout.length;i++){var q=patchLayout[i];patches.push({x:clamp(W*q[0]+(rng()-.5)*22,18,W-18),y:clamp(H*q[1]+(rng()-.5)*30,safeTop+35,H-safeBottom-35),rx:q[2]*(.88+rng()*.24),ry:q[3]*(.88+rng()*.24),rot:(i%2?-.12:.10)+(rng()-.5)*.18,a:.026+rng()*.012});}
-
+  var corridorHalf=Math.min(112,W*layout.corridor);
+  var patchLayout=[[.14,.24,58,30],[.86,.29,58,28],[.13,.48,62,30],[.87,.52,60,32],[.15,.70,64,34],[.85,.76,66,34]];
+  var patchUse=Math.min(patchLayout.length,layout.patches||4);
+  for(var i=0;i<patchUse;i++){var q=patchLayout[(i+act)%patchLayout.length];patches.push({x:clamp(W*q[0]+(rng()-.5)*28,18,W-18),y:clamp(H*q[1]+(rng()-.5)*34,safeTop+35,H-safeBottom-35),rx:q[2]*(.80+rng()*.34),ry:q[3]*(.78+rng()*.38),rot:(i%2?-.16:.14)+(rng()-.5)*.24,a:.024+rng()*.016});}
   var themeCover={
     jungle:[['sandbag','sandbagCurve'],['log','logPile'],['crate','crateStack'],['bush','bush2'],['rubble','boulder1'],['fence','woodFence']],
     desert:[['sandbag','sandbagStraight'],['crate','palletCargo'],['rubble','rubbleConcrete'],['barrel','barrelStack'],['lowwall','rubbleWall'],['fence','wireFence']],
@@ -490,42 +490,35 @@ function buildMap(){
     village:[['lowwall','rubbleWall'],['crate','crateStack'],['fence','woodFence'],['sandbag','sandbagStraight'],['rubble','rubbleBrick'],['barrel','barrelStack']],
     industrial:[['crate','palletCargo'],['rubble','rubbleConcrete'],['barrel','barrelStack'],['fence','wireFence'],['lowwall','steelDebris'],['sandbag','sandbagStraight']]
   }[L.theme];
-
   var roadside=[
-    [-1,46,.255,0,-.10],[ 1,48,.285,1,.12],
-    [-1,66,.335,2,.08],[ 1,65,.365,3,-.12],
-    [-1,48,.425,4,.10],[ 1,50,.455,5,-.09],
-    [-1,72,.515,1,-.08],[ 1,70,.545,0,.11],
-    [-1,50,.605,3,.12],[ 1,52,.635,2,-.10],
-    [-1,68,.695,5,.06],[ 1,66,.725,4,-.08],
-    [-1,47,.785,0,-.10],[ 1,49,.805,1,.10]
+    [-1,43,.22,0,-.10],[1,45,.25,1,.12],[-1,62,.31,2,.08],[1,62,.35,3,-.12],
+    [-1,45,.41,4,.10],[1,47,.45,5,-.09],[-1,69,.51,1,-.08],[1,68,.55,0,.11],
+    [-1,48,.61,3,.12],[1,50,.65,2,-.10],[-1,66,.71,5,.06],[1,64,.75,4,-.08],
+    [-1,45,.81,0,-.10],[1,47,.84,1,.10]
   ];
-  var roadCount=Math.min(roadside.length,10+Math.floor(gameState.levelIndex/8));
+  var roadCount=clamp(Math.round((8+Math.floor(gameState.levelIndex/10))*layout.cover),5,roadside.length);
   for(i=0;i<roadCount;i++){
-    var rc=roadside[i],set=themeCover[(rc[3]+act)%themeCover.length];
-    var sideGap=rc[1]*(.90+rng()*.20);
-    cover.push({id:cid++,x:clamp(roadX+rc[0]*sideGap+(rng()-.5)*7,24,W-24),y:clamp(H*(rc[2]+(rng()-.5)*.025),safeTop+55,H-safeBottom-88),kind:set[0],sprite:set[1],len:(rc[0]<0?29:27)*(.90+rng()*.18),rot:rc[4]+(rng()-.5)*.16,r:7,variant:i+act*3,roadside:true,integrity:5,hitProgress:0,destroyed:false});
+    var rc=roadside[(i*3+act)%roadside.length],set=themeCover[(rc[3]+act+i)%themeCover.length],sideGap=rc[1]*(.86+rng()*.28);
+    cover.push({id:cid++,x:clamp(roadX+rc[0]*sideGap+(rng()-.5)*11,22,W-22),y:clamp(H*(rc[2]+(rng()-.5)*.035),safeTop+50,H-safeBottom-82),kind:set[0],sprite:set[1],len:(rc[0]<0?29:27)*(.84+rng()*.28),rot:rc[4]+(rng()-.5)*.22,r:7,variant:i+act*3,roadside:true,integrity:5,hitProgress:0,destroyed:false});
   }
-
   var edgeSet=L.theme==='industrial'?['steelDebris','wireFence','rubbleConcrete']:L.theme==='village'?['woodFence','rubbleBrick','crateStack']:L.theme==='desert'?['boulder2','wireFence','jerryStack']:['bush2','logPile','boulder1'];
-  var edgeRows=[[.08,.31],[.92,.34],[.09,.50],[.91,.53],[.08,.70],[.92,.74]];
-  for(i=0;i<edgeRows.length;i++)decor.push({x:clamp(W*(edgeRows[i][0]+(rng()-.5)*.028),14,W-14),y:clamp(H*(edgeRows[i][1]+(rng()-.5)*.035),safeTop+35,H-safeBottom-35),type:edgeSet[(i+act)%edgeSet.length],rot:(i%2?-.12:.12)+(rng()-.5)*.24,s:.66+rng()*.13});
-
+  var edgeRows=[[.06,.25],[.94,.27],[.07,.43],[.93,.46],[.06,.62],[.94,.65],[.07,.81],[.93,.84]];
+  var decorUse=clamp(Math.round(4+layout.cover*3),4,8);
+  for(i=0;i<decorUse;i++)decor.push({x:clamp(W*(edgeRows[i][0]+(rng()-.5)*.035),12,W-12),y:clamp(H*(edgeRows[i][1]+(rng()-.5)*.045),safeTop+30,H-safeBottom-30),type:edgeSet[(i+act)%edgeSet.length],rot:(i%2?-.15:.15)+(rng()-.5)*.30,s:.62+rng()*.18});
   var themeSets={jungle:['ambush','timber','defense','supply'],desert:['defense','supply','roadblock','rubble'],polar:['timber','defense','supply','rubble'],village:['roadblock','supply','timber','rubble'],industrial:['rubble','roadblock','supply','defense']}[L.theme];
-  var setLayout=[[.11,.40],[.89,.44],[.12,.78],[.88,.69]],setUse=Math.min(4,2+Math.floor(gameState.levelIndex/8));
-  for(i=0;i<setUse;i++)setpieces.push({x:clamp(W*(setLayout[i][0]+(rng()-.5)*.035),24,W-24),y:clamp(H*(setLayout[i][1]+(rng()-.5)*.045),safeTop+62,H-safeBottom-76),type:themeSets[(i+stage+act)%themeSets.length],rot:(i%2?-.12:.12)+(rng()-.5)*.18,flip:(i+act)%2?-1:1,s:.74+rng()*.13});
-
-  var edgeTrees=[[.05,.24],[.95,.23],[.05,.58],[.95,.59],[.05,.86],[.95,.84]];
-  var treeUse=L.theme==='desert'?2:L.theme==='industrial'?3:5;
-  for(i=0;i<treeUse;i++)trees.push({x:clamp(W*(edgeTrees[i][0]+(rng()-.5)*.028),12,W-12),y:clamp(H*(edgeTrees[i][1]+(rng()-.5)*.040),safeTop+28,H-safeBottom-28),r:6.5+(i%3)*2+rng()*1.4,variant:(i+act)%5,dead:L.theme==='industrial'&&(i+act)%2===0});
-  var rockLayout=[[.07,.39],[.93,.40],[.07,.64],[.93,.79]];
-  for(i=0;i<3;i++)rocks.push({x:clamp(W*(rockLayout[i][0]+(rng()-.5)*.025),14,W-14),y:clamp(H*(rockLayout[i][1]+(rng()-.5)*.035),safeTop+32,H-safeBottom-32),r:4.7+(i%2)*2+rng()*1.2,variant:(i+act)%3});
-
-  surface.push({x:roadX+(rng()-.5)*7,y:H*(.42+(rng()-.5)*.035),type:'trackStraight',rot:(rng()-.5)*.08,s:.68+rng()*.08,a:.14+rng()*.04},{x:roadX+7+(rng()-.5)*8,y:H*(.61+(rng()-.5)*.035),type:'trackStraight',rot:(rng()-.5)*.08,s:.68+rng()*.08,a:.13+rng()*.04});
-  if(gameState.levelIndex>=3)surface.push({x:roadX+corridorHalf*.72,y:H*.48,type:'gravel',rot:.1,s:.72,a:.19});
-  if(gameState.levelIndex>=6)surface.push({x:roadX-corridorHalf*.74,y:H*.74,type:'scorch1',rot:-.2,s:.72,a:.18});
-
-  gameState.map={palette:p,units:unitPalette(p),road:{x:roadX,bendX:bendX,junctionY:junctionY},compound:compound,patches:patches,cover:cover,decor:decor,trees:trees,rocks:rocks,surface:surface,setpieces:setpieces,corridorHalf:corridorHalf};
+  var setLayout=[[.10,.36],[.90,.40],[.11,.61],[.89,.66],[.13,.80],[.87,.79]],setUse=clamp(layout.setpieces||3,1,5);
+  for(i=0;i<setUse;i++){var sl=setLayout[(i+stage)%setLayout.length];setpieces.push({x:clamp(W*(sl[0]+(rng()-.5)*.045),22,W-22),y:clamp(H*(sl[1]+(rng()-.5)*.055),safeTop+58,H-safeBottom-70),type:themeSets[(i+stage+act)%themeSets.length],rot:(i%2?-.16:.16)+(rng()-.5)*.24,flip:(i+act)%2?-1:1,s:.70+rng()*.18});}
+  var edgeTrees=[[.04,.20],[.96,.22],[.05,.37],[.95,.41],[.04,.58],[.96,.61],[.05,.78],[.95,.82]];
+  var treeBase=L.theme==='desert'?2:L.theme==='industrial'?3:5,treeUse=clamp(Math.round(treeBase*layout.trees),1,8);
+  for(i=0;i<treeUse;i++){var tr=edgeTrees[i%edgeTrees.length];trees.push({x:clamp(W*(tr[0]+(rng()-.5)*.035),10,W-10),y:clamp(H*(tr[1]+(rng()-.5)*.050),safeTop+25,H-safeBottom-25),r:6.0+(i%3)*2+rng()*1.8,variant:(i+act)%5,dead:L.theme==='industrial'&&(i+act)%2===0});}
+  var rockLayout=[[.06,.34],[.94,.37],[.07,.57],[.93,.60],[.06,.76],[.94,.80]],rockUse=layout.cover>1.1?5:3;
+  for(i=0;i<rockUse;i++){var rk=rockLayout[i];rocks.push({x:clamp(W*(rk[0]+(rng()-.5)*.032),12,W-12),y:clamp(H*(rk[1]+(rng()-.5)*.040),safeTop+28,H-safeBottom-28),r:4.5+(i%2)*2+rng()*1.5,variant:(i+act)%3});}
+  surface.push({x:roadX+(rng()-.5)*9,y:H*(.39+(rng()-.5)*.045),type:'trackStraight',rot:(rng()-.5)*.12,s:.65+rng()*.10,a:.14+rng()*.05});
+  surface.push({x:roadX+8+(rng()-.5)*10,y:H*(.62+(rng()-.5)*.045),type:layout.style==='s'?'trackCurve':'trackStraight',rot:(rng()-.5)*.12,s:.65+rng()*.10,a:.13+rng()*.05});
+  if(layout.secondary!=='none')surface.push({x:roadX+(rng()-.5)*18,y:junctionY,type:'gravel',rot:layout.secondary==='cross'?Math.PI/2:.18,s:.92,a:.20});
+  if(gameState.levelIndex>=4)surface.push({x:roadX+corridorHalf*.70,y:H*.49,type:'gravel',rot:.1,s:.72,a:.18});
+  if(gameState.levelIndex>=7)surface.push({x:roadX-corridorHalf*.72,y:H*.73,type:'scorch1',rot:-.2,s:.72,a:.19});
+  gameState.map={palette:p,units:unitPalette(p),road:{x:roadX,bendX:bendX,junctionY:junctionY,width:layout.roadWidth,style:layout.style,secondary:layout.secondary},compound:compound,patches:patches,cover:cover,decor:decor,trees:trees,rocks:rocks,surface:surface,setpieces:setpieces,corridorHalf:corridorHalf,layoutName:layout.name,layout:layout};
 }
 /* ---------- GAME STATE ---------- */
 
