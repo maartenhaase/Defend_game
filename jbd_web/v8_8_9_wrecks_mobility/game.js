@@ -1068,7 +1068,7 @@ cavalry_2:{id:'cavalry_2',family:'cavalry',class:2,name:'KAVALLERIE KAR98K',base
 cavalry_3:{id:'cavalry_3',family:'cavalry',class:3,name:'KAVALLERIE MP40',baseType:'jeep',hp:.64,speed:1.22,accel:1.06,turn:1.24,weapon:.92,capacity:1,transport:false,hasMG:true,visual:'mountedElite'}
 };
 function vehicleClassForLevel(idx){return idx<12?1:idx<24?2:3;}
-function vehicleSpecFor(family,idx){return VEHICLE_SPECS[family+'_'+vehicleClassForLevel(idx)]||VEHICLE_SPECS.blitz_1;}
+function vehicleSpecFor(family,idx){var key=(family==='motorcycle'?'r75':family)+'_'+vehicleClassForLevel(idx);return VEHICLE_SPECS[key]||VEHICLE_SPECS.blitz_1;}
 function vehicleSpecById(id,type){if(id&&VEHICLE_SPECS[id])return VEHICLE_SPECS[id];if(type==='jeep')return VEHICLE_SPECS.kubel_1;if(type==='scoutcar')return VEHICLE_SPECS.spah_1;if(type==='halftrack')return VEHICLE_SPECS.sdkfz250_1;if(type==='lighttruck')return VEHICLE_SPECS.steyr_1;return VEHICLE_SPECS.blitz_1;}
 function pickTransportVehicle(idx,rng){if(idx<2)return 'blitz_1';return vehicleSpecFor(rng()>.48?'steyr':'blitz',idx).id;}
 function pickScoutVehicle(idx,rng){return vehicleSpecFor(idx>=6&&rng()>.52?'horch':'kubel',idx).id;}
@@ -1451,6 +1451,9 @@ function drawWreckHoles(w,rot,bodyW,bodyL){
   var holes=Math.min(14,Math.floor((w.bulletHoles||0)*.55+(w.shellHits||0)*.24));
   if(!holes)return;
   ctx.save();ctx.translate(w.x,w.y);ctx.rotate(rot);ctx.fillStyle='#0b0d0b';ctx.strokeStyle='#6f6c57';ctx.lineWidth=.45;
+  if((w.wreckStage||0)>=1){ctx.globalAlpha=.68;ctx.fillStyle='#1d211d';ctx.fillRect(-bodyW*.62,-bodyL*.18,bodyW*1.24,bodyL*.26);}
+  if((w.wreckStage||0)>=2){ctx.globalAlpha=.92;ctx.strokeStyle='#151815';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-bodyW*.58,-bodyL*.48);ctx.lineTo(bodyW*.58,bodyL*.44);ctx.moveTo(bodyW*.58,-bodyL*.48);ctx.lineTo(-bodyW*.58,bodyL*.44);ctx.stroke();}
+  ctx.globalAlpha=1;ctx.fillStyle='#0b0d0b';ctx.strokeStyle='#6f6c57';ctx.lineWidth=.45;
   var seed=(w.wreckId||1)%997;
   for(var i=0;i<holes;i++){
     var xx=((seed*(i+3)*17)%100)/100*bodyW*1.28-bodyW*.64;
@@ -1670,11 +1673,11 @@ function damageVehicle(v,dmg,kind){
     if(fam==='cavalry'){w.carcass=true;w.wreckStage=3;w.shellHits=32;addBlood(v.x,v.y,10,kind==='he');emitLandingFx(v.x,v.y,1.2);}
     else if(fam==='motorcycle'||fam==='quad'){
       w.wreckStage=kind==='he'?1:0;w.shellHits=kind==='he'?9:2;
-      if(kind==='he'){explode(v.x,v.y,blastR,true);damageWreckShell(w,5,'blast');}
+      if(kind==='he'){explode(v.x,v.y,blastR,true);damageWreckShell(w,5,'blast');blastNearbyFromVehicle(v.x,v.y,blastR*.82,24+cls*5,v);}
       else{AudioSys.tone('metal',.72);emitGroundImpact(v.x,v.y,.9);}
     }else{
       w.burnT=rand(kind==='he'?12:9,kind==='he'?20:15);
-      explode(v.x,v.y,blastR,true);
+      explode(v.x,v.y,blastR,true);blastNearbyFromVehicle(v.x,v.y,blastR*.88,30+cls*9,v);
     }
     gameState.wrecks.push(w);if(gameState.wrecks.length>18)gameState.wrecks.shift();
     return true;
@@ -3279,6 +3282,7 @@ function specialMobilityFamily(v){
 function drawSpecialMobility(v,wreck,rot){
   var sp=v.vehicleSpec||{},fam=sp.family,cls=v.vehicleClass||sp.class||1;
   if(wreck&&v.carcass){drawWreckCarcass(v,'jeep',rot);return;}
+  ctx.save();ctx.globalAlpha=wreck?.20:.25;ctx.fillStyle='#0f120f';ctx.beginPath();ctx.ellipse(v.x+2,v.y+5,fam==='cavalry'?9:11,fam==='cavalry'?18:16,rot,0,TAU);ctx.fill();ctx.restore();
   ctx.save();ctx.translate(v.x,v.y);ctx.rotate(rot);ctx.globalAlpha=wreck?.88:1;
   if(fam==='motorcycle'){
     ctx.strokeStyle='#171b17';ctx.lineWidth=2.1;ctx.fillStyle=wreck?'#3b3b32':'#4d5947';
