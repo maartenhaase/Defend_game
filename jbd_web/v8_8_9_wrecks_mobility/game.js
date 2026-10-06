@@ -1014,7 +1014,19 @@ sdkfz250_2:{id:'sdkfz250_2',family:'sdkfz250',class:2,name:'Sd.Kfz.250/3',baseTy
 sdkfz250_3:{id:'sdkfz250_3',family:'sdkfz250',class:3,name:'Sd.Kfz.250/10',baseType:'halftrack',hp:1.38,speed:1.05,accel:1.06,turn:1.06,weapon:1.30,capacity:4,transport:true,hasMG:true,visual:'heavyGun'},
 spah_1:{id:'spah_1',family:'spah',class:1,name:'Sd.Kfz.222',baseType:'scoutcar',hp:.96,speed:1.06,accel:1.08,turn:1.08,weapon:.96,capacity:2,transport:false,hasMG:true,visual:'turret'},
 spah_2:{id:'spah_2',family:'spah',class:2,name:'Sd.Kfz.223',baseType:'scoutcar',hp:1.18,speed:1.08,accel:1.10,turn:1.10,weapon:1.12,capacity:2,transport:false,hasMG:true,visual:'radioTurret'},
-spah_3:{id:'spah_3',family:'spah',class:3,name:'Sd.Kfz.234/1',baseType:'scoutcar',hp:1.42,speed:1.11,accel:1.12,turn:1.12,weapon:1.32,capacity:2,transport:false,hasMG:true,visual:'heavyTurret'}
+spah_3:{id:'spah_3',family:'spah',class:3,name:'Sd.Kfz.234/1',baseType:'scoutcar',hp:1.42,speed:1.11,accel:1.12,turn:1.12,weapon:1.32,capacity:2,transport:false,hasMG:true,visual:'heavyTurret'},
+
+r75_1:{id:'r75_1',family:'motorcycle',class:1,name:'BMW R75 SIDECAR',baseType:'jeep',hp:.52,speed:1.42,accel:1.34,turn:1.34,weapon:.72,capacity:2,transport:false,hasMG:true,visual:'sidecar'},
+r75_2:{id:'r75_2',family:'motorcycle',class:2,name:'BMW R75 MG34',baseType:'jeep',hp:.62,speed:1.44,accel:1.36,turn:1.36,weapon:.90,capacity:2,transport:false,hasMG:true,visual:'sidecarMG'},
+r75_3:{id:'r75_3',family:'motorcycle',class:3,name:'ZUNDAPP KS750 MG42',baseType:'jeep',hp:.74,speed:1.46,accel:1.38,turn:1.38,weapon:1.04,capacity:2,transport:false,hasMG:true,visual:'sidecarElite'},
+
+quad_1:{id:'quad_1',family:'quad',class:1,name:'KLEINRAD 4X4 SCOUT',baseType:'jeep',hp:.60,speed:1.30,accel:1.30,turn:1.40,weapon:.68,capacity:1,transport:false,hasMG:true,visual:'quadScout'},
+quad_2:{id:'quad_2',family:'quad',class:2,name:'KLEINRAD 4X4 MG34',baseType:'jeep',hp:.72,speed:1.32,accel:1.32,turn:1.42,weapon:.88,capacity:1,transport:false,hasMG:true,visual:'quadMG'},
+quad_3:{id:'quad_3',family:'quad',class:3,name:'KLEINRAD 4X4 ASSAULT',baseType:'jeep',hp:.86,speed:1.34,accel:1.34,turn:1.44,weapon:1.02,capacity:1,transport:false,hasMG:true,visual:'quadElite'},
+
+cavalry_1:{id:'cavalry_1',family:'cavalry',class:1,name:'REITER SPAHTRUPP',baseType:'jeep',hp:.48,speed:1.18,accel:1.02,turn:1.20,weapon:.62,capacity:1,transport:false,hasMG:true,visual:'mountedScout'},
+cavalry_2:{id:'cavalry_2',family:'cavalry',class:2,name:'KAVALLERIE KAR98K',baseType:'jeep',hp:.56,speed:1.20,accel:1.04,turn:1.22,weapon:.78,capacity:1,transport:false,hasMG:true,visual:'mountedRifle'},
+cavalry_3:{id:'cavalry_3',family:'cavalry',class:3,name:'KAVALLERIE MP40',baseType:'jeep',hp:.64,speed:1.22,accel:1.06,turn:1.24,weapon:.92,capacity:1,transport:false,hasMG:true,visual:'mountedElite'}
 };
 function vehicleClassForLevel(idx){return idx<12?1:idx<24?2:3;}
 function vehicleSpecFor(family,idx){return VEHICLE_SPECS[family+'_'+vehicleClassForLevel(idx)]||VEHICLE_SPECS.blitz_1;}
@@ -1022,6 +1034,10 @@ function vehicleSpecById(id,type){if(id&&VEHICLE_SPECS[id])return VEHICLE_SPECS[
 function pickTransportVehicle(idx,rng){if(idx<2)return 'blitz_1';return vehicleSpecFor(rng()>.48?'steyr':'blitz',idx).id;}
 function pickScoutVehicle(idx,rng){return vehicleSpecFor(idx>=6&&rng()>.52?'horch':'kubel',idx).id;}
 function pickArmoredVehicle(idx,rng){return vehicleSpecFor(idx>=10&&rng()>.48?'spah':'sdkfz250',idx).id;}
+function pickLightMobility(idx,rng){
+  var fam=idx<6?'motorcycle':idx<10?(rng()<.58?'motorcycle':'cavalry'):(rng()<.38?'motorcycle':rng()<.66?'quad':'cavalry');
+  return vehicleSpecFor(fam,idx).id;
+}
 function vehicleExplosionScale(v){var c=v&&v.vehicleClass?v.vehicleClass:1,t=v&&v.type?v.type:'truck',base=t==='jeep'?30:t==='lighttruck'?38:t==='scoutcar'?42:t==='halftrack'?48:44;return base+(c-1)*6;}
 function vehicleCapacity(type,spec){
   if(spec&&spec.capacity)return spec.capacity;
