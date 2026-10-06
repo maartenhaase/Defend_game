@@ -2496,7 +2496,15 @@ function drawCover(c,p){
   }
   if(state===1){drawEnvSprite('rubbleConcrete',c.x,c.y,.28,c.rot||0,.58);}
 }
-function drawCompound(){var c=gameState.map.compound,name=level().theme==='industrial'?'ruinCompound':level().stage===2?'fieldBunker':'supplyCompound';drawEnvSprite(name,c.x,c.y,name==='supplyCompound'?.40:.37,0,1);}
+function drawCompound(){
+  var c=gameState.map.compound,ln=gameState.map.layoutName||'',name;
+  if(ln.indexOf('BUNKER')>=0)name='fieldBunker';
+  else if(ln.indexOf('RUINED')>=0||ln.indexOf('INDUSTRIAL')>=0||ln.indexOf('RAIL')>=0)name='ruinCompound';
+  else if(level().theme==='industrial')name='ruinCompound';
+  else if(level().stage===2)name='fieldBunker';
+  else name='supplyCompound';
+  drawEnvSprite(name,c.x,c.y,name==='supplyCompound'?.40:.37,0,1);
+}
 function drawGroundTexture(){var p=gameState.map.palette,step=36,name=level().theme==='desert'?'groundSand':level().theme==='industrial'?'groundRubble':level().theme==='polar'?'groundPale':'groundGrass';for(var y=-step;y<H+step;y+=step)for(var x=-step;x<W+step;x+=step){var alt=((x/step+y/step)|0)&1;drawEnvSprite(name,x+step*.5,y+step*.5,1,alt?Math.PI:0,.46);}}
 function drawSurface(){var a=gameState.map.surface||[];for(var i=0;i<a.length;i++){var d=a[i];drawEnvSprite(d.type,d.x,d.y,d.s,d.rot,d.a);}}
 function drawSetpieces(){
@@ -2911,6 +2919,38 @@ function drawSoldier(e){
   if(e.alive&&e.rocketUnit){var aa=e.state==='rocketAim'?(e.rocketAimAngle||e.angle):e.angle;ctx.save();ctx.translate(xx,yy-3);ctx.rotate(aa);ctx.strokeStyle='#151a16';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.strokeStyle='#52604a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.fillStyle='#8a7650';ctx.fillRect(-3,-2,3,4);ctx.restore();if(e.state==='rocketAim'){var rq=1-clamp(e.rocketAimT/Math.max(.01,e.rocketAimTotal),0,1);ctx.save();ctx.globalAlpha=.45+.35*Math.sin(gameState.time*16)*rq;ctx.strokeStyle='#e89a45';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(xx,yy-2,8+rq*4,0,TAU);ctx.stroke();ctx.restore();}}
   if(e.alive&&pose.indexOf('prone')!==0){ctx.save();ctx.globalAlpha=.42;ctx.fillStyle='#e2e0bd';ctx.beginPath();ctx.arc(xx-1.2,yy-5.2,1.05,0,TAU);ctx.fill();ctx.restore();}
 }
+function drawVehicleVariantOverlay(v,type,rot,wreck){
+  var spec=v.vehicleSpec||vehicleSpecById(v.vehicleId,type);if(!spec)return;
+  var cls=spec.class||1;
+  ctx.save();ctx.translate(v.x,v.y);ctx.rotate(rot);ctx.globalAlpha=wreck?.42:.94;
+  var w=type==='jeep'?11:type==='scoutcar'?14:type==='lighttruck'?14:type==='truck'?15:16;
+  var l=type==='jeep'?20:type==='scoutcar'?27:type==='lighttruck'?27:type==='truck'?30:31;
+  ctx.strokeStyle='#171d18';ctx.fillStyle=cls===3?'#59624c':cls===2?'#65705a':'#727760';ctx.lineWidth=1;
+  if(cls>=2){ctx.fillRect(-w*.78,-l*.18,w*1.56,4);ctx.strokeRect(-w*.78,-l*.18,w*1.56,4);}
+  if(cls>=3){ctx.fillRect(-w*.72,l*.18,w*1.44,4);ctx.strokeRect(-w*.72,l*.18,w*1.44,4);}
+  if(spec.family==='kubel'){
+    ctx.fillStyle='#222822';ctx.beginPath();ctx.arc(0,-l*.55,4.5,0,TAU);ctx.fill();
+    if(cls>=2){ctx.strokeStyle='#1c211c';ctx.beginPath();ctx.moveTo(4,-l*.20);ctx.lineTo(8,-l*.65);ctx.stroke();}
+  }else if(spec.family==='horch'){
+    ctx.strokeStyle='#20251f';ctx.beginPath();ctx.moveTo(-4,-l*.42);ctx.lineTo(-8,-l*.86);ctx.moveTo(4,-l*.42);ctx.lineTo(9,-l*.80);ctx.stroke();
+    ctx.fillStyle='#766d4e';ctx.fillRect(-5,-l*.48,10,4);
+  }else if(spec.family==='blitz'){
+    ctx.strokeStyle='#93876a';for(var i=-1;i<=1;i++)if(i!==0){ctx.beginPath();ctx.moveTo(i*w*.42,-l*.74);ctx.lineTo(i*w*.42,-l*.04);ctx.stroke();}
+    if(cls>=2){ctx.fillStyle='#4c5544';ctx.fillRect(-w*.55,l*.08,w*1.10,5);}
+  }else if(spec.family==='steyr'){
+    ctx.fillStyle='#6c644a';ctx.fillRect(-w*.60,-l*.48,5,7);ctx.fillRect(w*.24,-l*.44,5,6);
+    ctx.strokeStyle='#222820';ctx.beginPath();ctx.moveTo(w*.52,-l*.18);ctx.lineTo(w*.86,-l*.58);ctx.stroke();
+  }else if(spec.family==='sdkfz250'){
+    ctx.fillStyle='#4f5947';ctx.fillRect(-w*.85,-l*.22,3,l*.74);ctx.fillRect(w*.66,-l*.22,3,l*.74);
+    if(cls>=3){ctx.fillStyle='#272d27';ctx.fillRect(-4,l*.05,8,5);}
+  }else if(spec.family==='spah'){
+    ctx.strokeStyle='#1c211d';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,6+cls,0,TAU);ctx.stroke();
+    if(cls>=2){ctx.beginPath();ctx.moveTo(4,-4);ctx.lineTo(10,-13);ctx.stroke();}
+  }
+  ctx.globalAlpha=.78;ctx.fillStyle=cls===3?'#d6c26d':cls===2?'#d1d2bd':'#b7bea5';
+  for(var m=0;m<cls;m++)ctx.fillRect(-w*.72+m*4,l*.58,3,2);
+  ctx.restore();
+}
 function drawVehicle(v,wreck){
   var rawType=v.type||'truck',type=rawType==='trooptruck'?'truck':rawType,body=v.bodyAngle==null?Math.PI/2:v.bodyAngle,rot=body-Math.PI/2;
   var scale=type==='jeep'?.50:type==='scoutcar'?.56:type==='lighttruck'?.54:type==='truck'?.52:.54;
@@ -2926,7 +2966,7 @@ function drawVehicle(v,wreck){
   if(wreck){
     if(v.softDisabled){
       ctx.save();ctx.globalAlpha=v.fuelLeak?.52:.26;ctx.fillStyle=v.fuelLeak?'#2b2416':'#241d15';ctx.beginPath();ctx.ellipse(v.x+4,v.y+13,Math.max(v.fuelLeak?4:2.5,v.oilRadius||2.5),Math.max(1.4,(v.oilRadius||2.5)*.42),(v.oilSeed||0)%1,0,TAU);ctx.fill();ctx.restore();
-      drawAtlas(type+':empty:0:hit',v.x,v.y,scale,rot,1);
+      drawAtlas(type+':empty:0:hit',v.x,v.y,scale,rot,1);drawVehicleVariantOverlay(v,type,rot,true);
       ctx.save();ctx.translate(v.x,v.y);ctx.rotate(rot);
       if(v.windowBroken){var wy=bodyL*.29;ctx.strokeStyle='rgba(205,230,225,.88)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(-5,wy-4);ctx.lineTo(5,wy+2);ctx.moveTo(4,wy-5);ctx.lineTo(-4,wy+2);ctx.stroke();}
       if(v.tireFlat){ctx.fillStyle='#111312';ctx.beginPath();ctx.ellipse(-shadowW*.70,shadowH*.25,4,2.2,.25,0,TAU);ctx.fill();}
@@ -2937,13 +2977,14 @@ function drawVehicle(v,wreck){
       if(v.mirrorRight!==false){ctx.beginPath();ctx.moveTo(bodyW*.58,bodyL*.28);ctx.lineTo(bodyW*.88,bodyL*.33);ctx.stroke();ctx.fillRect(bodyW*.82,bodyL*.29,3.2,2.4);}
       if(v.rearGateOpen){ctx.save();ctx.translate(0,-bodyL*.68);ctx.rotate(.58);ctx.fillStyle='#53604a';ctx.fillRect(-bodyW*.72,0,bodyW*1.44,4);ctx.restore();}
       ctx.restore();
-    }else drawAtlas(type+':wreck',v.x,v.y,scale,rot,.99);
+    }else{drawAtlas(type+':wreck',v.x,v.y,scale,rot,.99);drawVehicleVariantOverlay(v,type,rot,true);}
     return;
   }
 
   var loaded=(v.passengers||0)>0,frame=(((v.wheelT||0)*1.55)|0)&1;
   var state=(v.hp/v.maxHp)<.58?'hit':'healthy';
   drawAtlas(type+':'+(loaded?'loaded':'empty')+':'+frame+':'+state,v.x,v.y,scale,rot,1);
+  drawVehicleVariantOverlay(v,type,rot,false);
 
   if(v.hasMG){
     var recoil=(v.turretRecoil||0)*(type==='halftrack'?2.6:type==='scoutcar'?2.1:1.8);
