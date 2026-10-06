@@ -666,6 +666,21 @@ function enemyWeaponProfile(role,idx,seed){
   ]);
 }
 function vehicleWeaponProfile(type,idx,spec){
+  if(spec&&spec.family==='motorcycle'){
+    if(spec.class===1)return {name:'KAR98K SIDECAR',damage:.74,spread:.078,cooldown:.92};
+    if(spec.class===2)return {name:'MG34 SIDECAR',damage:.96,spread:.058,cooldown:.72};
+    return {name:'MG42 SIDECAR',damage:1.08,spread:.048,cooldown:.62};
+  }
+  if(spec&&spec.family==='quad'){
+    if(spec.class===1)return {name:'MP40 SCOUT',damage:.70,spread:.088,cooldown:.62};
+    if(spec.class===2)return {name:'MG34 LIGHT MOUNT',damage:.90,spread:.064,cooldown:.70};
+    return {name:'STG44 ASSAULT MOUNT',damage:1.02,spread:.058,cooldown:.56};
+  }
+  if(spec&&spec.family==='cavalry'){
+    if(spec.class===1)return {name:'KAR98K MOUNTED',damage:.68,spread:.095,cooldown:1.02};
+    if(spec.class===2)return {name:'GEWEHR 43 MOUNTED',damage:.82,spread:.078,cooldown:.82};
+    return {name:'MP40 MOUNTED',damage:.88,spread:.090,cooldown:.58};
+  }
   var base=idx<12?{name:'MG34',damage:1.00,spread:.052,cooldown:1.00}:idx<26?{name:'MG42',damage:1.10,spread:.042,cooldown:.88}:{name:'MG42 VETERAN',damage:1.18,spread:.034,cooldown:.78};
   if(type==='halftrack')base={name:base.name+' HEAVY',damage:base.damage*1.10,spread:base.spread*.92,cooldown:base.cooldown*.92};
   if(type==='scoutcar')base={name:base.name+' TURRET',damage:base.damage*1.06,spread:base.spread*.88,cooldown:base.cooldown*.94};
@@ -760,29 +775,43 @@ function spawnMGTeam(tactic){
 function buildEncounterPlan(){
   var idx=gameState.levelIndex,L=level(),rng=seeded(L.seed+idx*911),events=[],mapNo=idx+1,tier=Math.floor(idx/2);
   var milestone=mapNo%10===0,totalWaves=idx<2?2:idx<6?3:(milestone?4:3);
-  var time=.18,truckLoad=idx===0?2:idx===1?3:Math.min(6,3+Math.floor(idx/6)),gap=idx<2?6.9:idx<6?6.2:idx<12?5.8:5.25;
-  var names=['TRANSPORT CONTACT','RIFLE REINFORCEMENTS','LIGHT SCOUTS','MG SUPPORT','HALFTRACK ESCORT','MARKSMEN','ROCKET THREAT','ARMORED SCOUT','ELITE INFANTRY','AIRBORNE','HEAVY TRANSPORT','AIR ATTACK'];
+  var time=.18,truckLoad=idx===0?2:idx===1?3:Math.min(6,3+Math.floor(idx/6)),gap=idx<2?6.9:idx<6?6.15:idx<12?5.7:5.15;
+  var names=['TRANSPORT CONTACT','MOBILE PATROLS','LIGHT MOBILITY','MG SUPPORT','HALFTRACK ESCORT','MARKSMEN','ROCKET THREAT','ARMORED SCOUT','ELITE INFANTRY','AIRBORNE','HEAVY TRANSPORT','AIR ATTACK'];
   gameState.encounterName=names[Math.min(tier,names.length-1)];gameState.waveTotal=totalWaves;
   function add(t,type,count,wave,label,opts){return addEncounter(events,t,type,count,wave,totalWaves,label,opts);}
-  function addVehicle(t,id,count,wave,label,cap){var s=VEHICLE_SPECS[id];return add(t,s.baseType,count,wave,label||s.name,{vehicleId:id,motorCap:cap||difficultyBand(idx).motors});}
+  function addVehicle(t,id,count,wave,label,cap){var sp=VEHICLE_SPECS[id];return add(t,sp.baseType,count,wave,label||sp.name,{vehicleId:id,motorCap:cap||difficultyBand(idx).motors});}
+  function addMobility(t,wave,label){
+    var mid=pickLightMobility(idx,rng),ms=VEHICLE_SPECS[mid];
+    addVehicle(t,mid,1,wave,label||ms.name,idx<8?1:2);
+  }
   function newestFeature(wave,t){
     if(tier===0)return;
-    if(tier===1)add(t,'foot',2+Math.min(1,idx-2),wave,'RIFLE SQUAD',{roleMix:'rifle',tactic:wave%2?'flankLeft':'flankRight'});
-    else if(tier===2){var sid=pickScoutVehicle(idx,rng);addVehicle(t,sid,1,wave,VEHICLE_SPECS[sid].name,1);}
-    else if(tier===3)add(t,'mgTeam',3,wave,'MG TEAM',{tactic:wave%2?'flankRight':'flankLeft'});
+    if(tier===1){add(t,'foot',2+Math.min(1,idx-2),wave,'RIFLE SQUAD',{roleMix:'rifle',tactic:wave%2?'flankLeft':'flankRight'});addMobility(t+.72,wave);}
+    else if(tier===2){addMobility(t,wave,'FAST PATROL');}
+    else if(tier===3){add(t,'mgTeam',3,wave,'MG TEAM',{tactic:wave%2?'flankRight':'flankLeft'});addMobility(t+.82,wave);}
     else if(tier===4){var hid=vehicleSpecFor('sdkfz250',idx).id;addVehicle(t,hid,4,wave,VEHICLE_SPECS[hid].name,2);}
     else if(tier===5)add(t,'marksmanSquad',2+Math.floor((idx-10)/2),wave,'MARKSMEN',{tactic:'support'});
     else if(tier===6)add(t,'rocketSquad',3,wave,'ROCKET SPECIALIST',{rocketCount:1,tactic:'support'});
-    else if(tier===7){var aid=vehicleSpecFor('spah',idx).id;addVehicle(t,aid,1,wave,VEHICLE_SPECS[aid].name,2);}
+    else if(tier===7){var aid=vehicleSpecFor('spah',idx).id;addVehicle(t,aid,1,wave,VEHICLE_SPECS[aid].name,2);addMobility(t+.95,wave);}
     else if(tier===8)add(t,'eliteSquad',3,wave,'ELITE SQUAD',{tactic:'split'});
     else if(tier===9)add(t,'heli',2,wave,'AIRBORNE');
-    else if(tier===10){var tid=vehicleSpecFor('steyr',idx).id;addVehicle(t,tid,4,wave,VEHICLE_SPECS[tid].name,2);}
+    else if(tier===10){var tid=vehicleSpecFor('steyr',idx).id;addVehicle(t,tid,4,wave,VEHICLE_SPECS[tid].name,2);addMobility(t+1.0,wave);}
     else add(t,'plane',tier>=13?3:2,wave,'AIR ATTACK');
   }
   function olderFeature(wave,t){
-    var choices=['foot'];if(idx>=4)choices.push('scout');if(idx>=6)choices.push('mg');if(idx>=8)choices.push('half');if(idx>=10)choices.push('marksman');if(idx>=12)choices.push('rocket');if(idx>=14)choices.push('armor');if(idx>=16)choices.push('elite');if(idx>=18)choices.push('air');
+    var choices=['foot'];
+    if(idx>=2)choices.push('mobility');
+    if(idx>=4)choices.push('scout');
+    if(idx>=6)choices.push('mg');
+    if(idx>=8)choices.push('half');
+    if(idx>=10)choices.push('marksman');
+    if(idx>=12)choices.push('rocket');
+    if(idx>=14)choices.push('armor');
+    if(idx>=16)choices.push('elite');
+    if(idx>=18)choices.push('air');
     var choice=choices[Math.floor(rng()*choices.length)];
     if(choice==='foot')add(t,'foot',Math.min(5,2+Math.floor(idx/7)),wave,null,{roleMix:'rifle',tactic:rng()<.5?'bound':'roadside'});
+    else if(choice==='mobility')addMobility(t,wave);
     else if(choice==='scout'){var sid=pickScoutVehicle(idx,rng);addVehicle(t,sid,1,wave,null,2);}
     else if(choice==='mg')add(t,'mgTeam',3,wave,null,{tactic:rng()<.5?'flankLeft':'flankRight'});
     else if(choice==='half'){var hid=vehicleSpecFor('sdkfz250',idx).id;addVehicle(t,hid,Math.min(5,3+Math.floor(idx/12)),wave,null,2);}
@@ -795,7 +824,13 @@ function buildEncounterPlan(){
   for(var wave=1;wave<=totalWaves;wave++){
     var label=wave===1?gameState.encounterName:(wave===totalWaves?'FINAL WAVE':null),transportId=pickTransportVehicle(idx,rng);
     addVehicle(time,transportId,truckLoad+(wave===totalWaves&&idx>=6?1:0),wave,label,idx<8?1:2);
-    if(tier>0){var featureTime=time+(idx<6?2.5:2.1);if(wave===totalWaves)newestFeature(wave,featureTime);else if(tier>=2&&wave>1)olderFeature(wave,featureTime);else if(tier===1&&wave===2)olderFeature(wave,featureTime);}
+    if(idx>=6&&wave<totalWaves&&rng()<.42)addMobility(time+1.55+rand(0,.45),wave);
+    if(tier>0){
+      var featureTime=time+(idx<6?2.45:2.05);
+      if(wave===totalWaves)newestFeature(wave,featureTime);
+      else if(tier>=2&&wave>1)olderFeature(wave,featureTime);
+      else if(tier===1&&wave===2)olderFeature(wave,featureTime);
+    }
     time+=gap+(rng()-.5)*.55;
   }
   return finalize1944Plan(events,idx,rng,totalWaves);
