@@ -644,6 +644,8 @@ function adaptiveValue(){
 }
 function enemyProgression(idx){var a=adaptiveValue(),dna=levelDNAForIndex(idx),skill=dna.infantrySkill,diff=dna.difficulty;var difficultyScale=.82+diff*.055,skillHp=.92+skill*.032,skillMove=.95+skill*.012;return {adaptive:a,infantryHp:(1+idx*.006)*difficultyScale*skillHp*(1+a*.58),infantrySpeed:(1+idx*.0016)*skillMove*(1+a*.24),infantryDamage:(.88+diff*.038+skill*.010)*(1+a),vehicleHp:(.90+dna.vehicleClass*.038+diff*.020)*(1+a*.64),vehicleSpeed:(.94+dna.vehicleClass*.012+diff*.006)*(1+a*.20),vehicleDamage:(.90+diff*.035+dna.vehicleClass*.012)*(1+a),cooldown:clamp((1.08-skill*.030-diff*.010)*(1-a*.34),.62,1.18),accuracy:clamp((1.12-skill*.035-diff*.010)*(1-a*.22),.54,1.24),decision:clamp((1.10-skill*.032-dna.tactics*.012)*(1-a*.24),.52,1.20),professionalism:clamp((skill+dna.tactics+diff)/27,0,1)};}
 function enemyWeaponProfile(role,idx,seed){
+  var dna=levelDNAForIndex((typeof gameState!=='undefined'&&gameState)?gameState.levelIndex:idx);
+  idx=Math.round(dna.weaponClass*39/9);
   var n=Math.abs((seed==null?idx*37:seed)|0),pick=function(a){return a[n%a.length];};
   if(role==='lmg'){
     return pick(idx<8?[
@@ -806,67 +808,95 @@ function spawnMGTeam(tactic){
   var roles=['lmg','rifle','rifle'];for(var i=0;i<3;i++){var member={id:teamId,tactic:sq.tactic,size:3,originX:origin,phase:sq.phase,slot:i,flankX:clamp(origin+(i-1)*14,30,W-30)},e=spawnInfantry(origin+(i-1)*12,safeTop+66-rand(0,18),roles[i],member);e.mgTeamId=teamId;e.mgTeamGunner=i===0;e.mgAssistant=i===1;e.mgAmmoBearer=i===2;e.firePose=i===0?'prone':'crouch';e.aggressive=i===0?.35:.10;if(i===0){e.speed*=.90;e.decisionT=.35;e.fireCd=rand(.25,.48);}}
 }
 
+function dnaDirectionLabel(d){
+  return ['N','NW','W','NE','E','N+W','N+E','W+E','N/W/E','SURROUND'][clamp(d|0,0,9)];
+}
+function dnaMixName(d){
+  return ['RIFLE','RIFLE','LMG','MARKSMAN','MIXED','LMG HEAVY','MARKSMAN HEAVY','ROCKET','ELITE','ELITE+ROCKET'][clamp(d|0,0,9)];
+}
+function dnaRoleMix(d){
+  if(d<=1)return 'rifle';if(d===2||d===5)return 'lmg';if(d===3||d===6)return 'marksman';if(d===7)return 'rocket';if(d>=8)return 'elite';return 'mixed';
+}
+function dnaTactic(d){
+  return ['direct','direct','roadside','flankLeft','flankRight','bound','support','split','pincer','adaptive'][clamp(d|0,0,9)];
+}
+function dnaIngressPoint(direction,i,n,rng){
+  var road=gameState.map.road.x,half=gameState.map.corridorHalf||92,slot=(i+.5)/Math.max(1,n),side;
+  function north(){return {x:clamp(road+rand(-half*.62,half*.62),22,W-22),y:safeTop+58-rand(0,18)};}
+  function west(){return {x:18+rand(0,9),y:H*(.24+.38*slot)+rand(-12,12)};}
+  function east(){return {x:W-18-rand(0,9),y:H*(.24+.38*slot)+rand(-12,12)};}
+  if(direction===0)return north();
+  if(direction===1)return {x:clamp(road-half*.68+rand(-12,8),18,W-18),y:safeTop+62+rand(0,45)};
+  if(direction===2)return west();
+  if(direction===3)return {x:clamp(road+half*.68+rand(-8,12),18,W-18),y:safeTop+62+rand(0,45)};
+  if(direction===4)return east();
+  if(direction===5)return i%2?north():west();
+  if(direction===6)return i%2?north():east();
+  if(direction===7)return i%2?west():east();
+  if(direction===8){side=i%3;return side===0?north():side===1?west():east();}
+  side=(i+(Math.floor(rng()*3)))%3;return side===0?north():side===1?west():east();
+}
+function dnaVehicleId(dna,rng,kind){
+  var mix=dna.vehicleMix,idx=gameState.levelIndex;
+  if(kind==='mobility'){
+    var mf=dna.mobility<3?'motorcycle':dna.mobility<6?(rng()<.55?'motorcycle':'cavalry'):(rng()<.34?'motorcycle':rng()<.68?'quad':'cavalry');
+    return vehicleSpecFor(mf,idx).id;
+  }
+  if(mix<=1)return vehicleSpecFor(rng()<.62?'blitz':'steyr',idx).id;
+  if(mix===2)return vehicleSpecFor('kubel',idx).id;
+  if(mix===3)return vehicleSpecFor(rng()<.5?'kubel':'horch',idx).id;
+  if(mix===4)return vehicleSpecFor('motorcycle',idx).id;
+  if(mix===5)return vehicleSpecFor(rng()<.5?'quad':'cavalry',idx).id;
+  if(mix===6)return vehicleSpecFor('sdkfz250',idx).id;
+  if(mix===7)return vehicleSpecFor('spah',idx).id;
+  if(mix===8)return vehicleSpecFor(rng()<.55?'sdkfz250':'spah',idx).id;
+  var all=['blitz','steyr','kubel','horch','motorcycle','quad','cavalry','sdkfz250','spah'];
+  return vehicleSpecFor(all[Math.floor(rng()*all.length)],idx).id;
+}
 function buildEncounterPlan(){
-  var idx=gameState.levelIndex,L=level(),rng=seeded(L.seed+idx*911),events=[],mapNo=idx+1,tier=Math.floor(idx/2);
-  var milestone=mapNo%10===0,totalWaves=idx<2?2:idx<6?3:(milestone?4:3);
-  var time=.18,truckLoad=idx===0?2:idx===1?3:Math.min(6,3+Math.floor(idx/6)),gap=idx<2?6.9:idx<6?6.15:idx<12?5.7:5.15;
-  var names=['TRANSPORT CONTACT','MOBILE PATROLS','LIGHT MOBILITY','MG SUPPORT','HALFTRACK ESCORT','MARKSMEN','ROCKET THREAT','ARMORED SCOUT','ELITE INFANTRY','AIRBORNE','HEAVY TRANSPORT','AIR ATTACK'];
-  gameState.encounterName=names[Math.min(tier,names.length-1)];gameState.waveTotal=totalWaves;
+  var idx=gameState.levelIndex,L=level(),dna=levelDNA(),rng=seeded((dna.hash^L.seed^0x5bd1e995)>>>0),events=[];
+  var totalWaves=dna.waves,paceGap=8.2-dna.pace*.48,infTotal=dna.infantryAmount===0?0:Math.round(2+dna.infantryAmount*2.0);
+  var vehTotal=dna.vehicleAmount===0?0:Math.max(1,Math.round(dna.vehicleAmount*.62));
+  var mobTotal=dna.mobility===0?0:Math.round(dna.mobility*.44),supportTotal=dna.support===0?0:Math.round(dna.support*.34),airTotal=dna.air===0?0:Math.round(dna.air*.30);
+  var infLeft=infTotal,vehLeft=vehTotal,mobLeft=mobTotal,supportLeft=supportTotal,airLeft=airTotal,time=.30;
+  var roleMix=dnaRoleMix(dna.infantryMix),tactic=dnaTactic(dna.tactics);
+  if(tactic==='pincer')tactic='split';if(tactic==='adaptive')tactic=null;
+  gameState.encounterName='DNA '+dnaDirectionLabel(dna.direction)+' · '+dnaMixName(dna.infantryMix);
+  gameState.waveTotal=totalWaves;
   function add(t,type,count,wave,label,opts){return addEncounter(events,t,type,count,wave,totalWaves,label,opts);}
-  function addVehicle(t,id,count,wave,label,cap){var sp=VEHICLE_SPECS[id];return add(t,sp.baseType,count,wave,label||sp.name,{vehicleId:id,motorCap:cap||difficultyBand(idx).motors});}
-  function addMobility(t,wave,label){
-    var mid=pickLightMobility(idx,rng),ms=VEHICLE_SPECS[mid];
-    addVehicle(t,mid,1,wave,label||ms.name,idx<8?1:2);
-  }
-  function newestFeature(wave,t){
-    if(tier===0)return;
-    if(tier===1){add(t,'foot',2+Math.min(1,idx-2),wave,'RIFLE SQUAD',{roleMix:'rifle',tactic:wave%2?'flankLeft':'flankRight'});addMobility(t+.72,wave);}
-    else if(tier===2){addMobility(t,wave,'FAST PATROL');}
-    else if(tier===3){add(t,'mgTeam',3,wave,'MG TEAM',{tactic:wave%2?'flankRight':'flankLeft'});addMobility(t+.82,wave);}
-    else if(tier===4){var hid=vehicleSpecFor('sdkfz250',idx).id;addVehicle(t,hid,4,wave,VEHICLE_SPECS[hid].name,2);}
-    else if(tier===5)add(t,'marksmanSquad',2+Math.floor((idx-10)/2),wave,'MARKSMEN',{tactic:'support'});
-    else if(tier===6)add(t,'rocketSquad',3,wave,'ROCKET SPECIALIST',{rocketCount:1,tactic:'support'});
-    else if(tier===7){var aid=vehicleSpecFor('spah',idx).id;addVehicle(t,aid,1,wave,VEHICLE_SPECS[aid].name,2);addMobility(t+.95,wave);}
-    else if(tier===8)add(t,'eliteSquad',3,wave,'ELITE SQUAD',{tactic:'split'});
-    else if(tier===9)add(t,'heli',2,wave,'AIRBORNE');
-    else if(tier===10){var tid=vehicleSpecFor('steyr',idx).id;addVehicle(t,tid,4,wave,VEHICLE_SPECS[tid].name,2);addMobility(t+1.0,wave);}
-    else add(t,'plane',tier>=13?3:2,wave,'AIR ATTACK');
-  }
-  function olderFeature(wave,t){
-    var choices=['foot'];
-    if(idx>=2)choices.push('mobility');
-    if(idx>=4)choices.push('scout');
-    if(idx>=6)choices.push('mg');
-    if(idx>=8)choices.push('half');
-    if(idx>=10)choices.push('marksman');
-    if(idx>=12)choices.push('rocket');
-    if(idx>=14)choices.push('armor');
-    if(idx>=16)choices.push('elite');
-    if(idx>=18)choices.push('air');
-    var choice=choices[Math.floor(rng()*choices.length)];
-    if(choice==='foot')add(t,'foot',Math.min(5,2+Math.floor(idx/7)),wave,null,{roleMix:'rifle',tactic:rng()<.5?'bound':'roadside'});
-    else if(choice==='mobility')addMobility(t,wave);
-    else if(choice==='scout'){var sid=pickScoutVehicle(idx,rng);addVehicle(t,sid,1,wave,null,2);}
-    else if(choice==='mg')add(t,'mgTeam',3,wave,null,{tactic:rng()<.5?'flankLeft':'flankRight'});
-    else if(choice==='half'){var hid=vehicleSpecFor('sdkfz250',idx).id;addVehicle(t,hid,Math.min(5,3+Math.floor(idx/12)),wave,null,2);}
-    else if(choice==='marksman')add(t,'marksmanSquad',2,wave,null,{tactic:'support'});
-    else if(choice==='rocket')add(t,'rocketSquad',3,wave,null,{rocketCount:1,tactic:'support'});
-    else if(choice==='armor'){var aid=pickArmoredVehicle(idx,rng);addVehicle(t,aid,1,wave,null,2);}
-    else if(choice==='elite')add(t,'eliteSquad',3,wave,null,{tactic:'split'});
-    else add(t,'heli',2,wave,null);
-  }
+  function addVehicle(t,id,count,wave,label){var sp=VEHICLE_SPECS[id];return add(t,sp.baseType,count,wave,label||sp.name,{vehicleId:id,motorCap:difficultyBand(idx).motors,direction:dna.direction});}
   for(var wave=1;wave<=totalWaves;wave++){
-    var label=wave===1?gameState.encounterName:(wave===totalWaves?'FINAL WAVE':null),transportId=pickTransportVehicle(idx,rng);
-    addVehicle(time,transportId,truckLoad+(wave===totalWaves&&idx>=6?1:0),wave,label,idx<8?1:2);
-    if(idx>=6&&wave<totalWaves&&rng()<.42)addMobility(time+1.55+rand(0,.45),wave);
-    if(tier>0){
-      var featureTime=time+(idx<6?2.45:2.05);
-      if(wave===totalWaves)newestFeature(wave,featureTime);
-      else if(tier>=2&&wave>1)olderFeature(wave,featureTime);
-      else if(tier===1&&wave===2)olderFeature(wave,featureTime);
+    var wavesLeft=totalWaves-wave+1,waveStart=time,label=wave===1?'CODED CONTACT':wave===totalWaves?'FINAL WAVE':null;
+    if(vehLeft>0){
+      var takeVeh=Math.max(1,Math.round(vehLeft/wavesLeft));
+      for(var vv=0;vv<takeVeh&&vehLeft>0;vv++,vehLeft--){
+        var vid=dnaVehicleId(dna,rng,'vehicle'),spec=VEHICLE_SPECS[vid],load=1;
+        if(spec.transport&&infLeft>0){load=Math.min(spec.capacity||5,Math.max(1,Math.round(infLeft/(wavesLeft+1))));infLeft=Math.max(0,infLeft-load);}
+        addVehicle(waveStart+vv*.78,vid,load,wave,label&&vv===0?label:null);
+      }
     }
-    time+=gap+(rng()-.5)*.55;
+    if(mobLeft>0){
+      var takeMob=Math.max(0,Math.round(mobLeft/wavesLeft));
+      for(var mm=0;mm<takeMob&&mobLeft>0;mm++,mobLeft--){
+        var mid=dnaVehicleId(dna,rng,'mobility');addVehicle(waveStart+1.0+mm*.58,mid,1,wave,mm===0&&wave===1?'FAST PATROL':null);
+      }
+    }
+    if(infLeft>0){
+      var foot=Math.max(1,Math.round(infLeft/wavesLeft));foot=Math.min(7,foot);infLeft-=foot;
+      var rockets=dna.infantryMix>=7?Math.min(2,Math.round(dna.weaponClass/5)):0;
+      add(waveStart+1.45,'foot',foot,wave,label&&vehTotal===0?label:null,{roleMix:roleMix,tactic:tactic,direction:dna.direction,rocketCount:rockets});
+    }
+    if(supportLeft>0){
+      var supportType=dna.weaponClass>=7&&wave%2===0?'rocketSquad':dna.infantryMix>=6?'marksmanSquad':'mgTeam';
+      var sc=supportType==='mgTeam'?3:Math.min(4,2+Math.floor(dna.support/4));
+      add(waveStart+2.30,supportType,sc,wave,'SUPPORT',{tactic:tactic,direction:dna.direction,rocketCount:supportType==='rocketSquad'?1:0});supportLeft--;
+    }
+    if(airLeft>0&&wave>=Math.ceil(totalWaves*.45)){
+      add(waveStart+2.95,(dna.air>=7&&wave===totalWaves)?'plane':'heli',dna.air>=8?2:1,wave,'AIR CONTACT',{direction:dna.direction});airLeft--;
+    }
+    time+=Math.max(3.45,paceGap)+(rng()-.5)*(1.5*dna.randomness);
   }
+  while(infLeft>0){var extra=Math.min(6,infLeft);add(time,'foot',extra,totalWaves,null,{roleMix:roleMix,tactic:tactic,direction:dna.direction});infLeft-=extra;time+=1.1;}
   return finalize1944Plan(events,idx,rng,totalWaves);
 }
 
@@ -957,14 +987,14 @@ function processEvents(){
     }
     gameState.eventCursor++;
     if(e.type==='mgTeam')spawnMGTeam(e.tactic);
-    else if(e.type==='foot')spawnPlannedFoot(e.count,e.roleMix||'mixed',e.tactic);
-    else if(e.type==='rocketSquad')spawnPlannedFoot(e.count,'rocket',e.tactic,e.rocketCount||1);
-    else if(e.type==='lmgSquad')spawnPlannedFoot(e.count,'lmg',e.tactic);
-    else if(e.type==='marksmanSquad')spawnPlannedFoot(e.count,'marksman',e.tactic);
-    else if(e.type==='eliteSquad')spawnPlannedFoot(e.count,'elite',e.tactic,e.rocketCount||1);
+    else if(e.type==='foot')spawnPlannedFoot(e.count,e.roleMix||'mixed',e.tactic,e.rocketCount||0,e.direction);
+    else if(e.type==='rocketSquad')spawnPlannedFoot(e.count,'rocket',e.tactic,e.rocketCount||1,e.direction);
+    else if(e.type==='lmgSquad')spawnPlannedFoot(e.count,'lmg',e.tactic,0,e.direction);
+    else if(e.type==='marksmanSquad')spawnPlannedFoot(e.count,'marksman',e.tactic,0,e.direction);
+    else if(e.type==='eliteSquad')spawnPlannedFoot(e.count,'elite',e.tactic,e.rocketCount||1,e.direction);
     else if(e.type==='heli')spawnHeli(e.count);
     else if(e.type==='plane')spawnPlane(e.count);
-    else spawnVehicle(e.type,e.count,e.vehicleId);
+    else spawnVehicle(e.type,e.count,e.vehicleId,e.direction);
   }
 }
 /* ---------- SPAWN ---------- */
@@ -1039,24 +1069,24 @@ function spawnInfantry(x,y,role,squad){
   return e;
 }
 
-function spawnPlannedFoot(n,mix,tactic,rocketCount){
-  var idx=gameState.levelIndex,origin=laneX(idx<2?rand(-24,24):rand(-60,60));
-  tactic=tactic||((idx<2)?'direct':newSquadTactic());origin=mapIngressX(tactic,origin);
-  var sq=squadPlan(n,tactic,origin),formation=formationForSquad(tactic,n),rockets=idx>=10?Math.max(0,rocketCount||0):0;
-  var rocketSlots={};
-  while(rockets>0){var slot=(Math.random()*n)|0;if(!rocketSlots[slot]){rocketSlots[slot]=true;rockets--;}}
+function spawnPlannedFoot(n,mix,tactic,rocketCount,direction){
+  var idx=gameState.levelIndex,dna=levelDNA(),rng=seeded((dna.hash+n*71+(gameState.eventCursor||0)*31)>>>0);
+  tactic=tactic||((dna.tactics<2)?'direct':newSquadTactic());
+  var first=dnaIngressPoint(direction==null?dna.direction:direction,0,n,rng),origin=first.x;
+  var sq=squadPlan(n,tactic,origin),formation=formationForSquad(tactic,n),rockets=dna.weaponClass>=5?Math.max(0,rocketCount||0):0;
+  var rocketSlots={};while(rockets>0){var slot=(Math.random()*n)|0;if(!rocketSlots[slot]){rocketSlots[slot]=true;rockets--;}}
   for(var i=0;i<n;i++){
-    var role='rifle',rr=Math.random();
+    var pt=dnaIngressPoint(direction==null?dna.direction:direction,i,n,rng),role='rifle',rr=Math.random();
     if(rocketSlots[i])role='grenadier';
-    else if(mix==='rocket')role=(i===0&&idx>=10)?'grenadier':(rr<.18?'lmg':'rifle');
+    else if(mix==='rocket')role=(i===0&&dna.weaponClass>=5)?'grenadier':(rr<.18?'lmg':'rifle');
     else if(mix==='lmg')role=(i===0||i===Math.floor(n*.55))?'lmg':(rr<.16?'marksman':'rifle');
     else if(mix==='marksman')role=(i===0?'marksman':(rr<.18?'lmg':'rifle'));
-    else if(mix==='elite'){if(idx>=10&&i===0)role='grenadier';else if(i%4===1)role='lmg';else if(i%4===2)role='marksman';else role='rifle';}
-    else if(mix==='rifle')role=rr<.12&&idx>=4?'lmg':'rifle';
-    else{if(idx>=5&&rr<.15)role='marksman';else if(idx>=3&&rr<.34)role='lmg';else role='rifle';}
-    var off=formationOffset(i,n,formation);
-    var member={id:sq.id,tactic:sq.tactic,size:n,originX:origin,phase:sq.phase,slot:i,formation:formation,flankX:clamp(origin+off.x*1.6,30,W-30)};
-    spawnInfantry(clamp(origin+off.x,20,W-20),safeTop+70+off.y-rand(0,10),role,member);
+    else if(mix==='elite'){if(dna.weaponClass>=6&&i===0&&dna.infantryMix>=7)role='grenadier';else if(i%4===1)role='lmg';else if(i%4===2)role='marksman';else role='rifle';}
+    else if(mix==='rifle')role=rr<(.04+dna.infantryMix*.018)&&dna.weaponClass>=2?'lmg':'rifle';
+    else{if(dna.weaponClass>=4&&rr<.15)role='marksman';else if(dna.weaponClass>=2&&rr<.34)role='lmg';else role='rifle';}
+    var off=formationOffset(i,n,formation),px=clamp(pt.x+off.x*.35,16,W-16),py=clamp(pt.y+off.y*.35,safeTop+28,H*.68);
+    var member={id:sq.id,tactic:sq.tactic,size:n,originX:origin,phase:sq.phase,slot:i,formation:formation,flankX:clamp(px+off.x,20,W-20)};
+    spawnInfantry(px,py,role,member);
   }
 }
 
@@ -1187,7 +1217,7 @@ function dismountDestroyed(v,kind){
   }
   v.passengers=0;v.unloadLeft=0;
 }
-function spawnVehicle(type,count,vehicleId){
+function spawnVehicle(type,count,vehicleId,direction){
   var id=Math.random()*1e9|0,spec=vehicleSpecById(vehicleId,type);type=spec.baseType||type;
   var cap=vehicleCapacity(type,spec),prog=enemyProgression(gameState.levelIndex);
   var hp=(type==='trooptruck'?58:type==='jeep'?62:type==='scoutcar'?132:type==='lighttruck'?122:type==='truck'?168:235)*prog.vehicleHp*(spec.hp||1);
@@ -1195,7 +1225,10 @@ function spawnVehicle(type,count,vehicleId){
   var accel=(type==='trooptruck'?68:type==='jeep'?72:type==='scoutcar'?78:type==='lighttruck'?36:type==='truck'?27:26)*(spec.accel||1);
   var turn=(type==='trooptruck'?1.70:type==='jeep'?2.75:type==='scoutcar'?2.55:type==='lighttruck'?1.90:type==='truck'?1.50:1.32)*(spec.turn||1);
   var roadX=gameState.map.road.x,side=Math.random()<.5?-1:1,shoulder=clamp(roadX+side*(type==='halftrack'?rand(50,72):type==='trooptruck'?rand(34,48):type==='scoutcar'?rand(44,66):rand(38,60)),28,W-28);
-  var routeBias=0,sec=gameState.map.road.secondary,style=gameState.map.road.style,half=gameState.map.corridorHalf||92;
+  var routeBias=0,sec=gameState.map.road.secondary,style=gameState.map.road.style,half=gameState.map.corridorHalf||92,dir=(direction==null?levelDNA().direction:direction);
+  if(dir===1||dir===2||dir===5)routeBias-=half*.34;
+  else if(dir===3||dir===4||dir===6)routeBias+=half*.34;
+  else if(dir>=7)routeBias+=(Math.random()<.5?-1:1)*half*.30;
   if(gameState.levelIndex>=4&&(sec==='cross'||sec==='yard'||sec==='fork'||sec==='alley'))routeBias=(Math.random()<.5?-1:1)*Math.min(half*.28,24);
   else if(style==='s'||style==='dogleg')routeBias=(Math.random()<.5?-1:1)*Math.min(half*.16,14);
   var x=clamp(roadX+routeBias+rand(-5,5),roadX-half*.72,roadX+half*.72),spawnY=type==='trooptruck'?H*.105:safeTop+48;
