@@ -62,12 +62,47 @@ var ZONES=[
   {type:'INDUSTRIAL',theme:'industrial',names:['Industrial Yard','Rail Spur','Factory Gate','Industrial Works','Machine Hall','Freight Line','Industrial Core','End Sector']}
 ];
 var CAMPAIGN_LENGTH=40;
+/* ---------- LEVEL DNA: 30 digits, 0..9 ---------- */
+var LEVEL_CODE_SCHEMA=[
+ 'INFANTRY_AMOUNT','INFANTRY_SKILL','INFANTRY_WEAPONS','INFANTRY_MIX','ATTACK_DIRECTION',
+ 'VEHICLE_AMOUNT','VEHICLE_CLASS','VEHICLE_MIX','FAST_MOBILITY','HEAVY_SUPPORT',
+ 'AIR_THREAT','WAVES','PACING','TACTICS','BASE_DIFFICULTY',
+ 'THEME','MAP_LAYOUT','ROADS','COVER','OBJECT_DENSITY',
+ 'VEGETATION','DESTRUCTION','GROUND_TEXTURE','WEATHER_VISIBILITY','STARTING_WRECKS',
+ 'TARGET_DAMAGE_MIN','TARGET_DAMAGE_MAX','REWARD','RANDOMNESS','SEED'
+];
+var LEVEL_CODES=["200001000002200100348020013143","200001000002200173468071013170","200031000002200146588022013147","200051000002200119648073013174","211061110002211182768024013141","311172110002311155388175013278","311182111002311128448126024245","311192111002311191568177024272","322102221002322395685120024249","322112221103322368745171024276","422233222103422331365222024343","422253222103422304485273124370","433263332103433377545224135347","433273332203433340665275135374","433283333203433313785226135341","533394333203533386345377235478","544304443203544880462320235445","544314443303544853582371235472","544334444304544826642322246449","544354444304544899762373346476","655465554314655862382424346543","655475554414655835442475346570","655485555414655808562426346547","655495555424655871682477446574","666405665424666575743420457541","766516665524766548363571457678","766536666534766511483522457645","766556666535766584543573557672","777566776535777557663524557649","777576776645777520783575557676","877687777645877593343626568743","877697777645877566463677668770","888607887655888460581620668747","888617887755888433641671668774","888637888755888406761622668741","988758888765988479381773768878","999768998766999442441724779845","999778998866999415561775779872","999788999876999488681726779849","999798999876999451741777879876"];
+var LEVEL_CODE_THEMES=['jungle','jungle','village','village','industrial','industrial','desert','desert','polar','polar'];
+function levelCodeDigit(code,i){var n=parseInt((code||'').charAt(i),10);return isFinite(n)?clamp(n,0,9):0;}
+function levelCodeHash(code){
+  var h=2166136261>>>0;for(var i=0;i<(code||'').length;i++){h^=code.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;
+}
+function decodeLevelCode(code){
+  code=String(code||'').replace(/\D/g,'').slice(0,30).padEnd(30,'0');
+  var d=[];for(var i=0;i<30;i++)d[i]=levelCodeDigit(code,i);
+  var minPct=.04+d[25]*.025,maxPct=.14+d[26]*.035;if(maxPct<minPct+.08)maxPct=minPct+.08;
+  var roadModes=['none','none','alley','fork','cross','yard','cross','fork','yard','cross'];
+  return {
+    code:code,digits:d,hash:levelCodeHash(code),
+    infantryAmount:d[0],infantrySkill:d[1],weaponClass:d[2],infantryMix:d[3],direction:d[4],
+    vehicleAmount:d[5],vehicleClass:d[6],vehicleMix:d[7],mobility:d[8],support:d[9],air:d[10],
+    waves:1+Math.round(d[11]*5/9),pace:d[12],tactics:d[13],difficulty:d[14],
+    themeDigit:d[15],themeName:LEVEL_CODE_THEMES[d[15]],layoutDigit:d[16],layoutIndex:(d[16]*2+(d[17]&1))%18,
+    roads:d[17],roadMode:roadModes[d[17]],cover:d[18],objects:d[19],vegetation:d[20],destruction:d[21],
+    ground:d[22],weather:d[23],startingWrecks:Math.round(d[24]/3),
+    damageMinPct:minPct,damageMaxPct:maxPct,rewardScale:.75+d[27]*.08,randomness:d[28]/9,seedDigit:d[29]
+  };
+}
+function levelDNAForIndex(idx){var L=LEVELS[clamp(idx|0,0,LEVELS.length-1)];return decodeLevelCode(L&&L.code?L.code:LEVEL_CODES[idx]||LEVEL_CODES[0]);}
+function levelDNA(){return gameState&&gameState.levelDNA?gameState.levelDNA:levelDNAForIndex(gameState?gameState.levelIndex:0);}
+
 var LEVELS=[];
 (function(){
   var seed=17;
   for(var z=0;z<ZONES.length;z++){
     for(var st=0;st<8;st++){
-      LEVELS.push({zone:z,stage:st%3,actStage:st,type:ZONES[z].type,theme:ZONES[z].theme,name:ZONES[z].names[st],seed:seed});
+      var idx=LEVELS.length,code=LEVEL_CODES[idx]||LEVEL_CODES[0],dna=decodeLevelCode(code);
+      LEVELS.push({zone:z,stage:st%3,actStage:st,type:ZONES[z].type,theme:dna.themeName,name:ZONES[z].names[st],seed:(seed^dna.hash)>>>0,code:code});
       seed+=23+z*4+st*3;
     }
   }
