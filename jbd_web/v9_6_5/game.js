@@ -2277,7 +2277,7 @@ function explodeWreck(w){
   ensureWreckState(w);
   if(w.vehicleSpec&&w.vehicleSpec.family==='cavalry'){w.carcass=true;w.wreckStage=3;w.shellHits=32;return false;}
   w.exploded=true;w.softDisabled=false;w.fuelIgnited=false;w.fuelBurnT=0;w.burnT=rand(8,13);w.smokeCd=0;w.flameCd=0;
-  var r=vehicleExplosionScale(w),cls=w.vehicleClass||1;
+  var fam=w.vehicleSpec&&w.vehicleSpec.family||w.vehicleFamily||'',r=vehicleExplosionScale(w),cls=w.vehicleClass||1;
   var dmg=(w.type==='jeep'?42:w.type==='lighttruck'?52:(w.type==='trooptruck'||w.type==='truck')?68:74)+(cls-1)*7;
   if(w.vehicleSpec&&w.vehicleSpec.family==='motorcycle')dmg=34+cls*4;
   if(w.vehicleSpec&&w.vehicleSpec.family==='quad')dmg=40+cls*5;
@@ -3467,8 +3467,10 @@ function updateFireZones(dt){
         var v=gameState.vehicles[j];if(!v.alive)continue;
         var vd=dist(z.x,z.y,v.x,v.y);if(vd<z.radius*.82){
           damageVehicle(v,z.dps*.08,'fire');
-          fuelHitProgress(v,1,true);
-          if(v.fuelLeak&&!v.fuelIgnited&&Math.random()<.16)igniteFuel(v,rand(.8,1.8));
+          if(v.alive){
+            fuelHitProgress(v,1,true);
+            if(v.fuelLeak&&!v.fuelIgnited&&Math.random()<.16)igniteFuel(v,rand(.8,1.8));
+          }
         }
       }
       for(j=0;j<gameState.wrecks.length;j++){
