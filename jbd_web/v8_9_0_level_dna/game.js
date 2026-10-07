@@ -642,7 +642,7 @@ function adaptiveValue(){
   if(gameState&&typeof gameState.adaptiveSnapshot==='number')return gameState.adaptiveSnapshot;
   return gameState&&gameState.save?clamp(gameState.save.adaptiveDifficulty||0,-.24,.30):0;
 }
-function enemyProgression(idx){var a=adaptiveValue(),dna=levelDNAForIndex(idx),skill=dna.infantrySkill,diff=dna.difficulty;var difficultyScale=.82+diff*.055,skillHp=.92+skill*.032,skillMove=.95+skill*.012;return {adaptive:a,infantryHp:(1+idx*.006)*difficultyScale*skillHp*(1+a*.58),infantrySpeed:(1+idx*.0016)*skillMove*(1+a*.24),infantryDamage:(.88+diff*.038+skill*.010)*(1+a),vehicleHp:(.90+dna.vehicleClass*.038+diff*.020)*(1+a*.64),vehicleSpeed:(.94+dna.vehicleClass*.012+diff*.006)*(1+a*.20),vehicleDamage:(.90+diff*.035+dna.vehicleClass*.012)*(1+a),cooldown:clamp((1.08-skill*.030-diff*.010)*(1-a*.34),.62,1.18),accuracy:clamp((1.12-skill*.035-diff*.010)*(1-a*.22),.54,1.24),decision:clamp((1.10-skill*.032-dna.tactics*.012)*(1-a*.24),.52,1.20),professionalism:clamp((skill+dna.tactics+diff)/27,0,1)};}
+function enemyProgression(idx){var a=adaptiveValue(),dna=levelDNAForIndex(idx),skill=dna.infantrySkill,diff=dna.difficulty;var difficultyScale=.82+diff*.055,skillHp=.92+skill*.032,skillMove=.95+skill*.012;return {adaptive:a,infantryHp:(1+idx*.006)*difficultyScale*skillHp*(1+a*.58),infantrySpeed:(1+idx*.0016)*skillMove*(1+a*.24),infantryDamage:(.88+diff*.038+skill*.010)*(1+a),vehicleHp:(.90+dna.vehicleClass*.038+diff*.020)*(1+a*.64),vehicleSpeed:(.94+dna.vehicleClass*.012+diff*.006)*(1+a*.20),vehicleDamage:(.90+diff*.035+dna.vehicleClass*.012)*(1+a),cooldown:clamp((1.08-skill*.030-diff*.010)*(1-a*.34),.62,1.18),accuracy:clamp((1.12-skill*.035-diff*.010)*(1+dna.weather*.012)*(1-a*.22),.54,1.32),decision:clamp((1.10-skill*.032-dna.tactics*.012)*(1-a*.24),.52,1.20),professionalism:clamp((skill+dna.tactics+diff)/27,0,1)};}
 function enemyWeaponProfile(role,idx,seed){
   var dna=levelDNAForIndex((typeof gameState!=='undefined'&&gameState)?gameState.levelIndex:idx);
   idx=Math.round(dna.weaponClass*39/9);
@@ -864,14 +864,14 @@ function buildEncounterPlan(){
   gameState.encounterName='DNA '+dnaDirectionLabel(dna.direction)+' · '+dnaMixName(dna.infantryMix);
   gameState.waveTotal=totalWaves;
   function add(t,type,count,wave,label,opts){return addEncounter(events,t,type,count,wave,totalWaves,label,opts);}
-  function addVehicle(t,id,count,wave,label){var sp=VEHICLE_SPECS[id];return add(t,sp.baseType,count,wave,label||sp.name,{vehicleId:id,motorCap:difficultyBand(idx).motors,direction:dna.direction});}
+  function addVehicle(t,id,count,wave,label){var sp=VEHICLE_SPECS[id],pc=count==null?null:Math.max(0,count|0);return add(t,sp.baseType,Math.max(1,pc==null?1:pc),wave,label||sp.name,{vehicleId:id,motorCap:difficultyBand(idx).motors,direction:dna.direction,passengersOverride:pc});}
   for(var wave=1;wave<=totalWaves;wave++){
     var wavesLeft=totalWaves-wave+1,waveStart=time,label=wave===1?'CODED CONTACT':wave===totalWaves?'FINAL WAVE':null;
     if(vehLeft>0){
       var takeVeh=Math.max(1,Math.round(vehLeft/wavesLeft));
       for(var vv=0;vv<takeVeh&&vehLeft>0;vv++,vehLeft--){
         var vid=dnaVehicleId(dna,rng,'vehicle'),spec=VEHICLE_SPECS[vid],load=1;
-        if(spec.transport&&infLeft>0){load=Math.min(spec.capacity||5,Math.max(1,Math.round(infLeft/(wavesLeft+1))));infLeft=Math.max(0,infLeft-load);}
+        if(spec.transport){if(infLeft>0){load=Math.min(spec.capacity||5,Math.max(1,Math.round(infLeft/(wavesLeft+1))));infLeft=Math.max(0,infLeft-load);}else load=0;}
         addVehicle(waveStart+vv*.78,vid,load,wave,label&&vv===0?label:null);
       }
     }
@@ -994,7 +994,7 @@ function processEvents(){
     else if(e.type==='eliteSquad')spawnPlannedFoot(e.count,'elite',e.tactic,e.rocketCount||1,e.direction);
     else if(e.type==='heli')spawnHeli(e.count);
     else if(e.type==='plane')spawnPlane(e.count);
-    else spawnVehicle(e.type,e.count,e.vehicleId,e.direction);
+    else spawnVehicle(e.type,e.count,e.vehicleId,e.direction,e.passengersOverride);
   }
 }
 /* ---------- SPAWN ---------- */
@@ -1217,7 +1217,7 @@ function dismountDestroyed(v,kind){
   }
   v.passengers=0;v.unloadLeft=0;
 }
-function spawnVehicle(type,count,vehicleId,direction){
+function spawnVehicle(type,count,vehicleId,direction,passengersOverride){
   var id=Math.random()*1e9|0,spec=vehicleSpecById(vehicleId,type);type=spec.baseType||type;
   var cap=vehicleCapacity(type,spec),prog=enemyProgression(gameState.levelIndex);
   var hp=(type==='trooptruck'?58:type==='jeep'?62:type==='scoutcar'?132:type==='lighttruck'?122:type==='truck'?168:235)*prog.vehicleHp*(spec.hp||1);
@@ -1234,7 +1234,7 @@ function spawnVehicle(type,count,vehicleId,direction){
   var x=clamp(roadX+routeBias+rand(-5,5),roadX-half*.72,roadX+half*.72),spawnY=type==='trooptruck'?H*.105:safeTop+48;
   for(var vi=0;vi<gameState.vehicles.length;vi++){var ov=gameState.vehicles[vi];if(ov.alive&&ov.y<safeTop+125)spawnY=Math.min(spawnY,ov.y-72);}
   var aim=Math.atan2(gameState.bunker.y-spawnY,gameState.bunker.x-x),transport=!!spec.transport,dismountRun=transport||(type==='halftrack'&&Math.random()<.62);
-  var hasMG=spec.hasMG!=null?!!spec.hasMG:type!=='trooptruck',passengerCount=transport?Math.max(1,count||cap):cap;
+  var hasMG=spec.hasMG!=null?!!spec.hasMG:type!=='trooptruck',passengerCount=transport?(passengersOverride!=null?Math.max(0,passengersOverride|0):Math.max(1,count||cap)):cap;
   gameState.vehicles.push({
     id:id,type:type,vehicleId:spec.id,vehicleName:spec.name,vehicleClass:spec.class,vehicleFamily:spec.family,vehicleSpec:spec,
     x:x,baseX:x,y:spawnY,hp:hp,maxHp:hp,speed:sp,baseSpeed:sp,currentSpeed:type==='trooptruck'?(gameState.levelIndex<4?sp*.78:sp*.62):sp*.36,accel:accel,turnRate:turn,
@@ -2752,7 +2752,7 @@ function completeLevel(){
   if(gameState.levelComplete)return;
   gameState.levelComplete=true;gameState.mode='shop';
   var mapNo=gameState.levelIndex+1,milestone=mapNo%5===0;
-  var baseSupply=Math.round(48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0)),chainBonus=gameState.runBonusSupply||0;gameState.save.supply+=baseSupply+chainBonus;
+  var baseSupply=Math.round((48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0))*levelDNA().rewardScale),chainBonus=gameState.runBonusSupply||0;gameState.save.supply+=baseSupply+chainBonus;
   var points=1;if(mapNo>=5)points++;if(mapNo>=15)points++;if(mapNo>=25)points++;if(milestone)points++;if(gameState.eff>=.90)points++;
   gameState.save.arsenalPoints=(gameState.save.arsenalPoints||0)+points;
   gameState.save.bestLevel=Math.max(gameState.save.bestLevel,Math.min(CAMPAIGN_LENGTH-1,gameState.levelIndex+1));
@@ -3681,7 +3681,7 @@ function drawHud(){
     var stageQ=clamp(gameState.stageIntroT/1.55,0,1),stageFade=Math.min(1,(1-stageQ)*5,stageQ*2.4);
     ctx.globalAlpha=stageFade*.92;ctx.fillStyle='rgba(18,23,19,.88)';roundRect(ctx,W*.5-112,H*.28-26,224,52,8);ctx.fill();
     ctx.textAlign='center';ctx.fillStyle='#f3efd8';ctx.font='900 10px system-ui,-apple-system,sans-serif';ctx.fillText('MAP '+(gameState.levelIndex+1),W*.5,H*.28-9);
-    ctx.font='900 16px system-ui,-apple-system,sans-serif';ctx.fillStyle='#e7c76a';ctx.fillText((gameState.map.layoutName||level().name).toUpperCase(),W*.5,H*.28+9);ctx.globalAlpha=1;
+    ctx.font='900 16px system-ui,-apple-system,sans-serif';ctx.fillStyle='#e7c76a';ctx.fillText((gameState.map.layoutName||level().name).toUpperCase(),W*.5,H*.28+7);ctx.font='700 7px ui-monospace,SFMono-Regular,Menlo,monospace';ctx.fillStyle='#c8cfb7';var dc=(gameState.levelCode||level().code||'');ctx.fillText('DNA '+dc.slice(0,10)+' '+dc.slice(10,20)+' '+dc.slice(20,30),W*.5,H*.28+21);ctx.globalAlpha=1;
   }
   if((gameState.waveIntroT||0)>0){
     var waveQ=clamp(gameState.waveIntroT/.62,0,1);
@@ -3694,6 +3694,23 @@ function drawHud(){
 }
 /* ---------- RENDER ---------- */
 
+function drawDNAAtmosphere(){
+  var d=levelDNA(),w=d.weather;if(w<=1)return;
+  var intensity=(w-1)/8,seed=seeded((d.hash+Math.floor(gameState.time*8)*977)>>>0),count=IS_IPHONE?Math.round(6+intensity*12):Math.round(10+intensity*22);
+  ctx.save();
+  if(level().theme==='polar'){
+    ctx.fillStyle='rgba(240,245,238,'+(0.20+intensity*.28)+')';
+    for(var i=0;i<count;i++){var x=seed()*W,y=(seed()*H+gameState.time*(18+intensity*28)*(i%3+1))%H,r=.7+seed()*1.5;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();}
+  }else if(level().theme==='desert'){
+    ctx.fillStyle='rgba(196,165,105,'+(0.025+intensity*.060)+')';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(221,194,135,'+(0.10+intensity*.18)+')';ctx.lineWidth=1;
+    for(i=0;i<count;i++){x=(seed()*W+gameState.time*(20+intensity*42))%W;y=seed()*H;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+8+intensity*12,y-2);ctx.stroke();}
+  }else{
+    ctx.fillStyle='rgba(188,201,190,'+(0.015+intensity*.045)+')';ctx.fillRect(0,0,W,H);
+    if(w>=5){ctx.strokeStyle='rgba(205,218,211,'+(0.10+intensity*.20)+')';ctx.lineWidth=.8;for(i=0;i<count;i++){x=seed()*W;y=(seed()*H+gameState.time*80*(.6+intensity))%H;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+8);ctx.stroke();}}
+  }
+  ctx.restore();
+}
 function render(){
   if(!gameState)return;
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;
@@ -3706,7 +3723,7 @@ function render(){
   for(i=0;i<gameState.infantry.length;i++){e=gameState.infantry[i];if(e.x>-40&&e.x<W+40&&e.y>-50&&e.y<H+50)drawSoldier(e);}
   for(i=0;i<gameState.air.length;i++){a=gameState.air[i];if(a.alive&&a.x>-110&&a.x<W+110&&a.y>-110&&a.y<H+110){if(a.type==='heli')drawHeli(a);else drawPlane(a);}}
   for(i=0;i<gameState.paras.length;i++){p=gameState.paras[i];if(p.alive)drawPara(p);}
-  drawShots();drawEffects();drawBunker();drawBunkerDamage();
+  drawShots();drawEffects();drawDNAAtmosphere();drawBunker();drawBunkerDamage();
   ctx.restore();
 
   if((gameState.screenFlash||0)>0){
