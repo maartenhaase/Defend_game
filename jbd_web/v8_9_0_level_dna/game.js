@@ -507,10 +507,27 @@ var MAP_LAYOUTS=[
 {name:'MARSH CAUSEWAY',style:'s',roadWidth:17,bend:-.12,cover:.70,patches:6,setpieces:2,trees:1.05,corridor:.215,secondary:'fork',compound:-1},
 {name:'RAIL YARD',style:'dogleg',roadWidth:28,bend:.10,cover:1.10,patches:2,setpieces:4,trees:.28,corridor:.265,secondary:'yard',compound:1}
 ];
-function mapLayoutForLevel(idx,L){var n=(idx*7+(L.seed||0)+(L.zone||0)*3+(L.stage||0)*5)%MAP_LAYOUTS.length;return MAP_LAYOUTS[Math.abs(n)|0];}
+function mapLayoutForLevel(idx,L){return MAP_LAYOUTS[levelDNAForIndex(idx).layoutIndex%MAP_LAYOUTS.length];}
+function populateDNAStartingWrecks(dna,rng){
+  var count=Math.min(3,dna.startingWrecks||0),families=['blitz','kubel','steyr','sdkfz250','spah'];
+  for(var i=0;i<count;i++){
+    var fam=families[(dna.seedDigit+i*3)%families.length],spec=vehicleSpecFor(fam,gameState.levelIndex),type=spec.baseType||'trooptruck';
+    var side=i%2?-1:1,x=clamp(gameState.map.road.x+side*(42+i*18)+(rng()-.5)*14,28,W-28),y=H*(.35+i*.16)+(rng()-.5)*24;
+    var stage=dna.destruction>=8&&i===count-1?3:dna.destruction>=5?2:1;
+    var w={type:type,vehicleId:spec.id,vehicleName:spec.name,vehicleClass:spec.class,vehicleFamily:spec.family,vehicleSpec:spec,x:x,y:y,bodyAngle:Math.PI/2+rand(-.35,.35),variant:(dna.hash+i)%4,burnT:0,smokeCd:0,flameCd:0,bulletHoles:stage*5,shellHits:stage===3?32:stage===2?18:8,wreckStage:stage,carcass:stage===3,panelLoss:stage,exploded:stage>=2,softDisabled:false,fuelLeak:false,fuelIgnited:false,fuelBurnT:0,oilRadius:2.5};
+    ensureWreckState(w);gameState.wrecks.push(w);
+  }
+}
 function buildMap(){
-  var L=level(),rng=seeded(L.seed+gameState.levelIndex*19),p=levelPalette(BASE_PALETTES[L.theme],L.stage);
-  var layout=mapLayoutForLevel(gameState.levelIndex,L),stage=L.stage,act=L.actStage||0;
+  var L=level(),dna=levelDNA(),rng=seeded((L.seed+dna.hash+gameState.levelIndex*19)>>>0),p=levelPalette(BASE_PALETTES[L.theme],L.stage);
+  var layout=Object.assign({},mapLayoutForLevel(gameState.levelIndex,L)),stage=L.stage,act=L.actStage||0;
+  layout.cover=.45+dna.cover*.115;
+  layout.patches=Math.max(1,Math.min(6,1+Math.round(dna.ground*.55)));
+  layout.setpieces=Math.max(1,Math.min(5,1+Math.round(dna.objects*.45)));
+  layout.trees=.25+dna.vegetation*.17;
+  layout.secondary=dna.roadMode;
+  layout.roadWidth=17+dna.roads*1.25;
+  layout.corridor=.20+dna.roads*.008;
   var roadBase=[.49,.55,.45][stage]+(layout.compound<0?-.015:.015);
   var roadX=W*clamp(roadBase+(rng()-.5)*.085,.36,.64);
   var bendX=clamp(roadX+layout.bend*W+(rng()-.5)*W*.055,W*.22,W*.78);
@@ -542,7 +559,7 @@ function buildMap(){
   }
   var edgeSet=L.theme==='industrial'?['steelDebris','wireFence','rubbleConcrete']:L.theme==='village'?['woodFence','rubbleBrick','crateStack']:L.theme==='desert'?['boulder2','wireFence','jerryStack']:['bush2','logPile','boulder1'];
   var edgeRows=[[.06,.25],[.94,.27],[.07,.43],[.93,.46],[.06,.62],[.94,.65],[.07,.81],[.93,.84]];
-  var decorUse=clamp(Math.round(4+layout.cover*3),4,8);
+  var decorUse=clamp(Math.round(2+dna.objects*.72+layout.cover*1.2),2,10);
   for(i=0;i<decorUse;i++)decor.push({x:clamp(W*(edgeRows[i][0]+(rng()-.5)*.035),12,W-12),y:clamp(H*(edgeRows[i][1]+(rng()-.5)*.045),safeTop+30,H-safeBottom-30),type:edgeSet[(i+act)%edgeSet.length],rot:(i%2?-.15:.15)+(rng()-.5)*.30,s:.62+rng()*.18});
   var themeSets={jungle:['ambush','timber','defense','supply'],desert:['defense','supply','roadblock','rubble'],polar:['timber','defense','supply','rubble'],village:['roadblock','supply','timber','rubble'],industrial:['rubble','roadblock','supply','defense']}[L.theme];
   var setLayout=[[.10,.36],[.90,.40],[.11,.61],[.89,.66],[.13,.80],[.87,.79]],setUse=clamp(layout.setpieces||3,1,5);
@@ -556,8 +573,10 @@ function buildMap(){
   surface.push({x:roadX+8+(rng()-.5)*10,y:H*(.62+(rng()-.5)*.045),type:layout.style==='s'?'trackCurve':'trackStraight',rot:(rng()-.5)*.12,s:.65+rng()*.10,a:.13+rng()*.05});
   if(layout.secondary!=='none')surface.push({x:roadX+(rng()-.5)*18,y:junctionY,type:'gravel',rot:layout.secondary==='cross'?Math.PI/2:.18,s:.92,a:.20});
   if(gameState.levelIndex>=4)surface.push({x:roadX+corridorHalf*.70,y:H*.49,type:'gravel',rot:.1,s:.72,a:.18});
-  if(gameState.levelIndex>=7)surface.push({x:roadX-corridorHalf*.72,y:H*.73,type:'scorch1',rot:-.2,s:.72,a:.19});
-  gameState.map={palette:p,units:unitPalette(p),road:{x:roadX,bendX:bendX,junctionY:junctionY,width:layout.roadWidth,style:layout.style,secondary:layout.secondary},compound:compound,patches:patches,cover:cover,decor:decor,trees:trees,rocks:rocks,surface:surface,setpieces:setpieces,corridorHalf:corridorHalf,layoutName:layout.name,layout:layout};
+  if(dna.destruction>=3)surface.push({x:roadX-corridorHalf*.72,y:H*.73,type:'scorch1',rot:-.2,s:.72+.03*dna.destruction,a:.12+.012*dna.destruction});
+  for(var gx=0;gx<Math.floor(dna.ground/2);gx++)surface.push({x:clamp(roadX+rand(-corridorHalf*.85,corridorHalf*.85),18,W-18),y:H*(.27+gx*.11)+rand(-14,14),type:gx%2?'gravel':'trackStraight',rot:rand(-.28,.28),s:.52+rand(0,.28),a:.08+dna.ground*.014});
+  gameState.map={palette:p,units:unitPalette(p),road:{x:roadX,bendX:bendX,junctionY:junctionY,width:layout.roadWidth,style:layout.style,secondary:layout.secondary},compound:compound,patches:patches,cover:cover,decor:decor,trees:trees,rocks:rocks,surface:surface,setpieces:setpieces,corridorHalf:corridorHalf,layoutName:layout.name,layout:layout,weatherDigit:dna.weather,groundDigit:dna.ground,dnaCode:dna.code};
+  populateDNAStartingWrecks(dna,rng);
 }
 /* ---------- GAME STATE ---------- */
 
@@ -576,6 +595,8 @@ function freshState(){
 }
 function resetLevel(){
   gameState.profile=playerProfile();
+  gameState.levelDNA=decodeLevelCode(level().code);
+  gameState.levelCode=gameState.levelDNA.code;
   gameState.adaptiveSnapshot=clamp(gameState.save.adaptiveDifficulty||0,-.24,.30);
   gameState.damageTarget=levelDamageBand(gameState.levelIndex,gameState.profile.maxHp);
   gameState.adaptiveEvaluated=false;
@@ -616,30 +637,12 @@ var DAMAGE_TARGET_BANDS=[
   [.20,.35],[.20,.36],[.21,.36],[.21,.37],[.22,.37],[.22,.38],[.22,.38],[.23,.39],[.23,.39],[.24,.40],
   [.24,.40],[.24,.41],[.25,.41],[.25,.42],[.25,.42],[.26,.42],[.26,.43],[.26,.43],[.27,.44],[.27,.44]
 ];
-function levelDamageBand(idx,maxHp){
-  var b=DAMAGE_TARGET_BANDS[clamp(idx|0,0,DAMAGE_TARGET_BANDS.length-1)],hp=Math.max(1,maxHp||100);
-  return {min:Math.round(hp*b[0]),max:Math.round(hp*b[1]),minPct:b[0],maxPct:b[1]};
-}
+function levelDamageBand(idx,maxHp){var dna=levelDNAForIndex(idx),hp=Math.max(1,maxHp||100);return {min:Math.round(hp*dna.damageMinPct),max:Math.round(hp*dna.damageMaxPct),minPct:dna.damageMinPct,maxPct:dna.damageMaxPct};}
 function adaptiveValue(){
   if(gameState&&typeof gameState.adaptiveSnapshot==='number')return gameState.adaptiveSnapshot;
   return gameState&&gameState.save?clamp(gameState.save.adaptiveDifficulty||0,-.24,.30):0;
 }
-function enemyProgression(idx){
-  var a=adaptiveValue(),p=clamp(idx/39,0,1);
-  return {
-    adaptive:a,
-    infantryHp:(1+idx*.011)*(1+a*.58),
-    infantrySpeed:(1+idx*.0027)*(1+a*.24),
-    infantryDamage:(1+idx*.0085)*(1+a),
-    vehicleHp:(1+idx*.014)*(1+a*.64),
-    vehicleSpeed:(1+idx*.0028)*(1+a*.20),
-    vehicleDamage:(1+idx*.009)*(1+a),
-    cooldown:clamp((1-idx*.0045)*(1-a*.34),.70,1.14),
-    accuracy:clamp((1-idx*.010)*(1-a*.22),.57,1.18),
-    decision:clamp((1-idx*.009)*(1-a*.24),.58,1.12),
-    professionalism:p
-  };
-}
+function enemyProgression(idx){var a=adaptiveValue(),dna=levelDNAForIndex(idx),skill=dna.infantrySkill,diff=dna.difficulty;var difficultyScale=.82+diff*.055,skillHp=.92+skill*.032,skillMove=.95+skill*.012;return {adaptive:a,infantryHp:(1+idx*.006)*difficultyScale*skillHp*(1+a*.58),infantrySpeed:(1+idx*.0016)*skillMove*(1+a*.24),infantryDamage:(.88+diff*.038+skill*.010)*(1+a),vehicleHp:(.90+dna.vehicleClass*.038+diff*.020)*(1+a*.64),vehicleSpeed:(.94+dna.vehicleClass*.012+diff*.006)*(1+a*.20),vehicleDamage:(.90+diff*.035+dna.vehicleClass*.012)*(1+a),cooldown:clamp((1.08-skill*.030-diff*.010)*(1-a*.34),.62,1.18),accuracy:clamp((1.12-skill*.035-diff*.010)*(1-a*.22),.54,1.24),decision:clamp((1.10-skill*.032-dna.tactics*.012)*(1-a*.24),.52,1.20),professionalism:clamp((skill+dna.tactics+diff)/27,0,1)};}
 function enemyWeaponProfile(role,idx,seed){
   var n=Math.abs((seed==null?idx*37:seed)|0),pick=function(a){return a[n%a.length];};
   if(role==='lmg'){
@@ -758,15 +761,7 @@ function evaluateAdaptiveDifficulty(failed){
   return {change:next-old,value:next,rating:rating,band:band,damage:dmg};
 }
 
-function difficultyBand(idx){
-  if(idx<2)return {count:.66,gap:1.22,motors:1,elite:0,air:0};
-  if(idx<4)return {count:.72,gap:1.18,motors:1,elite:0,air:0};
-  if(idx<8)return {count:.80,gap:1.12,motors:1,elite:.05,air:0};
-  if(idx<12)return {count:.88,gap:1.08,motors:2,elite:.10,air:0};
-  if(idx<20)return {count:.96,gap:1.03,motors:2,elite:.18,air:.08};
-  if(idx<30)return {count:1.06,gap:.98,motors:2,elite:.28,air:.16};
-  return {count:1.14,gap:.94,motors:3,elite:.38,air:.23};
-}
+function difficultyBand(idx){var d=levelDNAForIndex(idx);return {count:.62+d.infantryAmount*.050+d.difficulty*.018,gap:clamp(1.28-d.pace*.052,.76,1.28),motors:Math.max(1,Math.min(4,1+Math.floor(d.vehicleAmount/3))),elite:clamp((d.infantrySkill+d.weaponClass)/18,0,1),air:d.air/9};}
 function levelArchetype(idx){
   var mapNo=idx+1;
   if(mapNo%5===0)return 'finale';
@@ -1102,7 +1097,7 @@ cavalry_1:{id:'cavalry_1',family:'cavalry',class:1,name:'REITER SPAHTRUPP',baseT
 cavalry_2:{id:'cavalry_2',family:'cavalry',class:2,name:'KAVALLERIE KAR98K',baseType:'jeep',hp:.56,speed:1.20,accel:1.04,turn:1.22,weapon:.78,capacity:1,transport:false,hasMG:true,visual:'mountedRifle'},
 cavalry_3:{id:'cavalry_3',family:'cavalry',class:3,name:'KAVALLERIE MP40',baseType:'jeep',hp:.64,speed:1.22,accel:1.06,turn:1.24,weapon:.92,capacity:1,transport:false,hasMG:true,visual:'mountedElite'}
 };
-function vehicleClassForLevel(idx){return idx<12?1:idx<24?2:3;}
+function vehicleClassForLevel(idx){var d=levelDNAForIndex(idx).vehicleClass;return d<3?1:d<6?2:3;}
 function vehicleSpecFor(family,idx){var key=(family==='motorcycle'?'r75':family)+'_'+vehicleClassForLevel(idx);return VEHICLE_SPECS[key]||VEHICLE_SPECS.blitz_1;}
 function vehicleSpecById(id,type){if(id&&VEHICLE_SPECS[id])return VEHICLE_SPECS[id];if(type==='jeep')return VEHICLE_SPECS.kubel_1;if(type==='scoutcar')return VEHICLE_SPECS.spah_1;if(type==='halftrack')return VEHICLE_SPECS.sdkfz250_1;if(type==='lighttruck')return VEHICLE_SPECS.steyr_1;return VEHICLE_SPECS.blitz_1;}
 function pickTransportVehicle(idx,rng){if(idx<2)return 'blitz_1';return vehicleSpecFor(rng()>.48?'steyr':'blitz',idx).id;}
