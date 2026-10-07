@@ -3332,7 +3332,7 @@ function update(dt){
   var liveVeh=gameState.vehicles.some(function(v){return v.alive&&v.state!=='parked'&&v.state!=='parkedDisabled'&&v.state!=='disabled';});
   var liveAir=gameState.air.some(function(a){return a.alive;});
   var volatileWreck=gameState.wrecks.some(function(w){return w.fuelIgnited&&!w.exploded;});
-  var liveOpportunity=gameState.opportunities.some(function(o){return o.active;});
+  var liveOpportunity=gameState.opportunities.some(function(o){return o.active&&o.engaged;});
   if(gameState.eventCursor>=gameState.events.length&&!liveInf&&!liveVeh&&!liveAir&&!volatileWreck&&!liveOpportunity&&!gameState.paras.length&&gameState.levelTime>11.5)completeLevel();
 }
 
