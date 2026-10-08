@@ -987,6 +987,7 @@ var AudioSys=(function(){
   REC_URLS.trackSample='https://raw.githubusercontent.com/OpenTTD/OpenSFX/master/src/wav/osfx_39.wav';
   REC_URLS.woodBreakSample='https://raw.githubusercontent.com/OpenTTD/OpenSFX/master/src/wav/osfx_54.wav';
   REC_URLS.groundSample='https://raw.githubusercontent.com/OpenTTD/OpenSFX/master/src/wav/osfx_31.wav';
+  REC_URLS.shotgunReal=BASE+'shotgun_12ga.mp3';
 
   function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
   // V9.6.8: sample-only runtime. Procedural waveform generation was removed.
@@ -1079,12 +1080,12 @@ var AudioSys=(function(){
     bren:{key:'smg0',rate:.79,vol:.95,layer:'rifle1',layerVol:.12,crack:.07,machine:true},
     mg34:{key:'smg0',rate:.86,vol:.91,layer:'rifle1',layerVol:.10,crack:.06,machine:true},
     mg42:{key:'smg0',rate:1.08,vol:.94,layer:'rifle2',layerVol:.10,crack:.06,machine:true},
-    shotgun:{key:'rifle0',rate:.72,vol:1.0,layer:'metalHeavy',layerVol:.13,crack:.02,single:true},
+    shotgun:{key:'shotgunReal',rate:.98,vol:.98,layer:null,layerVol:0,crack:0,single:false},
     modern:{key:'smg0',rate:1.02,vol:.88,layer:'rifle2',layerVol:.09,crack:.05,machine:true}
   };
   function weaponSample(){
     var p=gameState&&gameState.profile, id=p?p.primaryId:'kar98',cls=p?p.primaryClass:'bolt rifle';
-    if(cls==='shotgun')return WEAPON_SOUND_DB.shotgun;
+    if(cls==='shotgun')return Object.assign({},WEAPON_SOUND_DB.shotgun,{rate:id==='spas12'?1.05:id==='auto5'?1.09:id==='win1897'?.90:.96});
     if(cls==='bolt rifle')return id==='springfield'?WEAPON_SOUND_DB.scoped:WEAPON_SOUND_DB.bolt;
     if(cls==='semi-auto rifle')return id==='fnfal'?WEAPON_SOUND_DB.automatic:WEAPON_SOUND_DB.semi;
     if(cls==='submachine gun')return id==='thompson'?WEAPON_SOUND_DB.thompson:id==='hkmp5'?WEAPON_SOUND_DB.modern:WEAPON_SOUND_DB.smg;
@@ -4117,9 +4118,9 @@ function update(dt){
     if(gameState.primaryReloadShell){
       gameState.primaryAmmo=Math.min(gameState.profile.primaryMag,gameState.primaryAmmo+1);
       gameState.primaryReloadShell=false;
-      if(gameState.primaryAmmo<gameState.profile.primaryMag&&gameState.primaryAmmo===0)beginPrimaryReload();
+      if(gameState.primaryAmmo<gameState.profile.primaryMag)beginPrimaryReload();
     }else gameState.primaryAmmo=gameState.profile.primaryMag;
-    gameState.message='LOADED '+gameState.primaryAmmo+'/'+gameState.profile.primaryMag;gameState.messageT=.24;
+    if(gameState.primaryReloadT===0){gameState.message='LOADED '+gameState.primaryAmmo+'/'+gameState.profile.primaryMag;gameState.messageT=.24;}
   }}
   gameState.heat=Math.max(0,gameState.heat-gameState.profile.cool*dt);if(gameState.overheat&&gameState.heat<.28)gameState.overheat=false;
   if(gameState.pointer.down&&!gameState.pointer.heFired){
