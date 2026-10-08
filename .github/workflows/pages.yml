@@ -1,10 +1,11 @@
-name: Deploy JBD Long Front to GitHub Pages
+name: Deploy JBD to GitHub Pages
 
 on:
   push:
     branches: ["main"]
     paths:
       - "jbd_rebuild_v1/dist/**"
+      - "jbd_web/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +31,16 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload Long Front site
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          cp -a jbd_rebuild_v1/dist/. _site/
+          cp -a jbd_web _site/jbd_web
+          touch _site/.nojekyll
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./jbd_rebuild_v1/dist
+          path: ./_site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
