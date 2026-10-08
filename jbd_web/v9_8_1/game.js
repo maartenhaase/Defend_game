@@ -5272,11 +5272,12 @@ function updateAlliedTeam(dt){
     // The identical enemy chassis now drives NORTH and steers around living
     // vehicles as well as wrecks instead of sliding through them.
     var targetX=v.routeX+Math.sin(gameState.time*.9+v.steerPhase)*12;
-    var blocks=gameState.vehicles.concat(a.armor,gameState.wrecks);
+    var solidCover=gameState.map&&gameState.map.cover?gameState.map.cover.filter(function(c){return !c.destroyed&&coverUsableForFire(c);}):[];
+    var blocks=gameState.vehicles.concat(a.armor,gameState.wrecks,a.allies,gameState.infantry,solidCover);
     var vr=vehicleBodyRadius(v),nearestBlock=null,blockDist=1e8;
     for(var j=0;j<blocks.length;j++){
       var obstacle=blocks[j];if(obstacle===v||obstacle.alive===false&&gameState.wrecks.indexOf(obstacle)<0)continue;
-      var dy=v.y-obstacle.y,dx=v.x-obstacle.x,clearance=vr+(gameState.wrecks.indexOf(obstacle)>=0?wreckBodyRadius(obstacle):vehicleBodyRadius(obstacle))+6;
+      var dy=v.y-obstacle.y,dx=v.x-obstacle.x,clearance=vr+(obstacle.role?7:solidCover.indexOf(obstacle)>=0?9:gameState.wrecks.indexOf(obstacle)>=0?wreckBodyRadius(obstacle):vehicleBodyRadius(obstacle))+6;
       if(dy>=-6&&dy<90&&Math.abs(dx)<clearance+16&&dy+Math.abs(dx)<blockDist){
         nearestBlock=obstacle;blockDist=dy+Math.abs(dx);
         var side=v.avoidSide||(v.x<=obstacle.x?-1:1);
@@ -5298,7 +5299,7 @@ function updateAlliedTeam(dt){
     // Resolve any residual penetration by separating contact surfaces.
     for(j=0;j<blocks.length;j++){
       var o=blocks[j];if(o===v||o.alive===false&&gameState.wrecks.indexOf(o)<0)continue;
-      var radius=vr+(gameState.wrecks.indexOf(o)>=0?wreckBodyRadius(o):vehicleBodyRadius(o))+4;
+      var radius=vr+(o.role?7:solidCover.indexOf(o)>=0?9:gameState.wrecks.indexOf(o)>=0?wreckBodyRadius(o):vehicleBodyRadius(o))+4;
       var sx=v.x-o.x,sy=v.y-o.y,dist2=Math.hypot(sx,sy);
       if(dist2<radius){var nx=dist2>0?sx/dist2:(v.id%2?.8:-.8),ny=dist2>0?sy/dist2:.6;
         v.x=clamp(v.x+nx*(radius-dist2+.5),vr+4,W-vr-4);
