@@ -1725,7 +1725,7 @@ function applyTrauma(e,mode){
   e.hp=Math.max(8,e.hp);
 }
 function dismountOne(v,mode,index){
-  var a=v.bodyAngle==null?Math.PI/2:v.bodyAngle,side=(index%2?1:-1),troop=v.type==='trooptruck';
+  var a=v.bodyAngle==null?Math.PI/2:v.bodyAngle,side=(index%2?1:-1),troop=v.type==='trooptruck'||v.type==='lighttruck'||v.type==='truck';
   // Rear hatch of each truck is behind the chassis, with a staggered exit queue.
   var rear=troop?(22.0+(index%2)*1.7):(13+(index%3)*1.2);
   var px=v.x-Math.cos(a)*rear+Math.cos(a+Math.PI/2)*side*2.5;
@@ -1803,7 +1803,7 @@ function spawnVehicle(type,count,vehicleId,direction,passengersOverride){
   for(var vi=0;vi<gameState.vehicles.length;vi++){var ov=gameState.vehicles[vi];if(ov.alive&&ov.y<safeTop+125)spawnY=Math.min(spawnY,ov.y-72);}
   var aim=Math.atan2(gameState.bunker.y-spawnY,gameState.bunker.x-x),transport=!!spec.transport,dismountRun=transport||(type==='halftrack'&&Math.random()<.62);
   var hasMG=spec.hasMG!=null?!!spec.hasMG:type!=='trooptruck',passengerCount=transport?(passengersOverride!=null?Math.max(0,passengersOverride|0):Math.max(1,count||cap)):cap;
-  if(type==='trooptruck')passengerCount=clamp(passengerCount,6,10);
+  if(transport&&(type==='trooptruck'||type==='lighttruck'||type==='truck')&&passengersOverride!==0)passengerCount=clamp(passengerCount,6,10);
   var armorTier=gameState.levelIndex<8?0:Math.min(3,Math.max(spec.class||1,1+Math.floor((gameState.levelIndex-8)/12)));
   if(Math.random()>clamp(.28+dna.vehicleClass*.06+gameState.levelIndex*.012,0,.90))armorTier=0;
   var armorHp=armorTier?(24+armorTier*22+dna.vehicleClass*5):0;
@@ -5557,7 +5557,8 @@ function demoFortify(stage){
   if(!fort){
     var u=a.allies.find(function(x){return x.alive&&!x.defendFort;});
     if(!u){spawnAlliedTeam(false);u=a.allies[a.allies.length-1];}
-    fort={owner:u.id,x:clamp(W*.44,35,W-35),y:H*.57,stage:1};a.forts.push(fort);
+    // Demo builders stay where they arrived from the south; no teleport.
+    fort={owner:u.id,x:clamp(u.x,35,W-35),y:clamp(u.y,H*.53,H*.83),stage:1};a.forts.push(fort);
   }
   var owner=a.allies.find(function(u){return u.id===fort.owner;});
   if(owner&&owner.alive){
