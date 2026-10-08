@@ -1711,7 +1711,7 @@ function vehicleExplosionScale(v){
 }
 function vehicleCapacity(type,spec){
   if(spec&&spec.capacity)return spec.capacity;
-  if(type==='trooptruck'){if(gameState.levelIndex===0)return 2;if(gameState.levelIndex===1)return 3;if(gameState.levelIndex<6)return Math.floor(rand(3,5));return Math.floor(rand(5,8));}
+  if(type==='trooptruck')return Math.floor(rand(6,11));
   if(type==='halftrack')return Math.floor(rand(6,9));
   if(type==='truck')return Math.floor(rand(7,10));
   if(type==='lighttruck')return Math.floor(rand(4,7));
@@ -1726,13 +1726,16 @@ function applyTrauma(e,mode){
 }
 function dismountOne(v,mode,index){
   var a=v.bodyAngle==null?Math.PI/2:v.bodyAngle,side=(index%2?1:-1),troop=v.type==='trooptruck';
-  var rear=troop?(15.5+(index%2)*.8):(13+(index%3)*1.2);
+  // Rear hatch of each truck is behind the chassis, with a staggered exit queue.
+  var rear=troop?(22.0+(index%2)*1.7):(13+(index%3)*1.2);
   var px=v.x-Math.cos(a)*rear+Math.cos(a+Math.PI/2)*side*2.5;
   var py=v.y-Math.sin(a)*rear+Math.sin(a+Math.PI/2)*side*2.5;
   var half=gameState.map.corridorHalf||92,roadX=gameState.map.road.x;
-  var sq={id:squadSerial++,tactic:index%3===0?'flankLeft':index%3===1?'flankRight':'bound',size:1,originX:px,phase:Math.random()*TAU,slot:index,flankX:clamp(px+side*24,roadX-half*.82,roadX+half*.82),aggressive:1,dismounted:true};
+  // A single officer leads the left group, with alternate exits to both flanks.
+  var sq={id:troop?(side<0?(v.leftSquadId||(v.leftSquadId=squadSerial++)):(v.rightSquadId||(v.rightSquadId=squadSerial++))):squadSerial++,tactic:troop?(side<0?'flankLeft':'flankRight'):(index%2?'flankRight':'flankLeft'),size:troop?5:1,originX:px,phase:Math.random()*TAU,slot:index,flankX:clamp(px+side*(troop?78:24),roadX-half*.88,roadX+half*.88),aggressive:1,dismounted:true};
   var role='rifle',rr=Math.random();
-  if(rr<.26)role='medic';
+  if(troop&&index===0)role='officer';
+  else if(rr<.26)role='medic';
   else if(gameState.levelIndex>=3&&rr<.42)role='lmg';
   else if(gameState.levelIndex>=6&&rr<.53)role='marksman';
   if(gameState.levelIndex>=10&&!v.rocketDismounted&&index>=2&&Math.random()<.12){role='grenadier';v.rocketDismounted=true;}
@@ -1740,8 +1743,8 @@ function dismountOne(v,mode,index){
   e.aggressive=1.25;e.cover=null;e.fireCd=rand(.28,.46);e.decisionT=rand(.58,.92);
   e.state='dismount';e.stateT=0;e.dismountDur=troop?rand(.44,.56):rand(.30,.42);e.dismountT=e.dismountDur;e.dismountArc=troop?rand(6.8,8.2):5.2;
   if(troop){
-    e.vx=Math.cos(a+Math.PI/2)*side*rand(18,30)-Math.cos(a)*rand(22,34);
-    e.vy=Math.sin(a+Math.PI/2)*side*rand(18,30)-Math.sin(a)*rand(22,34);
+    e.vx=Math.cos(a+Math.PI/2)*side*rand(45,64)-Math.cos(a)*rand(16,23);
+    e.vy=Math.sin(a+Math.PI/2)*side*rand(45,64)-Math.sin(a)*rand(16,23);
   }else{
     e.vx=Math.cos(a+Math.PI/2)*side*rand(28,42)-Math.cos(a)*rand(12,20);
     e.vy=Math.sin(a+Math.PI/2)*side*rand(28,42)-Math.sin(a)*rand(12,20);
@@ -1800,6 +1803,7 @@ function spawnVehicle(type,count,vehicleId,direction,passengersOverride){
   for(var vi=0;vi<gameState.vehicles.length;vi++){var ov=gameState.vehicles[vi];if(ov.alive&&ov.y<safeTop+125)spawnY=Math.min(spawnY,ov.y-72);}
   var aim=Math.atan2(gameState.bunker.y-spawnY,gameState.bunker.x-x),transport=!!spec.transport,dismountRun=transport||(type==='halftrack'&&Math.random()<.62);
   var hasMG=spec.hasMG!=null?!!spec.hasMG:type!=='trooptruck',passengerCount=transport?(passengersOverride!=null?Math.max(0,passengersOverride|0):Math.max(1,count||cap)):cap;
+  if(type==='trooptruck')passengerCount=clamp(passengerCount,6,10);
   var armorTier=gameState.levelIndex<8?0:Math.min(3,Math.max(spec.class||1,1+Math.floor((gameState.levelIndex-8)/12)));
   if(Math.random()>clamp(.28+dna.vehicleClass*.06+gameState.levelIndex*.012,0,.90))armorTier=0;
   var armorHp=armorTier?(24+armorTier*22+dna.vehicleClass*5):0;
@@ -2412,7 +2416,8 @@ function damageVehicle(v,dmg,kind){
       for(var vp=0;vp<4;vp++)pushEffect({type:'vehiclePart',part:'panel',x:v.x+rand(-7,7),y:v.y+rand(-8,8),vx:rand(-72,72),vy:rand(-90,-20),rot:rand(0,TAU),vr:rand(-11,11),t:0,life:rand(.7,1.15),scale:.75});
     }
   }
-  v.hp-=dealt;v.hitFlash=.10;gameState.hitMarker=.20;gameState.hitPulse=1;
+  v.hp-=dealt;v.hitFlash=.10;
+  if(v.allied&&!v.crewOut&&v.hp<=v.maxHp*.46)deployAlliedCrew(v);gameState.hitMarker=.20;gameState.hitPulse=1;
   pushEffect({type:'damage',x:v.x,y:v.y-8,text:String(Math.max(1,Math.round(dealt))),t:0,life:.52});
   if(fam!=='cavalry')vehicleHitFx(v,kind);
   if(v.hp<=0){
@@ -2793,7 +2798,7 @@ function unloadStep(v){
   if(v.unloadLeft<=0)return;
   dismountOne(v,'normal',v.unloadIndex++);v.unloadLeft--;v.passengers=v.unloadLeft;
   // Trooptruck passengers leave clearly one-by-one instead of appearing as a burst.
-  v.unloadCd=v.type==='trooptruck'?rand(.24,.32):rand(.14,.20);
+  v.unloadCd=v.type==='trooptruck'?rand(.18,.27):rand(.14,.20);
 }
 function approachValue(v,target,maxDelta){
   if(v<target)return Math.min(target,v+maxDelta);
@@ -3000,7 +3005,7 @@ function updateVehicles(dt){
       v.sideVel+=(desiredShoulder-(v.sideVel||0))*(1-Math.exp(-3.2*dt));
       v.x+=v.sideVel*dt;v.y+=v.currentSpeed*.10*dt;
       v.bodyAngle=approachAngle(v.bodyAngle,Math.atan2(v.currentSpeed*.10,v.sideVel||.001),dt*v.turnRate*.70);
-      if(Math.abs(dx)<2){v.state='unload';v.rearGateOpen=true;AudioSys.tone('door',.46);v.stopT=v.type==='trooptruck'?1.30:2.25;v.unloadCd=v.type==='trooptruck'?rand(.42,.54):.08;v.currentSpeed=0;v.stopBursts=2;}
+      if(Math.abs(dx)<2){v.state='unload';v.rearGateOpen=true;AudioSys.tone('door',.46);v.stopT=v.type==='trooptruck'?1.30:2.25;v.unloadCd=v.type==='trooptruck'?rand(.25,.34):.08;v.currentSpeed=0;v.stopBursts=2;}
     }else if(v.state==='unload'){
       vehicleMG(v,turretState);
       v.stopT-=dt;if(v.unloadLeft>0&&v.unloadCd<=0)unloadStep(v);
@@ -5119,24 +5124,28 @@ function redirectEnemyFireAtAllies(b){
   var a=gameState.arcade;if(!a||b.kind==='rocket'&&Math.random()<.6||Math.random()>.68)return;
   var candidates=a.allies.concat(a.armor).filter(function(u){return u.alive&&dist(u.x,u.y,b.x,b.y)<Math.max(440,H*.75);});
   if(!candidates.length)return;
-  var u=candidates[Math.random()*candidates.length|0],speed=Math.sqrt(b.vx*b.vx+b.vy*b.vy)||160;
+  var vehicles=a.armor.filter(function(v){return v.alive&&dist(v.x,v.y,b.x,b.y)<Math.max(440,H*.75);});
+  var u=vehicles.length&&Math.random()<.60?vehicles[Math.random()*vehicles.length|0]:candidates[Math.random()*candidates.length|0];
+  var speed=Math.sqrt(b.vx*b.vx+b.vy*b.vy)||160;
   var ang=Math.atan2(u.y-b.y+rand(-19,19),u.x-b.x+rand(-19,19));
   b.vx=Math.cos(ang)*speed;b.vy=Math.sin(ang)*speed;
 }
 function alliedIncomingFire(b){
   var a=gameState.arcade;if(!a||b.life<=0)return;
-  for(var i=0;i<a.allies.length;i++){
+  // The vehicle hull intercepts fire in front of soldiers and shares enemy damage rules.
+  for(var i=0;i<a.armor.length;i++){
+    var v=a.armor[i];
+    if(!v.alive||pointSegDist(v.x,v.y,b.px,b.py,b.x,b.y)>vehicleBodyRadius(v)+4)continue;
+    v.hitCount=(v.hitCount||0)+1;
+    var dmg=(b.kind==='rocket'||b.kind==='shell')?Math.max(18,(b.dmg||5)*3.4):Math.max(9,(b.dmg||5)*5.0);
+    damageVehicle(v,dmg,b.kind==='rocket'||b.kind==='shell'?'he':'mg');
+    b.life=0;return;
+  }
+  for(i=0;i<a.allies.length;i++){
     var u=a.allies[i];
     if(!u.alive||pointSegDist(u.x,u.y,b.px,b.py,b.x,b.y)>11)continue;
     u.lastFire=gameState.time;u.suppression=Math.min(1,(u.suppression||0)+.34);
     damageInfantry(u,b.dmg||5,b.kind==='rocket'||b.kind==='shell'?'he':'mg');
-    b.life=0;return;
-  }
-  for(i=0;i<a.armor.length;i++){
-    var v=a.armor[i];
-    if(!v.alive||pointSegDist(v.x,v.y,b.px,b.py,b.x,b.y)>vehicleBodyRadius(v)+3)continue;
-    v.hitCount=(v.hitCount||0)+1;
-    damageVehicle(v,b.dmg||5,b.kind==='rocket'||b.kind==='shell'?'he':'mg');
     b.life=0;return;
   }
 }
