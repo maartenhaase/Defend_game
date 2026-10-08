@@ -5537,7 +5537,8 @@ function spawnAlliedArmor(kills){
   var a=gameState.arcade;if(a.armor.some(function(v){return v.alive;}))return;
   var type=kills<60?'jeep':kills<110?'scoutcar':'halftrack';
   a.armor.push({type:type,x:gameState.bunker.x+rand(-42,42),y:Math.min(gameState.bunker.y-54,H*.73),
-    hp:type==='jeep'?44:type==='scoutcar'?65:85,maxHp:type==='jeep'?44:type==='scoutcar'?65:85,fireCd:rand(1,2),alive:true,wheelT:0,crewOut:false,hitCount:0});
+    hp:type==='jeep'?44:type==='scoutcar'?65:85,maxHp:type==='jeep'?44:type==='scoutcar'?65:85,fireCd:rand(.6,1.3),alive:true,wheelT:0,crewOut:false,hitCount:0,
+    steerPhase:rand(0,TAU),bodyAngle:0,turretAngle:0,routeX:gameState.bunker.x+rand(-45,45),driving:true});
   arcadeFlash('ALLIED SUPPORT · '+type.toUpperCase(),2.5);
 }
 // Crew bail out when an Allied vehicle is badly damaged. These are regular,
@@ -5727,26 +5728,45 @@ function updateAlliedTeam(dt){
   }
   for(i=0;i<a.armor.length;i++){
     var tank=a.armor[i];if(!tank.alive)continue;
-    tank.y=Math.max(H*.565,tank.y-dt*15);tank.wheelT+=dt*4;tank.fireCd-=dt;
+    // Allied armor follows a shallow curved path, turns its hull and rotates its turret independently.
+    var armorFront=H*.555,approaching=tank.y>armorFront;
+    var dirX=clamp(tank.routeX-tank.x+Math.sin(gameState.time*.95+tank.steerPhase)*23,-28,28);
+    var oldX=tank.x,oldY=tank.y;
+    if(approaching){tank.x=clamp(tank.x+dirX*dt,22,W-22);tank.y=Math.max(armorFront,tank.y-dt*34);}
+    else if(Math.random()<dt*.17)tank.routeX=clamp(tank.x+rand(-36,36),25,W-25);
+    var velX=(tank.x-oldX)/Math.max(.001,dt),velY=(tank.y-oldY)/Math.max(.001,dt);
+    if(approaching)tank.bodyAngle=approachAngle(tank.bodyAngle,Math.atan2(velY,velX)+Math.PI/2,dt*2.3);
+    tank.wheelT+=dt*(approaching?10:1);tank.fireCd-=dt;
     if(gameState.vehicles.some(function(v){return v.alive&&dist(v.x,v.y,tank.x,tank.y)<210;}))tank.fireCd-=dt*.3;
-    if(tank.fireCd<=0){
-      tank.fireCd=rand(2.5,3.8);
-      var target=null,best=260*260;
-      for(j=0;j<gameState.infantry.length;j++){e=gameState.infantry[j];var d=dist(tank.x,tank.y,e.x,e.y);if(e.alive&&d*d<best){best=d*d;target=e;}}
-      if(target){
-        emitMuzzle(tank.x,tank.y-16,-Math.PI/2,true);AudioSys.weapon('BREN MKII','lmg',.43,{pan:clamp((tank.x-W*.5)/(W*.5),-.8,.8)});gameState.shake=Math.max(gameState.shake||0,1.5);
-        if(Math.random()<.30){target.suppression=Math.min(1,(target.suppression||0)+.45);target.hp-=rand(7,11);if(target.hp<=0){gameState.arcadeNoReward=true;killInfantry(target,'mg');gameState.arcadeNoReward=false;}}
-      }
-      var hostileVehicle=null,near=260*260;
-      for(var vi=0;vi<gameState.vehicles.length;vi++){
-        var ev=gameState.vehicles[vi],vd=dist(tank.x,tank.y,ev.x,ev.y);
-        if(ev.alive&&vd*vd<near){near=vd*vd;hostileVehicle=ev;}
-      }
-      if(hostileVehicle&&Math.random()<.30){
-        emitMuzzle(tank.x,tank.y-15,Math.atan2(hostileVehicle.y-tank.y,hostileVehicle.x-tank.x),true);
-        AudioSys.weapon('BREN MKII','lmg',.32,{pan:clamp((tank.x-W*.5)/(W*.5),-.8,.8)});
-        hostileVehicle.suppression=(hostileVehicle.suppression||0)+.05;
-        if(Math.random()<.22)damageVehicle(hostileVehicle,rand(4,7),'mg');
+    var target=null,best=265*265;
+    for(j=0;j<gameState.infantry.length;j++){
+      var e=gameState.infantry[j],d=dist(tank.x,tank.y,e.x,e.y);
+      if(e.alive&&d*d<best){best=d*d;target=e;}
+    }
+    var hostileVehicle=null,near=250*250;
+    for(var vi=0;vi<gameState.vehicles.length;vi++){
+      var ev=gameState.vehicles[vi],vd=dist(tank.x,tank.y,ev.x,ev.y);
+      if(ev.alive&&vd*vd<near){near=vd*vd;hostileVehicle=ev;}
+    }
+    var aiming=hostileVehicle||target;
+    var aim=aiming?Math.atan2(aiming.y-tank.y,aiming.x-tank.x):-Math.PI/2;
+    tank.turretAngle=approachAngle(tank.turretAngle,aim+Math.PI/2,dt*4.8);
+    if(tank.fireCd<=0&&aiming){
+      tank.fireCd=hostileVehicle?rand(.55,.95):rand(.35,.70);
+      var muzzleAngle=tank.turretAngle-Math.PI/2;
+      var mx=tank.x+Math.cos(muzzleAngle)*19,my=tank.y+Math.sin(muzzleAngle)*19;
+      emitMuzzle(mx,my,muzzleAngle,true);
+      AudioSys.weapon('BREN MKII','lmg',.37,{pan:clamp((tank.x-W*.5)/(W*.5),-.8,.8)});
+      tank.wheelT+=.4;
+      if(target&&!hostileVehicle){
+        var canHit=Math.random()<.21,tx=target.x+rand(-13,13),ty=target.y+rand(-11,11);
+        var bulletAngle=Math.atan2(ty-my,tx-mx);
+        a.tracers.push({x:mx,y:my,px:mx,py:my,vx:Math.cos(bulletAngle)*680,vy:Math.sin(bulletAngle)*680,
+          life:.48,damage:rand(4.3,6.7),targetId:target.id,canHit:canHit,owner:tank});
+      }else if(hostileVehicle){
+        var hAngle=Math.atan2(hostileVehicle.y-my,hostileVehicle.x-mx);
+        pushEffect({type:'ricochet',x:hostileVehicle.x+rand(-8,8),y:hostileVehicle.y+rand(-8,8),vx:rand(-35,35),vy:rand(-55,10),t:0,life:.15});
+        if(Math.abs(muzzleAngle-hAngle)<.4&&Math.random()<.24)damageVehicle(hostileVehicle,rand(3,5),'mg');
       }
     }
   }
@@ -5782,8 +5802,8 @@ function drawAlliedTeam(){
   }
   for(i=0;i<a.armor.length;i++){
     var v=a.armor[i],type=v.type||'jeep';
-    drawAtlas(type+':empty:0:healthy',v.x,v.y,type==='jeep'?.5:.54,Math.PI,1);
-    drawAtlas('turret:'+type,v.x,v.y-2,.5,Math.PI,1);
+    drawAtlas(type+':empty:0:healthy',v.x,v.y,type==='jeep'?.5:.54,v.bodyAngle||0,1);
+    drawAtlas('turret:'+type,v.x,v.y-2,.5,v.turretAngle||0,1);
     ctx.save();ctx.fillStyle='#a8d6f1';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('★',v.x,v.y+3);ctx.restore();
   }
 }
