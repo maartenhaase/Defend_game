@@ -801,11 +801,11 @@ function primaryStats(index){
   var damageLevel=clamp(u.damage||0,0,SKILL_MAX),rangeLevel=clamp(u.range||0,0,SKILL_MAX);
   var aimLevel=clamp(u.aiming||0,0,SKILL_MAX),reloadLevel=clamp(u.reload||0,0,SKILL_MAX);
   return {
-    id:w.id,name:w.name,damage:w.damage*(1+damageLevel*.065),speed:w.speed,
-    rangeFactor:Math.min(1.12,w.range*(1+rangeLevel*.065)),spread:w.spread,
-    burst:w.burst,burstGap:w.cycle,heatScale:w.heatScale||1,cool:.27,
+    id:w.id,name:w.name,damage:w.damage*weaponFeel(w).damage*(1+damageLevel*.065),speed:w.speed,
+    rangeFactor:Math.min(1.18,w.range*weaponFeel(w).range*(1+rangeLevel*.065)),spread:w.spread*weaponFeel(w).spread,
+    burst:w.burst,burstGap:w.cycle*weaponFeel(w).cycle,heatScale:(w.heatScale||1)*weaponFeel(w).heat,cool:.27,
     visual:Math.min(MAX_WEAPON_LEVEL,Math.floor((gameState&&gameState.gunGameKills||0)/5)*2+damageLevel),
-    mag:w.mag,reload:w.reload,cycle:w.cycle,projectile:w.projectile,
+    mag:w.mag,reload:w.reload,cycle:w.cycle*weaponFeel(w).cycle,projectile:w.projectile,
     splash:0,homing:0,era:w.era,cls:w.cls,ammo:w.ammo,aimLevel:aimLevel,reloadLevel:reloadLevel,
     mode:w.mode,pellets:w.pellets||1,group:w.group,variant:w.variant
   };
@@ -838,6 +838,18 @@ function updateGrenadeSlots(dt){
   for(var i=0;i<gameState.grenadeSlots.length;i++)gameState.grenadeSlots[i]=Math.max(0,gameState.grenadeSlots[i]-dt);
 }
 var GUN_GAME_INTERVAL=5;
+/* All weapon performance comes from the actual 24-weapon database. Group identity is
+   enforced with bounded multipliers rather than inherited Kar98 characteristics.
+   Effective firepower balances burst damage against magazine size and recoil. */
+var WEAPON_FEEL=[
+ {damage:1.42,cycle:1.16,spread:.62,range:1.15,heat:.75},  // bolt: heavy, deliberate, precise
+ {damage:1.12,cycle:.92,spread:.82,range:1.04,heat:.92},   // semi: accurate follow-up
+ {damage:.86,cycle:.74,spread:1.50,range:.76,heat:1.14}, // SMG: bullet hose, close range
+ {damage:1.00,cycle:.89,spread:1.02,range:1.00,heat:1.08},// assault: jack of all trades
+ {damage:.84,cycle:.72,spread:1.34,range:1.02,heat:1.22}, // LMG: high volume, harder control
+ {damage:1.12,cycle:1.04,spread:1.18,range:.68,heat:1.07} // shotgun: 8-12 pellets
+];
+function weaponFeel(w){return WEAPON_FEEL[w.group]||WEAPON_FEEL[0];}
 var GUN_GAME_POOL=PRIMARY_DB.map(function(w,i){return i;});
 function nextGunGameIndex(current,previous){
   var candidates=[];
@@ -1419,6 +1431,7 @@ function freshState(){
 function resetLevel(){
   if(gameState.arcade){gameState.arcade.focusT=0;gameState.arcade.focusCd=0;gameState.arcade.reconT=0;gameState.arcade.lastNearMiss=-99;}
   gameState.zoneRule=currentZoneRule();
+  if(gameState.arcade){gameState.arcade.allies=[];gameState.arcade.salvageAt=15;gameState.arcade.focus=0;}
   gameState.riskBase=gameState.startMode==='hard'?.26:gameState.startMode==='random'?.18:.10;
   gameState.riskLevel=gameState.riskBase;gameState.riskPeak=gameState.riskBase;gameState.riskBank=0;
   gameState.riskReserveT=0;gameState.riskReserveQueued=0;gameState.riskThresholds=[false,false,false];
@@ -5442,7 +5455,7 @@ function arcadeUpdate(dt){
   a.focusCd=Math.max(0,a.focusCd-dt);
   updateAlliedTeam(dt);
   // Tactical focus rewards timing: brief defense and faster manual shots.
-  if(a.focusT>0){gameState.primaryCooldown=Math.max(0,(gameState.primaryCooldown||0)-dt*1.35);gameState.heat=Math.max(0,(gameState.heat||0)-dt*.9);gameState.overheat=false;}
+  if(a.focusT>0){gameState.primaryCooldown=Math.max(0,(gameState.primaryCooldown||0)-dt*1.35);gameState.heat=Math.max(0,(gameState.heat||0)-dt*.9);gameState.overheat=false;gameState.shake=Math.max(gameState.shake||0,.65);}
 }
 function activateArcadeFocus(){
   if(!gameState||gameState.mode!=='playing'||!gameState.arcade)return;
@@ -5477,7 +5490,7 @@ function updateAlliedTeam(dt){
         pushEffect({type:'spark',x:ally.x,y:ally.y-8,vx:0,vy:-22,t:0,life:.12});
         if(Math.random()<.72){
           damageInfantry(best,rand(8,14),'mg');
-          gameState.shots.push({kind:'mg',x:ally.x,y:ally.y-7,px:ally.x,py:ally.y-7,vx:0,vy:-700,damage:0,range:18,targetDist:18,traveled:0,active:true,visual:0,projectile:'bullet',suppressed:{},suppressionPower:0,allyTracer:true});
+          pushEffect({type:'spark',x:best.x,y:best.y,vx:rand(-10,10),vy:rand(-16,6),t:0,life:.16});
         }
       }else ally.fireCd=.12;
     }
