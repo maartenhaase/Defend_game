@@ -5511,7 +5511,7 @@ window.addEventListener('keydown',function(ev){
 function spawnAlliedTeam(initial){
   var a=gameState.arcade,i=a.reinforcements++,x=gameState.bunker.x+rand(-58,58);
   a.allies.push({id:Math.random()*1e9|0,x:x,y:Math.min(gameState.bunker.y-42,H*.72)+rand(-8,8),
-    role:Math.random()<.20?'shotgun':i>3&&i%5===0?'lmg':'rifle',faction:'british',variant:(Math.random()*16)|0,
+    role:i>3&&i%5===0?'lmg':'rifle',shotgun:Math.random()<.20,faction:'british',variant:(Math.random()*16)|0,
     alive:true,hp:12,maxHp:12,fireCd:rand(.55,1.3),muzzle:0,recoil:0,anim:rand(0,10),angle:-Math.PI/2,
     state:'advance',stateT:0,cover:null,suppression:0,deadT:0,limp:0,landSquash:0,firePose:'crouch',
     vx:0,vy:0,decisionT:rand(.6,1.5),targetX:x,shots:0,kills:0,hold:false,phaseT:rand(.8,1.8)});
@@ -5666,10 +5666,10 @@ function updateAlliedTeam(dt){
       u.muzzle=.12;u.recoil=1.4;
       var mx=u.x+Math.cos(u.angle)*7,my=u.y-4+Math.sin(u.angle)*7;
       emitMuzzle(mx,my,u.angle,false);
-      AudioSys.weapon(u.role==='shotgun'?'WINCHESTER 1897':u.role==='lmg'?'BREN MKII':'LEE-ENFIELD NO.4',u.role,.28,{pan:clamp((u.x-W*.5)/(W*.5),-.8,.8)});
+      AudioSys.weapon(u.shotgun?'WINCHESTER 1897':u.role==='lmg'?'BREN MKII':'LEE-ENFIELD NO.4',u.role,.28,{pan:clamp((u.x-W*.5)/(W*.5),-.8,.8)});
       // Actual traveling bullets: finite velocity, visual streak, collision and hit feedback.
       // Misses disperse around the enemy, so heavy firing still matters tactically.
-      var accuracy=u.role==='shotgun'?(nd<95*95?.42:.06):u.role==='lmg'?.12:.21;
+      var accuracy=u.shotgun?(nd<95*95?.42:.06):u.role==='lmg'?.12:.21;
       if(u.fortStage>=2)accuracy+=.055;
       var hit=Math.random()<accuracy;
       var tx=nearest.x+(hit?rand(-3,3):rand(-25,25));
@@ -5677,7 +5677,7 @@ function updateAlliedTeam(dt){
       if(!hit&&Math.abs(tx-nearest.x)<9)tx+=Math.random()<.5?-18:18;
       var ang=Math.atan2(ty-my,tx-mx),speed=u.role==='lmg'?650:780;
       a.tracers.push({x:mx,y:my,px:mx,py:my,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,
-        life:.48,damage:u.role==='shotgun'?rand(8,12):u.role==='lmg'?rand(2.5,4):rand(4,6),targetId:nearest.id,canHit:hit,owner:u});
+        life:.48,damage:u.shotgun?rand(8,12):u.role==='lmg'?rand(2.5,4):rand(4,6),targetId:nearest.id,canHit:hit,owner:u});
 
     }
   }
@@ -5790,7 +5790,7 @@ function updateBattleEvents(dt){
   if(a.flyby){
     var p=a.flyby;p.x+=p.vx*dt;p.t+=dt;
     if(p.x>W+120){a.flyby=null;return;}
-    if(p.t>.4&&p.t<2.5&&p.shots<25){p.shots++;
+    if(p.t>.4&&p.t<2.5&&p.shots<25){p.shotCd=(p.shotCd||0)-dt;if(p.shotCd>0)return;p.shotCd=.085;p.shots++;
       var bx=clamp(p.x+rand(-16,16),20,W-20),by=rand(H*.4,H*.57);
       pushEffect({type:'ricochet',x:bx,y:by,vx:rand(-75,75),vy:rand(90,160),t:0,life:.2,len:22});
       if(p.shots%4===0){emitGroundImpact(bx,by,.7);AudioSys.weapon('BROWNING M2','lmg',.33,{pan:clamp((bx-W*.5)/(W*.5),-.8,.8)});}
