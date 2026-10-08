@@ -2298,7 +2298,7 @@ function explodeLiveVehicleFuel(v){
   var fam=v.vehicleSpec&&v.vehicleSpec.family||'';
   if(fam==='cavalry')return damageVehicle(v,v.hp+1,'he');
   dismountDestroyed(v,'he');v.alive=false;v.hasMG=false;v.currentSpeed=0;v.state='disabled';
-  gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.025,0,1);addStreak();
+  if(!v.allied){gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.025,0,1);addStreak();}
   var w=makeWreckFromVehicle(v,{burnT:0,disabled:true,softDisabled:true,disabledReason:'FUEL',fuelLeak:true,fuelIgnited:true,fuelBurnT:0});
   gameState.wrecks.push(w);if(gameState.wrecks.length>18)gameState.wrecks.shift();
   return explodeWreck(w);
@@ -2334,7 +2334,7 @@ function neutralizeVehicle(v,reason,fragments){
   if(v.allied)return damageVehicle(v,v.hp+(v.armorHp||0)+50,'he');
   dismountDestroyed(v,'mg');if(fragments&&!(v.vehicleSpec&&v.vehicleSpec.family==='cavalry'))emitVehicleFragments(v,'mg');
   v.alive=false;v.currentSpeed=0;v.state='disabled';v.hasMG=false;
-  gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.018,0,1);addStreak();
+  if(!v.allied){gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.018,0,1);addStreak();}
   var fam=v.vehicleSpec&&v.vehicleSpec.family||'';
   var w=makeWreckFromVehicle(v,{disabled:true,softDisabled:fam!=='cavalry',disabledReason:reason||'MOBILITY'});
   if(fam==='cavalry'){w.carcass=true;w.wreckStage=3;w.shellHits=32;addBlood(v.x,v.y,7,false);}
@@ -2424,7 +2424,7 @@ function damageVehicle(v,dmg,kind){
       return true;
     }
     dismountDestroyed(v,kind);if(fam!=='cavalry')emitVehicleFragments(v,kind);
-    v.alive=false;gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.025,0,1);addStreak();
+    v.alive=false;if(!v.allied){gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.025,0,1);addStreak();}
     var cls=v.vehicleClass||1,blastR=vehicleExplosionScale(v)+(kind==='he'&&fam!=='cavalry'?5:0);
     gameState.hitStop=Math.max(gameState.hitStop||0,fam==='cavalry'?.035:.075);
     gameState.shake=Math.max(gameState.shake||0,fam==='cavalry'?2.2:5+cls);
@@ -3807,7 +3807,7 @@ restartBtn.addEventListener('click',function(){
   try{localStorage.removeItem(SAVE_KEY);}catch(e){}
   gameState=freshState();gameState.profile=playerProfile();gameState.bunker.maxHp=gameState.profile.maxHp;gameState.bunker.hp=gameState.profile.maxHp;
   overlay.classList.remove('hidden');restartBtn.style.display='none';deployBtn.style.display='none';summaryEl.style.display='none';shopEl.style.display='none';
-  titleEl.textContent='V9.8.0 · CHOOSE YOUR RUN';subEl.textContent='Easy, Hard, Random DNA of Demo Map. In de demo verschijnen alle grote voertuigtypen, medics, helicopters, parachutisten, rook, artillerie, mitrailleur-flybys en napalm.';
+  titleEl.textContent='V9.8.1 · CHOOSE YOUR RUN';subEl.textContent='Easy, Hard, Random DNA of Demo Map. In de demo verschijnen alle grote voertuigtypen, medics, helicopters, parachutisten, rook, artillerie, mitrailleur-flybys en napalm.';
   if(modeSelectEl)modeSelectEl.style.display='grid';
 });
 
@@ -5631,7 +5631,7 @@ window.addEventListener('error',function(e){
   try{
     var box=document.createElement('div');
     box.style.cssText='position:fixed;left:8px;right:8px;bottom:78px;z-index:9999;background:#651d1d;color:#fff;padding:8px;font:11px monospace';
-    box.textContent='JBD V9.8.0 ERROR: '+(e.message||'unknown')+(e.lineno?' @ line '+e.lineno:'');document.body.appendChild(box);
+    box.textContent='JBD V9.8.1 ERROR: '+(e.message||'unknown')+(e.lineno?' @ line '+e.lineno:'');document.body.appendChild(box);
   }catch(_){}
 });
 
