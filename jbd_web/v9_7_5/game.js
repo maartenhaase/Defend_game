@@ -770,7 +770,7 @@ var PRIMARY_DB=[
 // Three deliberately distinct classic shotgun identities plus the advanced SPAS.
 // Values are source-of-truth stats used by primaryStats and real pellet simulation.
 PRIMARY_DB.filter(function(w){return w.group===5;}).forEach(function(w){
-  if(w.id==='trench1897'){w.pellets=12;w.damage=11;w.range=.43;w.spread=1.45;w.cycle=.89;w.reload=.68;}
+  if(w.id==='win1897'){w.pellets=12;w.damage=11;w.range=.43;w.spread=1.45;w.cycle=.89;w.reload=.68;}
   if(w.id==='auto5'){w.pellets=7;w.damage=7.8;w.range=.56;w.spread=.91;w.cycle=.25;w.reload=.67;}
   if(w.id==='ithaca37'){w.pellets=9;w.damage=10;w.range=.67;w.spread=.68;w.cycle=.60;w.reload=.48;}
   if(w.id==='spas12'){w.pellets=8;w.damage=9.3;w.range=.67;w.spread=.82;w.cycle=.40;w.reload=.47;}
