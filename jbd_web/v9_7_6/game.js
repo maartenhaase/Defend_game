@@ -5685,8 +5685,19 @@ function updateAlliedTeam(dt){
       var target=null,best=260*260;
       for(j=0;j<gameState.infantry.length;j++){e=gameState.infantry[j];var d=dist(tank.x,tank.y,e.x,e.y);if(e.alive&&d*d<best){best=d*d;target=e;}}
       if(target){
-        emitMuzzle(tank.x,tank.y-16,-Math.PI/2,true);gameState.shake=Math.max(gameState.shake||0,1.5);
+        emitMuzzle(tank.x,tank.y-16,-Math.PI/2,true);AudioSys.weapon('BREN MKII','lmg',.43,{pan:clamp((tank.x-W*.5)/(W*.5),-.8,.8)});gameState.shake=Math.max(gameState.shake||0,1.5);
         if(Math.random()<.30){target.suppression=Math.min(1,(target.suppression||0)+.45);target.hp-=rand(7,11);if(target.hp<=0){gameState.arcadeNoReward=true;killInfantry(target,'mg');gameState.arcadeNoReward=false;}}
+      }
+      var hostileVehicle=null,near=260*260;
+      for(var vi=0;vi<gameState.vehicles.length;vi++){
+        var ev=gameState.vehicles[vi],vd=dist(tank.x,tank.y,ev.x,ev.y);
+        if(ev.alive&&vd*vd<near){near=vd*vd;hostileVehicle=ev;}
+      }
+      if(hostileVehicle&&Math.random()<.30){
+        emitMuzzle(tank.x,tank.y-15,Math.atan2(hostileVehicle.y-tank.y,hostileVehicle.x-tank.x),true);
+        AudioSys.weapon('BREN MKII','lmg',.32,{pan:clamp((tank.x-W*.5)/(W*.5),-.8,.8)});
+        hostileVehicle.suppression=(hostileVehicle.suppression||0)+.05;
+        if(Math.random()<.22)damageVehicle(hostileVehicle,rand(4,7),'mg');
       }
     }
   }
