@@ -38,6 +38,9 @@ jobs:
           cp -a jbd_rebuild_v1/dist/. _site/
           cp -a jbd_web _site/jbd_web
           touch _site/.nojekyll
+          test -s _site/jbd_web/v9_7_1/index.html
+          test -s _site/jbd_web/v9_7_1/game.js
+          echo 'Confirmed V9.7.1 in Pages artifact'
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
@@ -45,3 +48,14 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published V9.7.1
+        run: |
+          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_7_1/index.html'
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -L -s -o /tmp/jbd-page.html -w '%{http_code}' "$URL" || true)
+            echo "HTTP status: $STATUS"
+            if [ "$STATUS" = '200' ] && grep -q 'V9.7.1' /tmp/jbd-page.html; then echo 'V9.7.1 verified live'; exit 0; fi
+            sleep 5
+          done
+          echo 'Published V9.7.1 URL is not available'
+          exit 1
