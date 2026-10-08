@@ -38,10 +38,10 @@ jobs:
           cp -a jbd_rebuild_v1/dist/. _site/
           cp -a jbd_web _site/jbd_web
           touch _site/.nojekyll
-          test -s _site/jbd_web/v9_7_7/index.html
-          test -s _site/jbd_web/v9_7_7/game.js
-          node --check _site/jbd_web/v9_7_7/game.js
-          echo 'Confirmed V9.7.7 in Pages artifact'
+          test -s _site/jbd_web/v9_7_8/index.html
+          test -s _site/jbd_web/v9_7_8/game.js
+          node --check _site/jbd_web/v9_7_8/game.js
+          echo 'Confirmed V9.7.8 in Pages artifact'
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
@@ -49,17 +49,17 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published V9.7.7
+      - name: Verify published V9.7.8
         run: |
-          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_7_7/index.html'
+          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_7_8/index.html'
           for i in 1 2 3 4 5; do
             STATUS=$(curl -L -s -o /tmp/jbd-page.html -w '%{http_code}' "$URL" || true)
             echo "HTTP status: $STATUS"
-            if [ "$STATUS" = '200' ] && grep -q 'V9.7.7' /tmp/jbd-page.html; then
-              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_7_7/game.js' || true)
-              if [ "$JS_STATUS" = '200' ]; then echo 'V9.7.7 HTML and JS verified live'; exit 0; fi
+            if [ "$STATUS" = '200' ] && grep -q 'V9.7.8' /tmp/jbd-page.html; then
+              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_7_8/game.js' || true)
+              if [ "$JS_STATUS" = '200' ]; then echo 'V9.7.8 HTML and JS verified live'; exit 0; fi
             fi
             sleep 5
           done
-          echo 'Published V9.7.7 URL is not available'
+          echo 'Published V9.7.8 URL is not available'
           exit 1
