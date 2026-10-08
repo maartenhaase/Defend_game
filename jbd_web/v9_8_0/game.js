@@ -5914,6 +5914,134 @@ function updateBattleEvents(dt){
     }
   }
 }
+
+/* V9.8.0: deterministic demonstration. Unlike random DNA, these milestones
+   deliberately exercise every major mechanic. It loops without leaving the map. */
+var DEMO_SCRIPT=[
+  {t:.6,name:'RIFLE SQUADS + MEDICS',action:'squads'},
+  {t:2.5,name:'FAST TROOP TRANSPORT',action:'trucks'},
+  {t:5.5,name:'NAPALM STRIKE',action:'napalm'},
+  {t:9,name:'HELICOPTER RAPPEL',action:'heli'},
+  {t:13,name:'ALLIED ARMORED SUPPORT',action:'armor'},
+  {t:16,name:'ENEMY RECON ARMOR',action:'scout'},
+  {t:19,name:'PARATROOPER AIRDROP',action:'paras'},
+  {t:22,name:'ARTILLERY BARRAGE',action:'artillery'},
+  {t:25,name:'FIGHTER STRAFING',action:'strafe'},
+  {t:29,name:'MOTORCYCLE SIDE-CAR',action:'motorcycle'},
+  {t:33,name:'QUAD ATTACK',action:'quad'},
+  {t:37,name:'CAVALRY',action:'cavalry'},
+  {t:41,name:'SANDBAG DEFENSE',action:'sandbags'},
+  {t:45,name:'MACHINE-GUN POSITION',action:'mg'},
+  {t:49,name:'FORTIFIED MG NEST',action:'nest'},
+  {t:53,name:'HALFTRACK WITH SQUAD',action:'halftrack'},
+  {t:58,name:'HEAVY ALLIED SUPPORT',action:'allyHeavy'},
+  {t:63,name:'SMOKE BARRAGE',action:'smoke'},
+  {t:68,name:'SECOND NAPALM RUN',action:'napalm'},
+  {t:74,name:'LARGER TRUCK CONVOY',action:'convoy'},
+  {t:79,name:'SECOND HELICOPTER',action:'heli'},
+  {t:85,name:'MEDIC ASSAULT SQUAD',action:'medics'},
+  {t:91,name:'ARMORED COUNTERATTACK',action:'enemyHeavy'},
+  {t:98,name:'FIGHTER STRAFING',action:'strafe'}
+];
+function prepareDemoMap(){
+  gameState.events=[];gameState.eventCursor=0;
+  gameState.waveTotal=1;gameState.wave=1;
+  gameState.demoShowcase={base:gameState.time,next:0,cycle:1};
+  // The showcase itself schedules two napalm flights and two strafing flights.
+  gameState.battleEvent.flybyT=9999;
+  gameState.battleEvent.truckT=9999;
+  gameState.battleEvent.artilleryT=9999;
+  gameState.battleEvent.pressureT=9999;
+  gameState.bunker.maxHp=Math.max(180,gameState.bunker.maxHp);
+  gameState.bunker.hp=gameState.bunker.maxHp;
+  gameState.eff=1;
+  arcadeFlash('DEMO · ALL FEATURES IN 100 SECONDS',3);
+}
+function demoSpawnSquad(count,roles){
+  count=count||4;roles=roles||['rifle','lmg','medic','rifle'];
+  var total=gameState.infantry.filter(function(e){return e.alive;}).length;
+  if(total>=34)return;
+  var side=Math.random()<.5?-1:1,x0=clamp(W*.5+side*rand(15,66),65,W-65);
+  var sq=squadPlan(count,'bound',x0);sq.faction='wehrmacht';
+  for(var i=0;i<count;i++){
+    var x=clamp(x0+(i-(count-1)*.5)*16,28,W-28),y=H*rand(.40,.49);
+    var soldier=spawnInfantry(x,y,roles[i%roles.length],sq,'vehicle');
+    soldier.fireCd=rand(.3,.7);soldier.decisionT=rand(.3,.8);
+  }
+}
+function demoSpawnTruck(id,load){
+  if(gameState.vehicles.filter(function(v){return v.alive;}).length>=11)return;
+  spawnVehicle('trooptruck',load,id||'blitz_1',undefined,load||4);
+  var v=gameState.vehicles[gameState.vehicles.length-1];
+  v.speed*=1.5;v.accel*=1.3;v.currentSpeed=v.speed*.85;
+  v.contactY=H*.41;v.dropY=H*.50;v.zigAmp=11;
+}
+function demoAirStrike(napalm){
+  var b=gameState.battleEvent,fromLeft=Math.random()<.5;
+  b.flyby={x:fromLeft?-110:W+110,y:H*.24,vx:fromLeft?300:-300,
+    t:0,shots:0,shotCd:0,napalm:!!napalm,napalmDropped:false};
+  arcadeFlash(napalm?'DEMO · NAPALM INCOMING':'DEMO · FIGHTER STRAFING',2.3);
+}
+function demoFortify(stage){
+  var a=gameState.arcade;
+  var fort=a.forts[0];
+  if(!fort){
+    var u=a.allies.find(function(x){return x.alive&&!x.defendFort;});
+    if(!u){spawnAlliedTeam(false);u=a.allies[a.allies.length-1];}
+    fort={owner:u.id,x:clamp(W*.44,35,W-35),y:H*.57,stage:1};a.forts.push(fort);
+  }
+  var owner=a.allies.find(function(u){return u.id===fort.owner;});
+  if(owner&&owner.alive){
+    owner.assignment='defend';owner.defendFort=fort;owner.x=fort.x;owner.y=fort.y+3;
+    owner.fortStage=stage;owner.building=false;owner.role=stage>=2?'lmg':'rifle';
+  }
+  fort.stage=stage;
+}
+function demoShowcaseAction(key){
+  var a=gameState.arcade;
+  if(key==='squads')demoSpawnSquad(6,['rifle','medic','lmg','marksman','rifle','medic']);
+  else if(key==='trucks')demoSpawnTruck('blitz_2',5);
+  else if(key==='napalm'||key==='strafe')demoAirStrike(key==='napalm');
+  else if(key==='heli')spawnHeli(3);
+  else if(key==='armor'){if(!a.armor.some(function(v){return v.alive;}))spawnAlliedArmor(25);}
+  else if(key==='scout')spawnVehicle('scoutcar',1,'spah_1');
+  else if(key==='paras')spawnPlane(2);
+  else if(key==='artillery'){
+    for(var j=0;j<4;j++){var x=rand(W*.15,W*.85),y=H*rand(.39,.56);explode(x,y,rand(26,37),true);}
+  }
+  else if(key==='motorcycle')spawnVehicle('jeep',1,'r75_2');
+  else if(key==='quad')spawnVehicle('jeep',1,'quad_2');
+  else if(key==='cavalry')spawnVehicle('jeep',1,'cavalry_2');
+  else if(key==='sandbags')demoFortify(1);
+  else if(key==='mg')demoFortify(2);
+  else if(key==='nest')demoFortify(3);
+  else if(key==='halftrack')demoSpawnTruck('blitz_3',5);
+  else if(key==='allyHeavy'){
+    if(!a.armor.some(function(v){return v.alive;}))spawnAlliedArmor(110);
+    var tank=a.armor.find(function(v){return v.alive;});if(tank){tank.type='halftrack';tank.hp=Math.max(tank.hp,80);tank.maxHp=Math.max(tank.maxHp,80);}
+  }
+  else if(key==='smoke'){
+    for(var i=0;i<30;i++)pushEffect({type:'smoke',x:rand(W*.2,W*.8),y:rand(H*.4,H*.55),
+      vx:rand(-6,6),vy:rand(-15,-3),r:rand(10,21),t:0,life:rand(2,4),shade:.30});
+  }
+  else if(key==='convoy'){demoSpawnTruck('blitz_1',4);demoSpawnTruck('steyr_2',5);}
+  else if(key==='medics')demoSpawnSquad(6,['medic','rifle','medic','lmg','medic','rifle']);
+  else if(key==='enemyHeavy')spawnVehicle('halftrack',3,'sdkfz250_3',undefined,3);
+}
+function updateDemoMap(dt){
+  var d=gameState.demoShowcase;if(!d)return;
+  var elapsed=gameState.time-d.base;
+  while(d.next<DEMO_SCRIPT.length&&elapsed>=DEMO_SCRIPT[d.next].t){
+    var event=DEMO_SCRIPT[d.next++];demoShowcaseAction(event.action);
+    arcadeFlash('DEMO '+d.cycle+' · '+event.name,2.0);
+  }
+  // Sustain the showcase and repeat, avoiding an accidental level clear.
+  if(elapsed>=112){
+    d.base=gameState.time;d.next=0;d.cycle++;
+    arcadeFlash('DEMO LOOP '+d.cycle+' · STARTING AGAIN',2.2);
+  }
+}
+
 /* ---------- RESIZE / LOOP ---------- */
 
 function resize(){
