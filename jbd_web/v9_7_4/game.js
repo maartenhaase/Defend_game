@@ -3210,6 +3210,7 @@ function updateInfantry(dt){
       var drag=Math.exp(-2.6*dt);e.x+=(e.vx||0)*dt;e.y+=(e.vy||0)*dt;e.vx*=drag;e.vy*=drag;
       if(e.dismountT<=0){emitLandingFx(e.x,e.y,1);e.landSquash=.18;e.state=e.dismountExitState||'advance';e.stateT=0;e.cover=null;if(e.state==='prone')e.proneT=rand(.55,.95);}
     }else if(e.state==='advance'){
+      if(e.y>=H*.535){e.state='cover';e.stateT=0;e.coverT=rand(.65,1.5);e.forceDirectT=0;}
       if(!e.cover&&e.forceDirectT<=0)e.cover=nextForwardCover(e);
       var mt=e.forceDirectT>0?{x:gameState.bunker.x,y:gameState.bunker.y}:e.cover||tactical;
       mt=avoidKillZonePoint(e,mt);
@@ -3260,6 +3261,12 @@ function updateInfantry(dt){
     var ce=gameState.infantry[ci];if(!ce.alive)continue;
     if(ce.x<roadX-half){ce.x=roadX-half;ce.tactic='direct';ce.cover=null;}
     else if(ce.x>roadX+half){ce.x=roadX+half;ce.tactic='direct';ce.cover=null;}
+    // After entering the firefight corridor, troops may retreat to cover but
+    // cannot sprint off the north edge or advance far past the central line.
+    if(ce.state!=='parachuting'){
+      if(ce.y>=H*.42&&ce.y<=H*.62)ce.frontEntered=true;
+      if(ce.frontEntered)ce.y=clamp(ce.y,H*.40,H*.58);
+    }
   }
   gameState.infantry=gameState.infantry.filter(function(e){return e.alive||e.deadT<7;});
 }
