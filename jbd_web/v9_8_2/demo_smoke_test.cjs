@@ -74,7 +74,7 @@ assert.ok(attackEnv.out.every(e=>e.y<truck.y),'all dismount from the truck rear'
 attackEnv.alliedIncomingFire({x:400,y:320,px:400,py:310,vx:0,vy:100,life:1,dmg:2,kind:'vehicleMG'});
 assert.ok(attackEnv.lastDamage>=9,'enemy bullet meaningfully damages allied vehicle');
 assert.match(js,/mag:20,reload:2\.65,cycle:\.48,damage:9\.0,range:\.68/);
-assert.match(js,/if\(type==='trooptruck'\)passengerCount=clamp\(passengerCount,6,10\)/);
+assert.match(js,/if\(transport&&\(type==='trooptruck'\|\|type==='lighttruck'\|\|type==='truck'\)/);
 assert.match(js,/gameState\.bunker\.y\+rand\(8,28\)/);
 assert.match(js,/gameState\.bunker\.y\+rand\(12,30\)/);
 assert.match(js,/for\(var k=0;k<5;k\+\+\)/);
