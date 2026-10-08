@@ -3723,6 +3723,14 @@ function renderShop(){
   plus.addEventListener('click',function(){gameState.save.allyLevel=Math.min(5,gameState.save.allyLevel+1);saveGame();renderShop();});
   box.appendChild(minus);box.appendChild(plus);shopGrid.appendChild(box);
 }
+function endGame(reason){
+  gameState.mode='gameover';var dyn=evaluateAdaptiveDifficulty(true);
+  overlay.classList.remove('hidden');titleEl.textContent=reason;
+  subEl.textContent='Probeer dezelfde map opnieuw. Damage '+Math.round(dyn.damage)+' HP; target '+dyn.band.min+'-'+dyn.band.max+'. Retry enemy '+adaptiveLabel(dyn.value)+'.';
+  summaryEl.style.display='block';summaryEl.textContent='EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · MAP '+(gameState.levelIndex+1)+'/40 · DYN '+adaptiveLabel(dyn.value);
+  shopEl.style.display='none';deployBtn.style.display='none';restartBtn.style.display='block';
+}
+
 /* ---------- INPUT ---------- */
 
 function pointerPos(ev){
