@@ -901,7 +901,7 @@ function resetLevel(){
   if(gameState.map&&gameState.map.layoutName)gameState.encounterName=(gameState.encounterName||'CONTACT')+' · '+gameState.map.layoutName;
   gameState.eventCursor=0;
   gameState.mode='playing';gameState.message=(gameState.zoneRule.name+' · '+currentDoctrine().name);gameState.messageT=1.8;
-  gameState.gunGameBannerName=gameState.profile.primaryName;gameState.gunGameBannerT=2.6;
+  gameState.gunGameBannerName='FIELD MACHINE GUN · UPGRADE BETWEEN MAPS';gameState.gunGameBannerT=2.6;
   spawnAlliedTeam(true);spawnAlliedTeam(true);spawnAlliedTeam(true);spawnAlliedTeam(true);startBattleBarrage();
 }
 
@@ -4869,12 +4869,12 @@ function drawHud(){
   ctx.font='700 8px system-ui,-apple-system,sans-serif';ctx.fillStyle='#aeb9a4';ctx.textAlign='left';ctx.fillText(hpSteps+'/10',segX+92,segY+3);
   var bx=W*.5-42,by=top+45,bw=84;ctx.fillStyle='#0f1411';roundRect(ctx,bx,by,bw,5,3);ctx.fill();ctx.fillStyle=effColor();roundRect(ctx,bx+1,by+1,Math.max(1,(bw-2)*gameState.eff),3,2);ctx.fill();
 
-  var ggProgress=(gameState.gunGameKills||0)%GUN_GAME_INTERVAL;
+  var ggProgress=(gameState.gunGameKills||0)%5;
   ctx.fillStyle='#151d17';roundRect(ctx,18,top+53,W-36,5,3);ctx.fill();
-  if(ggProgress>0){ctx.fillStyle='#e7bb55';roundRect(ctx,19,top+54,(W-38)*(ggProgress/GUN_GAME_INTERVAL),3,2);ctx.fill();}
+  if(ggProgress>0){ctx.fillStyle='#e7bb55';roundRect(ctx,19,top+54,(W-38)*(ggProgress/5),3,2);ctx.fill();}
   ctx.font='700 9px system-ui,-apple-system,sans-serif';ctx.textAlign='center';
   ctx.fillStyle=(gameState.gunGameBannerT||0)>0?'#ffdc87':'#c5d2ba';
-  ctx.fillText((gameState.gunGameBannerT||0)>0?'NEW '+gameState.profile.primaryClass.toUpperCase()+' · '+gameState.gunGameBannerName:'GUN GAME '+ggProgress+'/10 · '+gameState.profile.primaryClass.toUpperCase()+(gameState.profile.primaryPellets>1?' · '+gameState.profile.primaryPellets+' PELLETS':''),W*.5,top+65,W-42);
+  ctx.fillText((gameState.gunGameBannerT||0)>0?gameState.gunGameBannerName:'NEXT ALLIED SOLDIER '+(5-ggProgress)+' KILLS · MACHINE GUN',W*.5,top+65,W-42);
   ctx.fillStyle='rgba(22,28,23,.90)';ctx.strokeStyle='rgba(236,231,202,.36)';roundRect(ctx,12,bottom-35,W-24,27,7);ctx.fill();ctx.stroke();
   ctx.textAlign='left';ctx.font='800 10px system-ui,-apple-system,sans-serif';ctx.fillStyle=gameState.overheat?'#d95e42':'#d9ddc4';ctx.fillText(gameState.primaryReloadT>0?'RELOAD '+gameState.primaryReloadT.toFixed(1)+'s':gameState.profile.primaryName+' '+gameState.primaryAmmo+'/'+gameState.profile.primaryMag,21,bottom-22);
   ctx.fillStyle='#0e1210';roundRect(ctx,64,bottom-27,W-92,8,4);ctx.fill();ctx.fillStyle=gameState.heat>.75?'#d95e42':'#e0b957';roundRect(ctx,65,bottom-26,Math.max(1,(W-94)*gameState.heat),6,3);ctx.fill();
@@ -5108,7 +5108,7 @@ function updateAlliedEngineer(u,dt){
     fort={owner:u.id,x:u.x,y:u.y,stage:1};a.forts.push(fort);
     u.assignment='defend';u.defendFort=fort;
   }else fort.stage=u.fortStage;
-  if(u.fortStage>=2){u.role='lmg';u.shotgun=false;u.fireCd=.25;}
+  if(u.fortStage>=2){u.role='lmg';u.weaponProfile=enemyWeaponProfile('lmg',gameState.levelIndex,u.id,'british');u.weaponName=u.weaponProfile.name;u.shotgun=false;u.fireCd=.25;}
   arcadeFlash(['','SANDBAGS READY','MG POSITION ACTIVE','MG NEST FORTIFIED'][u.fortStage],1.6);
 }
 function redirectEnemyFireAtAllies(b){
@@ -5549,7 +5549,7 @@ function demoFortify(stage){
   var owner=a.allies.find(function(u){return u.id===fort.owner;});
   if(owner&&owner.alive){
     owner.assignment='defend';owner.defendFort=fort;owner.x=fort.x;owner.y=fort.y+3;
-    owner.fortStage=stage;owner.building=false;owner.role=stage>=2?'lmg':'rifle';
+    owner.fortStage=stage;owner.building=false;owner.role=stage>=2?'lmg':'rifle';owner.weaponProfile=enemyWeaponProfile(owner.role,gameState.levelIndex,owner.id,'british');owner.weaponName=owner.weaponProfile.name;
   }
   fort.stage=stage;
 }
