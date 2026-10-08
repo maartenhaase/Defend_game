@@ -2138,7 +2138,7 @@ function spawnCommandGroup(groupId,direction,countOverride){
   for(var i=0;i<n;i++){
     var pt=dnaIngressPoint(direction==null?dna.direction:direction,i,n,rng),off=formationOffset(i,n,formation);
     var px=clamp(pt.x+off.x*.40,16,W-16),py=clamp(pt.y+off.y*.38,safeTop+28,H*.68);
-    var role=roles[i],rd=infantryRoleDef(role),member={id:sq.id,tactic:def.tactic,size:n,originX:origin,phase:sq.phase,slot:i,leader:!!rd.leader||i===0,formation:formation,flankX:clamp(px+off.x,20,W-20),faction:def.faction,commandGroup:groupId,commandName:def.name};
+    var role=roles[i];if(role==='rifle'&&Math.random()<.24)role='medic';var rd=infantryRoleDef(role),member={id:sq.id,tactic:def.tactic,size:n,originX:origin,phase:sq.phase,slot:i,leader:!!rd.leader||i===0,formation:formation,flankX:clamp(px+off.x,20,W-20),faction:def.faction,commandGroup:groupId,commandName:def.name};
     var northEntry=pt.y<=safeTop+120&&pt.x>36&&pt.x<W-36;
     if(northEntry)py=safeTop-28-rand(0,12);
     var e=spawnInfantry(px,py,role,member,northEntry?'edgeMarch':null);e.commandGroup=groupId;e.commandName=def.name;
@@ -2204,7 +2204,7 @@ function spawnPlannedFoot(n,mix,tactic,rocketCount,direction){
     else if(mix==='elite'){if(dna.weaponClass>=6&&i===0&&dna.infantryMix>=7)role='grenadier';else if(i%4===1)role='lmg';else if(i%4===2)role='marksman';else role='rifle';}
     else if(mix==='rifle')role=rr<(.04+dna.infantryMix*.018)&&dna.weaponClass>=2?'lmg':'rifle';
     else{if(dna.weaponClass>=4&&rr<.15)role='marksman';else if(dna.weaponClass>=2&&rr<.34)role='lmg';else role='rifle';}
-    if(!rocketSlots[i]&&role==='rifle'&&Math.random()<.20)role='medic';
+    if(!rocketSlots[i]&&role==='rifle'&&Math.random()<.29)role='medic';
     var off=formationOffset(i,n,formation),px=clamp(pt.x+off.x*.35,16,W-16),py=clamp(pt.y+off.y*.35,safeTop+28,H*.68);
     var member={id:sq.id,tactic:sq.tactic,size:n,originX:origin,phase:sq.phase,slot:i,leader:i===0,formation:formation,flankX:clamp(px+off.x,20,W-20),faction:groupFaction};
     var northEntry=pt.y<=safeTop+120&&pt.x>36&&pt.x<W-36;
@@ -2291,8 +2291,9 @@ function dismountOne(v,mode,index){
   var half=gameState.map.corridorHalf||92,roadX=gameState.map.road.x;
   var sq={id:squadSerial++,tactic:index%3===0?'flankLeft':index%3===1?'flankRight':'bound',size:1,originX:px,phase:Math.random()*TAU,slot:index,flankX:clamp(px+side*24,roadX-half*.82,roadX+half*.82),aggressive:1,dismounted:true};
   var role='rifle',rr=Math.random();
-  if(gameState.levelIndex>=3&&rr<.18)role='lmg';
-  else if(gameState.levelIndex>=6&&rr<.28)role='marksman';
+  if(rr<.26)role='medic';
+  else if(gameState.levelIndex>=3&&rr<.42)role='lmg';
+  else if(gameState.levelIndex>=6&&rr<.53)role='marksman';
   if(gameState.levelIndex>=10&&!v.rocketDismounted&&index>=2&&Math.random()<.12){role='grenadier';v.rocketDismounted=true;}
   var e=spawnInfantry(px,py,role,sq,'vehicle');
   e.aggressive=1.25;e.cover=null;e.fireCd=rand(.28,.46);e.decisionT=rand(.58,.92);
@@ -4926,13 +4927,18 @@ function drawVehicleThreatTell(v){
 }
 function drawSoldier(e){
   var pose=spritePose(e),dir=spriteDirection(e),skin=Math.abs(e.variant||0)%SPR.inf.skins,scale=(IS_IPHONE?.91:.88),faction=e.faction||'wehrmacht';
-  var moving=e.alive&&(e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='burnRun'||e.state==='burnRoll'||e.state==='medicRun'),gait=moving?Math.sin(e.anim*3.15):0,bob=moving&&pose.indexOf('prone')!==0?Math.abs(gait)*.85:0;
+  var moving=e.alive&&(e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='burnRun'||e.state==='burnRoll'||e.state==='medicRun'),gait=moving?Math.sin(e.anim*3.8):0,bob=moving&&pose.indexOf('prone')!==0?Math.abs(gait)*1.35:0;
   var hop=e.limp>0?Math.abs(Math.sin(e.anim*2.8))*1.7*e.limp:0;
   if(e.state==='dismount'&&e.dismountDur>0)hop+=Math.sin(Math.PI*clamp(1-e.dismountT/e.dismountDur,0,1))*(e.dismountArc||5.2);
   var recoil=(e.recoil||0)*(e.role==='lmg'?1.7:1.15),rx=-Math.cos(e.angle||0)*recoil,ry=-Math.sin(e.angle||0)*recoil;
   var xx=e.x+(e.limp>0?Math.sin(e.anim*5.6)*.8:0)+rx,yy=e.y-hop-bob+ry;
+  if(e.state==='heliRappel'){
+    var heli=gameState.air.find(function(a){return a.id===e.heloId&&a.alive;});
+    ctx.save();ctx.strokeStyle='#a9b7a7';ctx.lineWidth=1.1;ctx.globalAlpha=.9;
+    ctx.beginPath();ctx.moveTo(e.x,heli?heli.y+9:e.y-42);ctx.lineTo(e.x,e.y-9);ctx.stroke();ctx.restore();
+  }
   var landQ=clamp((e.landSquash||0)/.18,0,1),sx=1+landQ*.08,sy=1-landQ*.10;
-  var lean=moving&&pose.indexOf('prone')!==0?clamp((e.vx||0)*.0018,-.055,.055)+gait*.018:0;
+  var lean=moving&&pose.indexOf('prone')!==0?clamp((e.vx||0)*.0024,-.08,.08)+gait*.028:0;
   if(e.state==='burnRoll')lean+=Math.sin(e.burnRollPhase||0)*.48;
   if(e.charred)lean+=((e.variant||0)%2?.10:-.10);
   else if(!e.alive)lean+=clamp(e.deadT/.22,0,1)*((e.variant||0)%2?.16:-.16);
@@ -5830,10 +5836,24 @@ function battleVoice(e,kind){
   AudioSys.tone(key,kind==='death'?.3:.19,{rate:rand(.66,1.35),pan:clamp((e.x-W*.5)/(W*.5),-.8,.8)});
 }
 function startBattleBarrage(){
-  gameState.battleEvent={intro:3.4,smokeCd:0,artilleryT:rand(14,24),flybyT:rand(25,46),flyby:null};
+  gameState.battleEvent={intro:3.4,smokeCd:0,artilleryT:rand(14,24),flybyT:rand(20,35),flyby:null,truckT:rand(4.8,7.6)};
 }
 function updateBattleEvents(dt){
   var a=gameState.battleEvent;if(!a)return;
+  // Fast transport columns regularly bring squads to the middle of the battlefield.
+  a.truckT-=dt;
+  if(a.truckT<=0){
+    a.truckT=rand(14,23);
+    var activeTrucks=gameState.vehicles.filter(function(v){return v.alive&&v.type==='trooptruck';}).length;
+    if(activeTrucks<3&&gameState.infantry.filter(function(e){return e.alive;}).length<35){
+      var crew=3+(Math.random()*3|0),truckId=Math.random()<.30?'blitz_2':'blitz_1';
+      spawnVehicle('trooptruck',crew,truckId,undefined,crew);
+      var truck=gameState.vehicles[gameState.vehicles.length-1];
+      truck.speed*=1.32;truck.accel*=1.22;truck.currentSpeed=truck.speed*.78;
+      truck.contactY=H*rand(.39,.43);truck.dropY=H*.49;
+      truck.zigAmp=rand(7,13);truck.zigFreq=rand(.50,.80);
+    }
+  }
   if(a.intro>0){
     a.intro-=dt;a.smokeCd-=dt;
     if(a.smokeCd<=0){a.smokeCd=.17;var sx=rand(W*.12,W*.88),sy=rand(H*.27,H*.54);
