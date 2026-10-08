@@ -3687,42 +3687,42 @@ function weaponPreview(kind,lvl){
   return x.name+' → '+y.name+' · RANGE '+Math.round(x.rangeFactor*100)+'→'+Math.round(y.rangeFactor*100)+'% · '+x.effect.toUpperCase()+'→'+y.effect.toUpperCase();
 }
 function skillPreview(key,lvl){
-  var n=Math.min(SKILL_MAX,lvl+1);
-  if(key==='damage')return 'ALL GUNS · DAMAGE +'+Math.round(lvl*6.5)+'% → +'+Math.round(n*6.5)+'%';
-  if(key==='range')return 'ALL GUNS · RANGE +'+Math.round(lvl*6.5)+'% → +'+Math.round(n*6.5)+'%';
-  if(key==='aiming')return 'ALL GUNS · SPREAD '+Math.round(Math.max(.52,1-lvl*.09)*100)+'% → '+Math.round(Math.max(.52,1-n*.09)*100)+'%';
-  if(key==='reload')return 'ALL GUNS · RELOAD x'+Math.max(.69,1.04-lvl*.07).toFixed(2)+' → x'+Math.max(.69,1.04-n*.07).toFixed(2);
-  return 'HP +'+(lvl*24)+' → +'+(n*24)+' · INCOMING DAMAGE '+Math.round((1-lvl*.065)*100)+'%→'+Math.round((1-n*.065)*100)+'%';
+  var n=Math.min(SKILL_MAX,lvl+1),u=gameState.save.upgrades;
+  if(key==='damage')return (5.8*(1+lvl*.125)).toFixed(1)+' → '+(5.8*(1+n*.125)).toFixed(1)+' damage';
+  if(key==='range')return Math.round((.50+lvl*.044)*100)+'% → '+Math.round((.50+n*.044)*100)+'% screen range';
+  if(key==='rate')return (.72*Math.pow(.885,lvl)).toFixed(2)+' → '+(.72*Math.pow(.885,n)).toFixed(2)+' seconds per shot';
+  if(key==='magazine')return (12+lvl*4)+' → '+(12+n*4)+' rounds per magazine';
+  if(key==='reload')return (3.35*Math.pow(.925,lvl)).toFixed(2)+' → '+(3.35*Math.pow(.925,n)).toFixed(2)+' seconds to reload';
+  if(key==='aiming')return Math.round(100*Math.pow(.9,lvl))+'% → '+Math.round(100*Math.pow(.9,n))+'% spread';
+  return 'Bunker HP and armor upgrade';
 }
 function renderShop(){
   gameState.profile=playerProfile();var up=gameState.save.upgrades;
   supplyEl.textContent='FIELD MACHINE GUN · '+gameState.profile.primaryMag+' ROUNDS · '+(gameState.save.arsenalPoints||0)+' UPGRADE POINTS';
   shopGrid.innerHTML='';
-  ['damage','range','rate','magazine','aiming','reload','armor'].forEach(function(key){
-    var cfg=UPGRADES[key],isSpecial=key==='special',lvl=up[key]||0,max=lvl>=(isSpecial?MAX_WEAPON_LEVEL:SKILL_MAX);
-    var cost=isSpecial?weaponUpgradeCost(key,lvl):1;
-    var title=isSpecial?specialStats(lvl).name:cfg.label;
-    var detail=max?'MAX':isSpecial?weaponPreview(key,lvl):skillPreview(key,lvl);
-    var canBuy=!max&&(gameState.save.arsenalPoints||0)>=cost;
-    var b=document.createElement('button');b.type='button';b.className='shopBtn'+(!canBuy?' disabled':'');
-    b.innerHTML='<strong>'+cfg.label+' · '+lvl+'/'+(isSpecial?MAX_WEAPON_LEVEL:SKILL_MAX)+' · '+title+'</strong><span>'+detail+'</span><em>'+(max?'MAX':cost+' ARSENAL POINT'+(cost>1?'S':''))+'</em>';
-    if(!max)b.addEventListener('click',function(){
-      if((gameState.save.arsenalPoints||0)<cost)return;
-      gameState.save.arsenalPoints-=cost;
-      gameState.save.upgrades[key]=Math.min(isSpecial?MAX_WEAPON_LEVEL:SKILL_MAX,lvl+1);
+  ['damage','range','rate','magazine','reload','aiming','armor'].forEach(function(key){
+    var lvl=up[key]||0,max=lvl>=SKILL_MAX,cost=1;
+    var b=document.createElement('button');b.type='button';b.className='shopBtn'+(max||gameState.save.arsenalPoints<cost?' disabled':'');
+    b.innerHTML='<strong>'+UPGRADES[key].label+' · '+lvl+'/'+SKILL_MAX+'</strong><span>'+(max?'MAX LEVEL':skillPreview(key,lvl))+'</span><em>'+(max?'MAX':'1 UPGRADE POINT')+'</em>';
+    b.disabled=max||gameState.save.arsenalPoints<cost;
+    b.addEventListener('click',function(){
+      if((gameState.save.arsenalPoints||0)<cost||max)return;
+      gameState.save.arsenalPoints-=cost;up[key]=Math.min(SKILL_MAX,lvl+1);
       saveGame();gameState.profile=playerProfile();renderShop();
     });
     shopGrid.appendChild(b);
   });
+  // Tactical setting, not a paid upgrade: level 3 matches enemy stats.
+  var box=document.createElement('div');
+  box.style.cssText='grid-column:1/-1;padding:10px;border:1px solid #697d63;border-radius:10px;color:#d9edcc';
+  box.innerHTML='<strong>ALLIED INFANTRY LEVEL '+gameState.save.allyLevel+'/5</strong><p style="font-size:11px;margin:5px 0">3 = enemy-equivalent HP, movement and weapon stats. Adjust for an easier/harder squad.</p>';
+  var minus=document.createElement('button'),plus=document.createElement('button');
+  for(var i=0;i<2;i++){var b=i?plus:minus;b.type='button';b.className='shopBtn';b.style.cssText='min-height:34px;width:49%;margin-right:1%';b.textContent=i?'＋ ALLIES STRONGER':'− ALLIES WEAKER';}
+  minus.disabled=gameState.save.allyLevel<=1;plus.disabled=gameState.save.allyLevel>=5;
+  minus.addEventListener('click',function(){gameState.save.allyLevel=Math.max(1,gameState.save.allyLevel-1);saveGame();renderShop();});
+  plus.addEventListener('click',function(){gameState.save.allyLevel=Math.min(5,gameState.save.allyLevel+1);saveGame();renderShop();});
+  box.appendChild(minus);box.appendChild(plus);shopGrid.appendChild(box);
 }
-function endGame(reason){
-  gameState.mode='gameover';var dyn=evaluateAdaptiveDifficulty(true);
-  overlay.classList.remove('hidden');titleEl.textContent=reason;
-  subEl.textContent='Probeer dezelfde map opnieuw. Damage '+Math.round(dyn.damage)+' HP; target '+dyn.band.min+'-'+dyn.band.max+'. Retry enemy '+adaptiveLabel(dyn.value)+'.';
-  summaryEl.style.display='block';summaryEl.textContent='EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · MAP '+(gameState.levelIndex+1)+'/40 · DYN '+adaptiveLabel(dyn.value);
-  shopEl.style.display='none';deployBtn.style.display='none';restartBtn.style.display='block';
-}
-
 /* ---------- INPUT ---------- */
 
 function pointerPos(ev){
