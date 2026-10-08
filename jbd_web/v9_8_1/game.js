@@ -3254,7 +3254,7 @@ function blastCover(x,y,r,power){
 function createFireZone(x,y,b,plasma){
   var duration=b.burnDuration||0,dps=b.burnDps||0;if(duration<=0||dps<=0)return;
   gameState.fireZones.push({x:x,y:y,radius:b.radius,t:duration,maxT:duration,dps:dps,tick:0,fx:0,plasma:!!plasma,level:b.visual||0,source:b.source||'weapon'});
-  if(gameState.fireZones.length>14)gameState.fireZones.shift();
+  if(gameState.fireZones.length>24)gameState.fireZones.shift();
 }
 function createVehicleFire(x,y,radius,power,sourceType){
   power=power||1;radius=radius||24;
@@ -3509,11 +3509,13 @@ function updateFireZones(dt){
   for(var i=0;i<gameState.fireZones.length;i++){
     var z=gameState.fireZones[i];z.t-=dt;z.tick-=dt;z.fx-=dt;
     if(z.fx<=0){
-      z.fx=z.plasma?.07:(z.source==='vehicle'?.075:.11);
+      z.fx=z.plasma?.07:z.source==='napalm'?.025:(z.source==='vehicle'?.075:.11);
       var a=rand(0,TAU),rr=Math.sqrt(Math.random())*z.radius*.82,fx=z.x+Math.cos(a)*rr,fy=z.y+Math.sin(a)*rr;
       if(z.plasma)pushEffect({type:'plasmaFlame',x:fx,y:fy,vx:rand(-4,4),vy:rand(-18,-8),r:rand(3,6),t:0,life:rand(.28,.48)});
-      else emitFlame(fx,fy,Math.random()<.34);
-      if(Math.random()<(z.source==='vehicle'?.38:.20))emitSmoke(fx,fy,z.source==='vehicle');
+      else {emitFlame(fx,fy,z.source==='napalm'||Math.random()<.34);
+        if(z.source==='napalm'){emitFlame(fx+rand(-8,8),fy+rand(-6,6),true);
+          if(Math.random()<.60)emitSmoke(fx,fy,true);}}
+      if(Math.random()<(z.source==='napalm'?.60:z.source==='vehicle'?.38:.20))emitSmoke(fx,fy,z.source==='vehicle'||z.source==='napalm');
       if(Math.random()<.18)pushEffect({type:'ember',x:fx,y:fy,vx:rand(-18,18),vy:rand(-55,-18),t:0,life:rand(.25,.55)});
     }
     if(z.tick<=0){
@@ -3524,6 +3526,18 @@ function updateFireZones(dt){
           var ef=clamp(1-ed/z.radius,0,1);
           damageInfantry(e,z.dps*.25*(.65+.60*ef),'fire');
           if(!e.burnT&&Math.random()<.12+.24*ef)igniteInfantry(e,rand(4.8,7.6),.85+ef*.30);
+        }
+      }
+      if(gameState.arcade){
+        for(j=0;j<gameState.arcade.allies.length;j++){
+          var ally=gameState.arcade.allies[j];
+          if(ally.alive&&dist(z.x,z.y,ally.x,ally.y)<z.radius){
+            damageInfantry(ally,z.dps*.25,'fire');
+          }
+        }
+        for(j=0;j<gameState.arcade.armor.length;j++){
+          var av=gameState.arcade.armor[j];
+          if(av.alive&&dist(z.x,z.y,av.x,av.y)<z.radius*.82)damageVehicle(av,z.dps*.08,'fire');
         }
       }
       for(j=0;j<gameState.vehicles.length;j++){
@@ -3874,8 +3888,24 @@ function drawSetpieces(){
 function drawFireZones(){
   for(var i=0;i<gameState.fireZones.length;i++){
     var z=gameState.fireZones[i],q=clamp(z.t/z.maxT,0,1);
-    ctx.save();ctx.globalAlpha=(z.plasma?.20:.16)*Math.min(1,q*2.5);ctx.fillStyle=z.plasma?'#5ce7ff':'#d94b27';ctx.beginPath();ctx.ellipse(z.x,z.y,z.radius,z.radius*.58,0,0,TAU);ctx.fill();
-    ctx.globalAlpha=(z.plasma?.38:.24)*q;ctx.strokeStyle=z.plasma?'#c86cff':'#ff9b39';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+    var napalm=z.source==='napalm';
+    ctx.save();ctx.translate(z.x,z.y);
+    ctx.globalAlpha=(napalm?.62:.16)*Math.min(1,q*2.5);
+    ctx.fillStyle=z.plasma?'#5ce7ff':napalm?'#ae250a':'#d94b27';
+    ctx.beginPath();ctx.ellipse(0,0,z.radius*(napalm?1.25:1),z.radius*(napalm?.79:.58),0,0,TAU);ctx.fill();
+    ctx.globalAlpha=(napalm?.75:.25)*q;ctx.fillStyle=napalm?'#ff8124':'#f9a23c';
+    ctx.beginPath();ctx.ellipse(0,0,z.radius*(napalm?.95:.75),z.radius*(napalm?.55:.40),0,0,TAU);ctx.fill();
+    if(napalm){
+      for(var j=0;j<10;j++){
+        var a=j/10*TAU+gameState.time*.25,x=Math.cos(a)*z.radius*.65,y=Math.sin(a)*z.radius*.43;
+        var height=z.radius*(.25+.33*(1+Math.sin(gameState.time*9+j*2))*.5);
+        ctx.globalAlpha=q*(.66+.24*Math.sin(gameState.time*6+j));
+        ctx.fillStyle=j%3?'#ff8c1d':'#ffd25c';
+        ctx.beginPath();ctx.moveTo(x-4,y);ctx.quadraticCurveTo(x,y-height*.8,x+2,y-height);
+        ctx.quadraticCurveTo(x+5,y-height*.45,x+5,y);ctx.closePath();ctx.fill();
+      }
+    }
+    ctx.restore();
   }
 }
 function drawCrater(c,p){drawEnvSprite(c.r>8?'crater2':'crater1',c.x,c.y,.52+(c.r/22),c.rot||0,.68);}
@@ -5332,9 +5362,8 @@ function drawAlliedTeam(){
   }
   for(i=0;i<a.armor.length;i++){
     var v=a.armor[i],type=v.type||'jeep';
-    drawAtlas(type+':empty:0:healthy',v.x,v.y,type==='jeep'?.5:.54,v.bodyAngle||0,1);
-    drawAtlas('turret:'+type,v.x,v.y-2,.5,v.turretAngle||0,1);
-    ctx.save();ctx.fillStyle='#a8d6f1';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('★',v.x,v.y+3);ctx.restore();
+    drawVehicle(v,false);
+    ctx.save();ctx.fillStyle='#e5f0de';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText('★',v.x,v.y+3);ctx.restore();
   }
 }
 function drawArcadeOverlay(){
@@ -5420,11 +5449,11 @@ function updateBattleEvents(dt){
     // The napalm run leaves several genuine persistent fire zones along the central line.
     if(p.napalm&&!p.napalmDropped&&(p.vx>0?p.x>W*.42:p.x<W*.58)){
       p.napalmDropped=true;
-      for(var k=0;k<5;k++){
-        var nx=clamp(p.x+(k-2)*17+rand(-8,8),22,W-22),ny=H*rand(.43,.54);
-        createFireZone(nx,ny,{radius:rand(17,24),burnDuration:rand(6.0,9.2),burnDps:rand(5.5,8.0),visual:3,source:'napalm'},false);
+      for(var k=0;k<10;k++){
+        var nx=clamp(W*.20+k*W*.065+rand(-4,4),22,W-22),ny=H*.50+Math.sin(k*.62)*14+rand(-5,5);
+        createFireZone(nx,ny,{radius:rand(23,32),burnDuration:rand(9,13),burnDps:rand(5.5,8.0),visual:3,source:'napalm'},false);
         explode(nx,ny,rand(12,19),false);
-        for(var sm=0;sm<5;sm++){emitFlame(nx+rand(-10,10),ny+rand(-8,8),true);emitSmoke(nx,ny,false);}
+        for(var sm=0;sm<12;sm++){emitFlame(nx+rand(-14,14),ny+rand(-10,10),true);if(sm%3===0)emitSmoke(nx,ny,true);}
       }
       AudioSys.tone('cannon',.48,{pan:clamp((p.x-W*.5)/(W*.5),-.8,.8)});
     }
@@ -5442,29 +5471,29 @@ function updateBattleEvents(dt){
 var DEMO_SCRIPT=[
   {t:.6,name:'RIFLE SQUADS + MEDICS',action:'squads'},
   {t:2.5,name:'FAST TROOP TRANSPORT',action:'trucks'},
-  {t:4.0,name:'SNIPER RIFLES · PENETRATION',action:'boltGun'},
+  {t:4.0,name:'UPGRADEABLE MACHINE GUN',action:'mgDemo'},
   {t:5.5,name:'NAPALM STRIKE',action:'napalm'},
   {t:9,name:'HELICOPTER RAPPEL',action:'heli'},
   {t:13,name:'ALLIED ARMORED SUPPORT',action:'armor'},
   {t:16,name:'ENEMY RECON ARMOR',action:'scout'},
   {t:19,name:'PARATROOPER AIRDROP',action:'paras'},
-  {t:20.0,name:'SUBMACHINE GUN DEMO',action:'smgGun'},
+  {t:20.0,name:'BULLET EFFECTS & ARMOR',action:'mgDemo'},
   {t:22,name:'ARTILLERY BARRAGE',action:'artillery'},
   {t:25,name:'FIGHTER STRAFING',action:'strafe'},
   {t:29,name:'MOTORCYCLE SIDE-CAR',action:'motorcycle'},
   {t:33,name:'QUAD ATTACK',action:'quad'},
   {t:37,name:'CAVALRY',action:'cavalry'},
-  {t:39,name:'LIGHT MACHINE GUN DEMO',action:'lmgGun'},
+  {t:39,name:'MG RATE AND MAGAZINE',action:'mgDemo'},
   {t:41,name:'SANDBAG DEFENSE',action:'sandbags'},
   {t:45,name:'MACHINE-GUN POSITION',action:'mg'},
   {t:49,name:'FORTIFIED MG NEST',action:'nest'},
   {t:53,name:'HALFTRACK WITH SQUAD',action:'halftrack'},
-  {t:56,name:'SEMI-AUTOMATIC RIFLES',action:'semiGun'},
+  {t:56,name:'SHARED VEHICLE STATS',action:'mgDemo'},
   {t:58,name:'HEAVY ALLIED SUPPORT',action:'allyHeavy'},
   {t:63,name:'SMOKE BARRAGE',action:'smoke'},
   {t:68,name:'SECOND NAPALM RUN',action:'napalm'},
   {t:74,name:'LARGER TRUCK CONVOY',action:'convoy'},
-  {t:76,name:'ASSAULT RIFLES',action:'assaultGun'},
+  {t:76,name:'COLLISION & COVER',action:'mgDemo'},
   {t:79,name:'SECOND HELICOPTER',action:'heli'},
   {t:85,name:'MEDIC ASSAULT SQUAD',action:'medics'},
   {t:91,name:'ARMORED COUNTERATTACK',action:'enemyHeavy'},
@@ -5524,21 +5553,9 @@ function demoFortify(stage){
   }
   fort.stage=stage;
 }
-function demoChangeGun(group){
-  var candidate=PRIMARY_DB.findIndex(function(w){return w.group===group;});
-  if(candidate<0)return;
-  gameState.gunGameWeaponIndex=candidate;gameState.profile=playerProfile();
-  gameState.burstQueue.length=0;gameState.primaryReloadT=0;
-  gameState.primaryAmmo=gameState.profile.primaryMag;
-  gameState.gunGameBannerName=gameState.profile.primaryName;gameState.gunGameBannerT=3;
-}
 function demoShowcaseAction(key){
   var a=gameState.arcade;
-  if(key==='boltGun')demoChangeGun(0);
-  else if(key==='smgGun')demoChangeGun(2);
-  else if(key==='lmgGun')demoChangeGun(4);
-  else if(key==='semiGun')demoChangeGun(1);
-  else if(key==='assaultGun')demoChangeGun(3);
+  if(key==='mgDemo'){gameState.gunGameBannerName='FIELD MACHINE GUN · UPGRADE BETWEEN MAPS';gameState.gunGameBannerT=2;}
   if(key==='squads')demoSpawnSquad(6,['rifle','medic','lmg','marksman','rifle','medic']);
   else if(key==='trucks')demoSpawnTruck('blitz_2',5);
   else if(key==='napalm'||key==='strafe')demoAirStrike(key==='napalm');
