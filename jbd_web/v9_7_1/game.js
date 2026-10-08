@@ -4057,7 +4057,7 @@ function updateFireZones(dt){
 }
 function updateEnemyShots(dt){
   for(var i=0;i<gameState.enemyShots.length;i++){
-    var b=gameState.enemyShots[i];b.px=b.x;b.py=b.y;if(b.kind==='grenade')b.vy+=78*dt;
+    var b=gameState.enemyShots[i];b.px=b.x;b.py=b.y;redirectEnemyFireAtAllies(b);if(b.kind==='grenade')b.vy+=78*dt;
     b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     arcadeNearMiss(b);alliedIncomingFire(b);
     if(b.kind==='rocket'){
@@ -5486,6 +5486,15 @@ function spawnAlliedTeam(){
     a.armor.push({x:gameState.bunker.x+rand(-37,37),y:gameState.bunker.y-50,hp:110,fireCd:1.1,alive:true});
   }
   arcadeFlash('ALLIED FIRETEAM · '+count+' INFANTRY',2.4);
+}
+function redirectEnemyFireAtAllies(b){
+  if(b.arcadeDirected)return;b.arcadeDirected=true;
+  var a=gameState.arcade;if(!a||!a.allies.length||Math.random()>.48)return;
+  var candidates=a.allies.filter(function(u){return u.alive&&dist(u.x,u.y,b.x,b.y)<360;});
+  if(!candidates.length)return;
+  var u=candidates[Math.random()*candidates.length|0],speed=Math.sqrt(b.vx*b.vx+b.vy*b.vy)||160;
+  var angle=Math.atan2(u.y-b.y+rand(-35,35),u.x-b.x+rand(-35,35));
+  b.vx=Math.cos(angle)*speed;b.vy=Math.sin(angle)*speed;
 }
 function alliedIncomingFire(b){
   var a=gameState.arcade;if(!a||b.life<=0)return;
