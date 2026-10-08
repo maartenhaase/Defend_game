@@ -2203,6 +2203,7 @@ function spawnPlannedFoot(n,mix,tactic,rocketCount,direction){
     else if(mix==='elite'){if(dna.weaponClass>=6&&i===0&&dna.infantryMix>=7)role='grenadier';else if(i%4===1)role='lmg';else if(i%4===2)role='marksman';else role='rifle';}
     else if(mix==='rifle')role=rr<(.04+dna.infantryMix*.018)&&dna.weaponClass>=2?'lmg':'rifle';
     else{if(dna.weaponClass>=4&&rr<.15)role='marksman';else if(dna.weaponClass>=2&&rr<.34)role='lmg';else role='rifle';}
+    if(!rocketSlots[i]&&role==='rifle'&&Math.random()<.20)role='medic';
     var off=formationOffset(i,n,formation),px=clamp(pt.x+off.x*.35,16,W-16),py=clamp(pt.y+off.y*.35,safeTop+28,H*.68);
     var member={id:sq.id,tactic:sq.tactic,size:n,originX:origin,phase:sq.phase,slot:i,leader:i===0,formation:formation,flankX:clamp(px+off.x,20,W-20),faction:groupFaction};
     var northEntry=pt.y<=safeTop+120&&pt.x>36&&pt.x<W-36;
@@ -3168,7 +3169,7 @@ function updateInfantry(dt){
     if(e.burnT>0){
       if(updateBurningInfantry(e,dt))continue;
     }else if(e.bleedT>0){
-      e.bleedT-=dt;if(e.wounded)e.hp-=dt*(e.state==='woundedCrawl'?1.7:.95);
+      e.bleedT-=dt;if(e.wounded&&e.state!=='woundedCrawl')e.hp-=dt*.95;
       if(e.bleedCd<=0){e.bleedCd=rand(.28,.48);addBlood(e.x+rand(-2,2),e.y+rand(-2,2),1,false);}
       if(e.hp<=0){killInfantry(e,'wound');continue;}
     }
