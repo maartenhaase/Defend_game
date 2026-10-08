@@ -5472,7 +5472,7 @@ function render(){
   for(i=0;i<gameState.air.length;i++){a=gameState.air[i];if(a.alive&&a.x>-110&&a.x<W+110&&a.y>-110&&a.y<H+110){if(a.type==='heli')drawHeli(a);else drawPlane(a);}}
   for(i=0;i<gameState.paras.length;i++){p=gameState.paras[i];if(p.alive)drawPara(p);}
   drawShots();drawEffects();drawDNAAtmosphere();drawAlliedTeam();
-  if(gameState.battleEvent&&gameState.battleEvent.flyby){var fb=gameState.battleEvent.flyby;drawAtlas('plane:0',fb.x,fb.y,1.24,0,.98);}drawBunker();drawBunkerDamage();drawSmokeZones();
+  if(gameState.battleEvent&&gameState.battleEvent.flyby){var fb=gameState.battleEvent.flyby;drawAtlas('plane:0',fb.x,fb.y,1.24,fb.vx>0?Math.PI/2:-Math.PI/2,.98);}drawBunker();drawBunkerDamage();drawSmokeZones();
   ctx.restore();
   if((gameState.concussion||0)>0){
     var cq=clamp(gameState.concussion,0,1);ctx.save();ctx.globalAlpha=cq*.16;ctx.fillStyle='#d7d2bd';ctx.fillRect(0,0,W,H);ctx.globalAlpha=cq*.28;ctx.strokeStyle='#1a1b18';ctx.lineWidth=12*cq;ctx.strokeRect(4,4,W-8,H-8);ctx.restore();
@@ -5870,11 +5870,27 @@ function updateBattleEvents(dt){
     }
   }
   a.flybyT-=dt;
-  if(a.flybyT<=0&&!a.flyby){a.flybyT=rand(44,75);a.flyby={x:-110,y:H*.24,vx:420,t:0,shots:0};arcadeFlash('ALLIED FIGHTER · STRAFING RUN',2.5);}
+  if(a.flybyT<=0&&!a.flyby){
+    a.flybyT=rand(44,75);
+    var fromLeft=Math.random()<.5,napalm=Math.random()<.38;
+    a.flyby={x:fromLeft?-110:W+110,y:H*.24,vx:fromLeft?420:-420,t:0,shots:0,napalm:napalm,napalmDropped:false};
+    arcadeFlash(napalm?'FIGHTER · NAPALM RUN':'FIGHTER · STRAFING RUN',2.5);
+  }
   if(a.flyby){
     var p=a.flyby;p.x+=p.vx*dt;p.t+=dt;
-    if(p.x>W+120){a.flyby=null;return;}
-    if(p.t>.4&&p.t<2.5&&p.shots<25){p.shotCd=(p.shotCd||0)-dt;if(p.shotCd>0)return;p.shotCd=.085;p.shots++;
+    if(p.x>W+125||p.x<-125){a.flyby=null;return;}
+    // The napalm run leaves several genuine persistent fire zones along the central line.
+    if(p.napalm&&!p.napalmDropped&&(p.vx>0?p.x>W*.42:p.x<W*.58)){
+      p.napalmDropped=true;
+      for(var k=0;k<5;k++){
+        var nx=clamp(p.x+(k-2)*17+rand(-8,8),22,W-22),ny=H*rand(.43,.54);
+        createFireZone(nx,ny,{radius:rand(17,24),burnDuration:rand(6.0,9.2),burnDps:rand(5.5,8.0),visual:3,source:'napalm'},false);
+        explode(nx,ny,rand(12,19),false);
+        for(var sm=0;sm<5;sm++){emitFlame(nx+rand(-10,10),ny+rand(-8,8),true);emitSmoke(nx,ny,false);}
+      }
+      AudioSys.tone('cannon',.48,{pan:clamp((p.x-W*.5)/(W*.5),-.8,.8)});
+    }
+    if(!p.napalm&&p.t>.4&&p.t<2.5&&p.shots<25){p.shotCd=(p.shotCd||0)-dt;if(p.shotCd>0)return;p.shotCd=.085;p.shots++;
       var bx=clamp(p.x+rand(-16,16),20,W-20),by=rand(H*.4,H*.57);
       pushEffect({type:'ricochet',x:bx,y:by,vx:rand(-75,75),vy:rand(90,160),t:0,life:.2,len:22});
       if(p.shots%4===0){emitGroundImpact(bx,by,.7);AudioSys.weapon('BROWNING M2','lmg',.33,{pan:clamp((bx-W*.5)/(W*.5),-.8,.8)});}
