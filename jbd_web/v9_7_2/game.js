@@ -1418,7 +1418,7 @@ function freshState(){
   return {
     mode:'menu',save:sv,levelIndex:0,startMode:null,randomDNA:null,gunGameKills:0,gunGameWeaponIndex:0,gunGamePreviousIndex:-1,gunGameBannerT:0,gunGameBannerName:'',riskBase:0,riskLevel:0,riskPeak:0,riskBank:0,riskReserveT:0,riskReserveQueued:0,riskThresholds:[false,false,false],opportunities:[],objectiveBonusSupply:0,objectiveBonusAP:0,zoneRule:null,
     time:0,levelTime:0,levelComplete:false,
-    arcade:{salvageAt:15,focus:0,focusT:0,focusCd:0,nearMisses:0,allies:[],armor:[],allyKills:0,reinforcements:0},
+    arcade:{salvageAt:15,focus:0,focusT:0,focusCd:0,nearMisses:0,allies:[],tracers:[],armor:[],allyKills:0,reinforcements:0},
     profile:null,bunker:{x:W*.5,y:H-78,hp:100,maxHp:100,angle:-Math.PI/2},
     aim:{x:W*.5,y:H*.35},pointer:{down:false,t0:0,heFired:false},
     heat:0,overheat:false,eff:.75,hitMarker:0,hitPulse:0,streak:0,streakT:0,message:'',messageT:0,shake:0,screenFlash:0,hitStop:0,wave:0,
@@ -1431,7 +1431,7 @@ function freshState(){
 function resetLevel(){
   if(gameState.arcade){gameState.arcade.focusT=0;gameState.arcade.focusCd=0;gameState.arcade.reconT=0;gameState.arcade.lastNearMiss=-99;}
   gameState.zoneRule=currentZoneRule();
-  if(gameState.arcade){gameState.arcade.allies=[];gameState.arcade.armor=[];gameState.arcade.salvageAt=15;gameState.arcade.focus=0;gameState.arcade.allyKills=0;gameState.arcade.reinforcements=0;}
+  if(gameState.arcade){gameState.arcade.allies=[];gameState.arcade.tracers=[];gameState.arcade.armor=[];gameState.arcade.salvageAt=15;gameState.arcade.focus=0;gameState.arcade.allyKills=0;gameState.arcade.reinforcements=0;}
   gameState.riskBase=gameState.startMode==='hard'?.26:gameState.startMode==='random'?.18:.10;
   gameState.riskLevel=gameState.riskBase;gameState.riskPeak=gameState.riskBase;gameState.riskBank=0;
   gameState.riskReserveT=0;gameState.riskReserveQueued=0;gameState.riskThresholds=[false,false,false];
@@ -5508,6 +5508,7 @@ function alliedIncomingFire(b){
 }
 function updateAlliedTeam(dt){
   var a=gameState.arcade;if(!a)return;
+  a.tracers=a.tracers.filter(function(t){t.t-=dt;return t.t>0;});
   for(var i=0;i<a.allies.length;i++){
     var u=a.allies[i];u.anim+=dt*3.4;u.stateT+=dt;
     u.muzzle=Math.max(0,u.muzzle-dt);u.recoil=Math.max(0,u.recoil-dt*5);
@@ -5550,7 +5551,7 @@ function updateAlliedTeam(dt){
       AudioSys.weapon(u.role==='lmg'?'BREN MKII':'LEE-ENFIELD NO.4',u.role,.28,{pan:clamp((u.x-W*.5)/(W*.5),-.8,.8)});
       // Long, visible tracer; suppression is frequent, kills are deliberately rare.
       var tx=nearest.x+rand(-35,35),ty=nearest.y+rand(-27,27);
-      pushEffect({type:'tracer',x:mx,y:my,vx:(tx-mx)*3.5,vy:(ty-my)*3.5,t:0,life:.27});
+      a.tracers.push({x:mx,y:my,tx:tx,ty:ty,t:.11});
       pushEffect({type:'ricochet',x:tx,y:ty,vx:rand(-20,20),vy:rand(-20,15),t:0,life:.16});
       if(Math.random()<.12){
         nearest.hp-=rand(5,9);
@@ -5580,6 +5581,9 @@ function updateAlliedTeam(dt){
 }
 function drawAlliedTeam(){
   var a=gameState.arcade;if(!a)return;
+  ctx.save();ctx.lineWidth=1.6;ctx.strokeStyle='#f8dc83';
+  for(var ti=0;ti<a.tracers.length;ti++){var tr=a.tracers[ti];ctx.globalAlpha=Math.min(1,tr.t*9);ctx.beginPath();ctx.moveTo(tr.x,tr.y);ctx.lineTo(tr.tx,tr.ty);ctx.stroke();}
+  ctx.restore();
   for(var i=0;i<a.allies.length;i++){
     var u=a.allies[i];
     // Same animation atlas and poses as the opposing British infantry.
