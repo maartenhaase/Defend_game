@@ -1968,7 +1968,7 @@ function addStreak(){
 
 /* ---------- DAMAGE ---------- */
 
-function killInfantry(e,kind){if(!e.alive)return;battleVoice(e,'death');var burned=!!e.charred||(e.burnBlack||0)>.42||kind==='burn';e.alive=false;e.deadT=0;e.charred=burned;e.state=burned?'charred':'dead';gameState.stats.kills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.020,0,1);addStreak();registerKillZone(e.x,e.y);shockSquadMorale(e,e.leader?.34:(kind==='he'?.29:.20));reactSquadToLoss(e);addBlood(e.x,e.y,kind==='he'?18:8,kind==='he');gameState.hitStop=Math.max(gameState.hitStop||0,.028);gameState.shake=Math.max(gameState.shake||0,1.0);gameState.screenFlash=Math.max(gameState.screenFlash||0,.025);}
+function killInfantry(e,kind){if(!e.alive)return;battleVoice(e,'death');if(e.allied){e.alive=false;e.deadT=0;e.state='dead';addBlood(e.x,e.y,kind==='he'?14:8,kind==='he');return;}var burned=!!e.charred||(e.burnBlack||0)>.42||kind==='burn';e.alive=false;e.deadT=0;e.charred=burned;e.state=burned?'charred':'dead';gameState.stats.kills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.020,0,1);addStreak();registerKillZone(e.x,e.y);shockSquadMorale(e,e.leader?.34:(kind==='he'?.29:.20));reactSquadToLoss(e);addBlood(e.x,e.y,kind==='he'?18:8,kind==='he');gameState.hitStop=Math.max(gameState.hitStop||0,.028);gameState.shake=Math.max(gameState.shake||0,1.0);gameState.screenFlash=Math.max(gameState.screenFlash||0,.025);}
 function damageInfantry(e,dmg,kind){
   if(!e.alive)return false;
   if(e.state==='woundedCrawl'&&!['fire','he','explosion','burn'].includes(kind))return false;
@@ -2294,6 +2294,7 @@ function explodeWreck(w){
 }
 function explodeLiveVehicleFuel(v){
   if(!v||!v.alive)return false;
+  if(v.allied)return damageVehicle(v,v.hp+(v.armorHp||0)+50,'he');
   var fam=v.vehicleSpec&&v.vehicleSpec.family||'';
   if(fam==='cavalry')return damageVehicle(v,v.hp+1,'he');
   dismountDestroyed(v,'he');v.alive=false;v.hasMG=false;v.currentSpeed=0;v.state='disabled';
@@ -2330,6 +2331,7 @@ function lineBlockedByWreck(x1,y1,x2,y2){
 }
 function neutralizeVehicle(v,reason,fragments){
   if(!v.alive)return false;
+  if(v.allied)return damageVehicle(v,v.hp+(v.armorHp||0)+50,'he');
   dismountDestroyed(v,'mg');if(fragments&&!(v.vehicleSpec&&v.vehicleSpec.family==='cavalry'))emitVehicleFragments(v,'mg');
   v.alive=false;v.currentSpeed=0;v.state='disabled';v.hasMG=false;
   gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.018,0,1);addStreak();
@@ -2412,6 +2414,15 @@ function damageVehicle(v,dmg,kind){
   pushEffect({type:'damage',x:v.x,y:v.y-8,text:String(Math.max(1,Math.round(dealt))),t:0,life:.52});
   if(fam!=='cavalry')vehicleHitFx(v,kind);
   if(v.hp<=0){
+    if(v.allied){
+      deployAlliedCrew(v);emitVehicleFragments(v,kind);
+      v.alive=false;v.currentSpeed=0;v.hasMG=false;
+      var alliedWreck=makeWreckFromVehicle(v,{burnT:rand(8,14),disabled:true,softDisabled:false});
+      gameState.wrecks.push(alliedWreck);if(gameState.wrecks.length>18)gameState.wrecks.shift();
+      explode(v.x,v.y,vehicleExplosionScale(v),true);
+      gameState.shake=Math.max(gameState.shake||0,5);
+      return true;
+    }
     dismountDestroyed(v,kind);if(fam!=='cavalry')emitVehicleFragments(v,kind);
     v.alive=false;gameState.stats.vehicleKills++;registerGunGameKill();gameState.eff=clamp(gameState.eff+.025,0,1);addStreak();
     var cls=v.vehicleClass||1,blastR=vehicleExplosionScale(v)+(kind==='he'&&fam!=='cavalry'?5:0);
@@ -4981,22 +4992,48 @@ window.addEventListener('keydown',function(ev){
 });
 /* ALLIED FIRETEAM: shares the original British sprite atlas, pose animation,
    cover-seeking, morale and cooldown ideas with the enemy; lower hit probability. */
+function createAlliedInfantry(x,y,role){
+  // Reuse the exact enemy infantry factory: HP, speed, role, armor and weapon profile.
+  var soldier=spawnInfantry(x,y,role||'rifle',null,'vehicle');
+  gameState.infantry.pop(); // Re-home; never count as an enemy.
+  var level=(gameState.save.allyLevel||3),mult=1+(level-3)*.14;
+  soldier.allied=true;soldier.team='allied';soldier.faction='british';
+  soldier.weaponProfile=enemyWeaponProfile(soldier.role,gameState.levelIndex,soldier.id,'british');
+  soldier.weaponName=soldier.weaponProfile.name;
+  soldier.hp*=mult;soldier.maxHp*=mult;soldier.speed*=mult;
+  soldier.aimSkill=mult;soldier.fireCd=rand(.4,1.0);
+  soldier.x=x;soldier.y=y;soldier.state='advance';soldier.stateT=0;
+  soldier.muzzle=0;soldier.deadT=0;soldier.recoil=0;soldier.suppression=0;
+  soldier.anim=rand(0,10);soldier.angle=-Math.PI/2;
+  soldier.decisionT=rand(.5,1.1);soldier.targetX=x;
+  soldier.hold=false;soldier.phaseT=rand(.8,1.7);soldier.fortStage=0;
+  soldier.lastFire=gameState.time;soldier.kills=0;
+  return soldier;
+}
 function spawnAlliedTeam(initial){
   var a=gameState.arcade,i=a.reinforcements++,x=gameState.bunker.x+rand(-58,58);
-  a.allies.push({id:Math.random()*1e9|0,x:x,y:Math.min(gameState.bunker.y-42,H*.72)+rand(-8,8),
-    role:i>3&&i%5===0?'lmg':'rifle',shotgun:Math.random()<.20,assignment:initial?'advance':(a.forts.length&&Math.random()<.62?'defend':'advance'),faction:'british',variant:(Math.random()*16)|0,
-    alive:true,hp:12,maxHp:12,fireCd:rand(.65,1.4),muzzle:0,recoil:0,anim:rand(0,10),angle:-Math.PI/2,
-    state:'advance',stateT:0,cover:null,suppression:0,deadT:0,limp:0,landSquash:0,firePose:'crouch',
-    vx:0,vy:0,decisionT:rand(.6,1.5),targetX:x,shots:0,kills:0,hold:false,phaseT:rand(.8,1.8)});
-  if(!initial)arcadeFlash('ALLIED +1 · REINFORCEMENTS',1.8);
+  var role=i>3&&i%5===0?'lmg':i%9===0?'medic':'rifle';
+  var u=createAlliedInfantry(x,Math.min(gameState.bunker.y-42,H*.72)+rand(-8,8),role);
+  u.shotgun=Math.random()<.20;
+  u.assignment=initial?'advance':(a.forts.length&&Math.random()<.62?'defend':'advance');
+  a.allies.push(u);
+  if(!initial)arcadeFlash('ALLIED +1 · REINFORCEMENTS',1.5);
 }
 function spawnAlliedArmor(kills){
-  var a=gameState.arcade;if(a.armor.some(function(v){return v.alive;}))return;
-  var type=kills<60?'jeep':kills<110?'scoutcar':'halftrack';
-  a.armor.push({type:type,x:gameState.bunker.x+rand(-42,42),y:Math.min(gameState.bunker.y-54,H*.73),
-    hp:type==='jeep'?44:type==='scoutcar'?65:85,maxHp:type==='jeep'?44:type==='scoutcar'?65:85,fireCd:rand(.6,1.3),alive:true,wheelT:0,crewOut:false,hitCount:0,
-    steerPhase:rand(0,TAU),bodyAngle:0,turretAngle:0,routeX:gameState.bunker.x+rand(-45,45),driving:true});
-  arcadeFlash('ALLIED SUPPORT · '+type.toUpperCase(),2.5);
+  var a=gameState.arcade;
+  if(a.armor.some(function(v){return v.alive;}))return;
+  var id=kills<60?'kubel_2':kills<110?'spah_2':'sdkfz250_2';
+  // Exact same spawn function and vehicleSpec as opposing vehicles.
+  spawnVehicle('jeep',0,id,undefined,0);
+  var v=gameState.vehicles.pop();
+  v.allied=true;v.team='allied';v.x=clamp(gameState.bunker.x+rand(-45,45),25,W-25);
+  v.y=Math.min(gameState.bunker.y-60,H*.75);
+  v.bodyAngle=-Math.PI/2;v.turretAngle=-Math.PI/2;v.turretTarget=-Math.PI/2;
+  v.passengers=0;v.unloadLeft=0;v.hasMG=true;v.routeX=v.x+rand(-20,20);
+  v.steerPhase=rand(0,TAU);v.state='alliedApproach';v.currentSpeed=v.speed*.55;
+  v.crewOut=false;v.hitCount=0;v.fireCd=rand(.55,1.0);
+  a.armor.push(v);
+  arcadeFlash('ALLIED VEHICLE · '+v.vehicleName,2.5);
 }
 // Crew bail out when an Allied vehicle is badly damaged. These are regular,
 // vulnerable infantry using exactly the same soldier sprites and combat logic.
@@ -5004,16 +5041,14 @@ function deployAlliedCrew(v){
   if(v.crewOut)return;v.crewOut=true;
   var a=gameState.arcade,count=2+(Math.random()*3|0);
   for(var i=0;i<count;i++){
-    var u={id:Math.random()*1e9|0,x:v.x+(i-count*.5)*10,y:v.y+rand(-10,10),
-      role:i===0?'lmg':'rifle',faction:'british',variant:(Math.random()*12)|0,
-      alive:true,hp:10,maxHp:10,fireCd:rand(.7,1.4),muzzle:0,recoil:0,anim:rand(0,10),
-      angle:-Math.PI/2,state:'cover',stateT:0,cover:null,suppression:.35,deadT:0,
-      limp:0,landSquash:0,firePose:'crouch',vx:0,vy:0,decisionT:0,targetX:v.x+rand(-28,28),
-      phaseT:rand(1,2),hold:true,shots:0,kills:0,lastFire:gameState.time,fortStage:0};
+    var x=clamp(v.x+(i-(count-1)*.5)*14,24,W-24),y=v.y+rand(-7,10);
+    var u=createAlliedInfantry(x,y,i===0?'lmg':'rifle');
+    u.state='cover';u.suppression=.4;u.assignment='advance';
     a.allies.push(u);
   }
-  arcadeFlash('CREW BAIL OUT · '+count,1.8);
+  arcadeFlash('CREW BAIL OUT · '+count,1.5);
 }
+
 function updateAlliedEngineer(u,dt){
   var a=gameState.arcade;
   if(u.lastFire==null)u.lastFire=gameState.time;
