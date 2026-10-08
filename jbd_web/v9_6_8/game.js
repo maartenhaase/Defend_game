@@ -3635,7 +3635,7 @@ function fireWeapon(kind,x,y){
     burnDps:kind==='he'?gameState.profile.specialDps:0,blastDamage:kind==='he'?gameState.profile.specialBlast:0,
     specialEffect:kind==='he'?gameState.profile.specialEffect:null,visual:kind==='he'?gameState.profile.specialVisual:gameState.profile.primaryVisual,
     projectile:kind==='mg'?gameState.profile.primaryProjectile:null,primarySplash:kind==='mg'?gameState.profile.primarySplash:0,homing:kind==='mg'?gameState.profile.primaryHoming:0,
-    suppressed:{}
+    suppressed:{},suppressionPower:kind==='mg'?(gameState.profile.primaryClass==='light machine gun'?1.5:gameState.profile.primaryClass==='submachine gun'?.70:gameState.profile.primaryClass==='shotgun'?.18:gameState.profile.primaryClass==='bolt rifle'?.52:1):1
   };
   if(kind==='he'){
     shot.z=0;shot.pz=0;shot.arcStart=0;shot.arcEnd=targetDist;shot.arcHeight=gameState.profile.specialArcHeight+targetDist*.018;
@@ -3672,7 +3672,7 @@ function applySuppression(b){
   for(var i=0;i<gameState.infantry.length;i++){
     var e=gameState.infantry[i];if(!e.alive||b.suppressed[e.id])continue;
     var d=pointSegDist(e.x,e.y,b.px,b.py,b.x,b.y);
-    if(d<27&&d>8){b.suppressed[e.id]=1;e.suppression=clamp(e.suppression+.22,0,1);e.morale=clamp((e.morale==null?1:e.morale)-.035,0,1);}
+    if(d<27&&d>8){b.suppressed[e.id]=1;e.suppression=clamp(e.suppression+.22*(b.suppressionPower||1),0,1);e.morale=clamp((e.morale==null?1:e.morale)-.035*(b.suppressionPower||1),0,1);}
   }
 }
 function coverRadius(c){
@@ -3855,7 +3855,7 @@ function resolveMGHit(b){
   gameState.stats.hits+=b.pellet?.20:1;gameState.eff=clamp(gameState.eff+(b.pellet?.0015:.008),0,1);
   var hitDamage=b.pellet?b.damage*clamp(1-.68*(b.traveled/Math.max(1,b.range)),.32,1):b.damage;
   if(type==='infantry')damageInfantry(best,hitDamage,'mg');
-  else if(type==='vehicle'){if(b.pellet){vehicleHitFx(best,'mg');if(best.vehicleSpec&&/motorcycle|quad|cavalry/.test(best.vehicleSpec.family||''))damageVehicle(best,hitDamage*.35,'mg');}else primaryVehicleHit(best,b);}
+  else if(type==='vehicle'){if(b.pellet){if(b.pelletIndex%3===0)vehicleHitFx(best,'mg');if(best.vehicleSpec&&/motorcycle|quad|cavalry/.test(best.vehicleSpec.family||''))damageVehicle(best,hitDamage*.35,'mg');}else primaryVehicleHit(best,b);}
   else if(type==='air')damageAir(best,hitDamage);
   else{best.hp-=hitDamage;AudioSys.tone('flesh',.72);if(best.hp<=0){best.alive=false;gameState.stats.airKills++;registerGunGameKill();addBlood(best.x,best.y,6,false);}}
   if((b.primarySplash||0)>0){explode(best.x,best.y,b.primarySplash,false);addUpgradeCrater(best.x,best.y,b.primarySplash,b.visual);blastInfantry(best.x,best.y,b.primarySplash,b.damage*.42);}
@@ -3897,6 +3897,7 @@ function primaryObstacleHit(b){
     d=pointSegDist(w.x,w.y,b.px,b.py,b.x,b.y);
     if(d<wreckRadius(w)*.76){
       b.lastWreckId=w.wreckId;
+      if(b.pellet&&b.pelletIndex%3!==0){b.active=false;return true;}
       if(hitDisabledWreck(w,b)){b.active=false;return true;}
     }
   }
@@ -3907,8 +3908,7 @@ function primaryObstacleHit(b){
       pushEffect({type:'impactFlash',x:b.x,y:b.y,r:4,t:0,life:.08});
       damageCover(c,b.pellet?.22:1,'bullet',b.x,b.y);
       if(steel)emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),1);
-      AudioSys.impact(mat,.72,{pan:clamp((b.x-W*.5)/(W*.55),-.8,.8)});
-      emitGroundImpact(b.x,b.y,.82,mat,true);
+      if(!b.pellet||b.pelletIndex%3===0){AudioSys.impact(mat,.72,{pan:clamp((b.x-W*.5)/(W*.55),-.8,.8)});emitGroundImpact(b.x,b.y,.82,mat,true);}
       b.active=false;return true;
     }
   }
