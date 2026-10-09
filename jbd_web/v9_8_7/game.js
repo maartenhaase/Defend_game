@@ -1121,7 +1121,7 @@ function resetLevel(){
   if(gameState.startMode!=='demo')for(var startIdx=0;startIdx<gameState.events.length;startIdx++)gameState.events[startIdx].t+=1.45;
   if(gameState.map&&gameState.map.layoutName)gameState.encounterName=(gameState.encounterName||'CONTACT')+' · '+gameState.map.layoutName;
   gameState.eventCursor=0;
-  gameState.mode='playing';gameState.message=(gameState.zoneRule.name+' · '+currentDoctrine().name);gameState.messageT=1.8;
+  gameState.mode='playing';gameState.message=(gameState.shortBattle?gameState.shortBattle.label:gameState.zoneRule.name+' · '+currentDoctrine().name);gameState.messageT=1.8;
   gameState.gunGameBannerName='FULL AUTO MG · CLOSE RANGE DOMINATES';gameState.gunGameBannerT=2.6;
   spawnAlliedTeam(true);spawnAlliedTeam(true);startBattleBarrage();
 }
@@ -4366,7 +4366,7 @@ function completeLevel(){
   gameState.save.bestLevel=Math.max(gameState.save.bestLevel,Math.min(CAMPAIGN_LENGTH-1,gameState.levelIndex+1));
   var dyn=evaluateAdaptiveDifficulty(false);saveGame();
   overlay.classList.remove('hidden');titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'40 MAPS COMPLETE':gameState.shortBattleWithdrawn?'SECTOR HELD · ENEMY WITHDREW':'MAP CLEARED';
-  subEl.textContent=(gameState.encounterName||'SECTOR')+' voltooid. Damage target '+dyn.band.min+'-'+dyn.band.max+' HP; resultaat '+Math.round(dyn.damage)+' HP ('+dyn.rating+'). Volgende map enemy '+adaptiveLabel(dyn.value)+'.';
+  subEl.textContent=(gameState.shortBattleWithdrawn?'Time over: resterende vijanden teruggetrokken, 65% basisvoorraad. ':'')+(gameState.encounterName||'SECTOR')+' voltooid. Damage target '+dyn.band.min+'-'+dyn.band.max+' HP; resultaat '+Math.round(dyn.damage)+' HP ('+dyn.rating+'). Volgende map enemy '+adaptiveLabel(dyn.value)+'.';
   summaryEl.style.display='block';summaryEl.textContent=riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · BUILDINGS '+(gameState.stats.buildingsDestroyed||0)+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus);
   shopEl.style.display='block';restartBtn.style.display='none';deployBtn.style.display='block';deployBtn.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'MAP 1 AGAIN':'NEXT MAP';renderShop();
 }
@@ -4381,11 +4381,11 @@ function weaponPreview(kind,lvl){
 }
 function skillPreview(key,lvl){
   var n=Math.min(SKILL_MAX,lvl+1),u=gameState.save.upgrades;
-  if(key==='damage')return (15.0*(1+lvl*.115)).toFixed(1)+' → '+(15.0*(1+n*.115)).toFixed(1)+' damage';
-  if(key==='range')return Math.round((.54+lvl*.036)*100)+'% → '+Math.round((.54+n*.036)*100)+'% screen range';
-  if(key==='rate')return (.56*Math.pow(.94,lvl)).toFixed(2)+' → '+(.56*Math.pow(.94,n)).toFixed(2)+' seconds BURST recovery';
-  if(key==='magazine')return (26+lvl*4)+' → '+(26+n*4)+' rounds per magazine';
-  if(key==='reload')return (2.45*Math.pow(.925,lvl)).toFixed(2)+' → '+(2.45*Math.pow(.925,n)).toFixed(2)+' seconds to reload';
+  if(key==='damage')return (12.0*(1+lvl*.115)).toFixed(1)+' → '+(12.0*(1+n*.115)).toFixed(1)+' damage';
+  if(key==='range')return Math.round((.60+lvl*.033)*100)+'% → '+Math.round((.60+n*.033)*100)+'% screen range';
+  if(key==='rate')return (.10*Math.pow(.952,lvl)).toFixed(3)+' → '+(.10*Math.pow(.952,n)).toFixed(3)+' seconds per automatic shot';
+  if(key==='magazine')return (40+lvl*4)+' → '+(40+n*4)+' rounds per magazine';
+  if(key==='reload')return (2.60*Math.pow(.925,lvl)).toFixed(2)+' → '+(2.60*Math.pow(.925,n)).toFixed(2)+' seconds to reload';
   if(key==='aiming')return Math.round(100*Math.pow(.9,lvl))+'% → '+Math.round(100*Math.pow(.9,n))+'% spread';
   return 'Bunker HP and armor upgrade';
 }
@@ -5666,7 +5666,7 @@ function drawHud(){
 
   if(gameState.pointer.down){
     var hold=gameState.pointer.dragAim?0:(performance.now()-gameState.pointer.t0)/1000*gameState.profile.chargeScale,charge=clamp(hold/HE_HOLD,0,1),label=gameState.pointer.heFired?'HE!':gameState.pointer.dragAim?'MG':hold<.16?'MG':'HE';
-    ctx.textAlign='right';ctx.fillStyle=hold<.16?'#f0ecd6':'#f09642';ctx.fillText(gameState.pointer.heFired?'HE':(hold<.16?'MG':'CHARGE'),W-21,bottom-22,73);ctx.fillStyle='#111612';roundRect(ctx,W-84,bottom-14,62,4,2);ctx.fill();ctx.fillStyle='#ef8a3a';roundRect(ctx,W-83,bottom-13,60*charge,2,1);ctx.fill();
+    ctx.textAlign='right';ctx.fillStyle=hold<.16?'#f0ecd6':'#f09642';ctx.fillText(gameState.pointer.heFired?'HE':(hold<.16?'MG':'CHARGE'),W*.68,bottom-22,64);ctx.fillStyle='#111612';roundRect(ctx,W-84,bottom-14,62,4,2);ctx.fill();ctx.fillStyle='#ef8a3a';roundRect(ctx,W-83,bottom-13,60*charge,2,1);ctx.fill();
   }
   if(gameState.streak>1&&gameState.streakT>0){
     ctx.textAlign='left';ctx.fillStyle='#f0c75d';ctx.fillText('STREAK '+gameState.streak,20,bottom-5);
