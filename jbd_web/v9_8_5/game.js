@@ -1570,6 +1570,96 @@ function strongestKillZone(){
   for(var i=0;i<gameState.killZones.length;i++){var z=gameState.killZones[i];if(z.until<=gameState.time)continue;if(!best||(z.strength||0)>(best.strength||0))best=z;}
   return best;
 }
+
+/* WORLD FIRE NAVIGATION -- same danger model for both factions and vehicles.
+   Firezones, ignited trucks, and burning wrecks all advertise a real exclusion area. */
+function lineOfSightBlockedByWalls(x1,y1,x2,y2){
+  var covers=gameState&&gameState.map&&gameState.map.cover||[];
+  var shot={px:x1,py:y1,x:x2,y:y2};
+  for(var i=0;i<covers.length;i++)if(covers[i].kind==='building'&&buildingWallHit(shot,covers[i])>=0)return true;
+  return false;
+}
+function fireThreatAt(x,y,buffer,ignore){
+  if(!gameState)return null;
+  var best=null,bestRatio=1;
+  function test(o,radius,tag){
+    if(!o||o===ignore)return;
+    var rr=radius+(buffer||0),d=Math.hypot(x-o.x,y-o.y),ratio=d/Math.max(1,rr);
+    if(ratio<bestRatio){bestRatio=ratio;best={x:o.x,y:o.y,radius:radius,d:d,ratio:ratio,tag:tag,source:o};}
+  }
+  var zones=gameState.fireZones||[];
+  for(var i=0;i<zones.length;i++){var z=zones[i];if(z.t>0)test(z,z.radius,'napalm');}
+  var vehicles=gameState.vehicles||[];
+  for(i=0;i<vehicles.length;i++){var v=vehicles[i];if(v.alive&&v.fuelIgnited)test(v,26,'burningTruck');}
+  var w=gameState.wrecks||[];
+  for(i=0;i<w.length;i++){var wreck=w[i];if(wreck.fuelIgnited||wreck.burnT>0&&wreck.exploded)test(wreck,29,'burningWreck');}
+  if(gameState.arcade&&gameState.arcade.armor)for(i=0;i<gameState.arcade.armor.length;i++){
+    var armor=gameState.arcade.armor[i];if(armor.alive&&armor.fuelIgnited)test(armor,26,'burningTruck');
+  }
+  return best;
+}
+function fireEscapePoint(x,y,threat,margin){
+  var a=Math.atan2(y-threat.y,x-threat.x);
+  if(!Number.isFinite(a)||Math.hypot(x-threat.x,y-threat.y)<.5)a=-Math.PI*.5;
+  var desired=threat.radius+(margin||25)+12;
+  var dirs=[0,.4,-.4,.8,-.8,1.3,-1.3,Math.PI];
+  var best=null,bestScore=1e9;
+  for(var i=0;i<dirs.length;i++){
+    var ang=a+dirs[i];
+    var px=clamp(threat.x+Math.cos(ang)*desired,18,W-18);
+    var py=clamp(threat.y+Math.sin(ang)*desired,safeTop+12,H-safeBottom-27);
+    var unsafe=fireThreatAt(px,py,margin*.45);
+    var blocked=nearbySolidWall(px,py,8);
+    var score=Math.hypot(px-x,py-y)+Math.abs(dirs[i])*9+(unsafe?1000+(1-unsafe.ratio)*200:0)+(blocked?900:0);
+    if(score<bestScore){bestScore=score;best={x:px,y:py,unsafe:!!unsafe,blocked:blocked};}
+  }
+  return best||{x:clamp(x+35,18,W-18),y:y,unsafe:true};
+}
+function evadeInfantryFire(e,dt){
+  if(!e||!e.alive||e.burnT>0||e.wounded||e.state==='parachuting'||e.state==='heliRappel'||e.state==='dismount')return false;
+  var threat=fireThreatAt(e.x,e.y,22);
+  // Avoid walking into hot terrain from a few metres away.
+  if(!threat&&e.state==='advance'){
+    var aheadX=e.x+(e.vx||0)*.65,aheadY=e.y+(e.vy||0)*.65;
+    threat=fireThreatAt(aheadX,aheadY,17);
+  }
+  if(threat){
+    var point=fireEscapePoint(e.x,e.y,threat,25);
+    e.fireEscapeX=point.x;e.fireEscapeY=point.y;
+    e.fireEscapeUntil=gameState.time+.75;
+    e.fireEscapeCount=(e.fireEscapeCount||0)+dt;
+    if(e.state!=='fireFlee'){e.state='fireFlee';e.stateT=0;e.cover=null;e.rocketAimT=0;}
+  }
+  if(e.state!=='fireFlee')return false;
+  // Once the fire is behind us, complete a short retreat before returning to tactics.
+  var remaining=Math.hypot(e.x-(e.fireEscapeX||e.x),e.y-(e.fireEscapeY||e.y));
+  if(!threat&&(remaining<8||gameState.time>(e.fireEscapeUntil||0))){
+    e.state='advance';e.stateT=0;e.decisionT=rand(.35,.75);
+    e.cover=null;e.fireCd=Math.max(e.fireCd>50?0:e.fireCd,rand(.4,.9));return false;
+  }
+  e.morale=clamp(e.morale-.06*dt,0,1);
+  e.fireCd=Math.max(e.fireCd>50?0:e.fireCd,.3);
+  var speed=Math.max(e.speed*1.42,34);
+  steerInfantry(e,e.fireEscapeX,e.fireEscapeY,speed,dt,9);
+  e.x=clamp(e.x,16,W-16);e.y=clamp(e.y,safeTop+10,H-safeBottom-30);
+  return true;
+}
+function vehicleFireBypass(v,threat,northbound){
+  var rad=vehicleBodyRadius(v)+20,spacing=threat.radius+rad;
+  var candidates=[
+    clamp(threat.x-spacing,rad,W-rad),
+    clamp(threat.x+spacing,rad,W-rad)
+  ];
+  var bestX=candidates[0],best=1e9;
+  for(var i=0;i<candidates.length;i++){
+    var x=candidates[i],y=v.y+(northbound?-18:27);
+    var danger=fireThreatAt(x,y,rad*.60,v);
+    var blocked=nearbySolidWall(x,y,rad);
+    var cost=Math.abs(x-v.x)+(danger?1000:0)+(blocked?850:0);
+    if(cost<best){best=cost;bestX=x;}
+  }
+  return {x:bestX,safe:best<800};
+}
 function avoidKillZonePoint(e,pt){
   var z=strongestKillZone();if(!z||z.strength<2)return pt;
   if(z.y<e.y-15||z.y>e.y+190)return pt;
@@ -2742,6 +2832,7 @@ function updateInfantry(dt){
       if(e.bleedCd<=0){e.bleedCd=rand(.28,.48);addBlood(e.x+rand(-2,2),e.y+rand(-2,2),1,false);}
       if(e.hp<=0){killInfantry(e,'wound');continue;}
     }
+    if(evadeInfantryFire(e,dt))continue;
     if(e.role==='medic'&&updateMedicBehavior(e,dt))continue;
 
     var moved=dist(e.x,e.y,e.lastX||e.x,e.lastY||e.y);e.stuckT=(e.state==='advance'||e.state==='crawl')&&moved<.08?e.stuckT+dt:0;e.lastX=e.x;e.lastY=e.y;
@@ -3057,6 +3148,18 @@ function updateVehicles(dt){
     if(v.zigT!=null)v.zigT+=dt;v.wheelT+=dt*Math.max(1,v.currentSpeed*.16);v.moveFxCd=(v.moveFxCd||0)-dt;if(v.currentSpeed>15&&v.moveFxCd<=0&&(v.state==='road'||v.state==='toShoulder'||v.state==='evadeWreck'||v.state==='depart')){v.moveFxCd=rand(.10,.18);emitVehicleMotionFx(v);}updateVehicleDamageParticles(v,dt);
     if(v.tireChaosT>0)v.tireChaosT=Math.max(0,v.tireChaosT-dt);
     var turretState=updateVehicleTurret(v,dt),traffic=vehicleFollowScale(v);
+    var ableToEvade=v.state==='road'||v.state==='toShoulder'||v.state==='depart'||v.state==='approachStop'||v.state==='firestop'||v.state==='unload'||v.state==='support'||v.state==='fireEvade';
+    if(ableToEvade){
+      var hot=fireThreatAt(v.x,v.y+Math.max(20,vehicleBodyRadius(v)+14),vehicleBodyRadius(v)+18,v)||fireThreatAt(v.x,v.y,vehicleBodyRadius(v)+16,v);
+      if(hot){
+        var detour=vehicleFireBypass(v,hot,false);
+        if(v.state!=='fireEvade'){
+          v.fireReturnState=v.state;
+          v.state='fireEvade';v.fireEvadeT=0;
+        }
+        v.fireEscapeX=detour.x;v.fireEvadeT=Math.max(v.fireEvadeT||0,.8);
+      }
+    }
     if(v.state==='road'||v.state==='depart'||v.state==='toShoulder'){
       var bs=gameState.map&&gameState.map.cover||[];
       for(var ci2=0;ci2<bs.length;ci2++){
@@ -3081,7 +3184,25 @@ function updateVehicles(dt){
       if(block)beginWreckAvoid(v,block);
     }
 
-    if(v.state==='reverseWreck'){
+    if(v.state==='fireEvade'){
+      v.fireEvadeT=Math.max(0,(v.fireEvadeT||0)-dt);
+      var vrFire=vehicleBodyRadius(v),fireGoal=clamp(v.fireEscapeX==null?v.x:v.fireEscapeX,vrFire+5,W-vrFire-5);
+      var fireAhead=fireThreatAt(v.x,v.y+24,vrFire+12,v);
+      var lateral=clamp((fireGoal-v.x)*2.5,-Math.max(18,v.speed*.8),Math.max(18,v.speed*.8));
+      v.sideVel+=(lateral-(v.sideVel||0))*(1-Math.exp(-5.6*dt));
+      v.currentSpeed=approachValue(v.currentSpeed,v.speed*.54,v.accel*dt);
+      v.x=clamp(v.x+v.sideVel*dt,vrFire+4,W-vrFire-4);
+      // Don't plough into the flames before the detour lane is clear.
+      v.y+=(fireAhead?-Math.max(3,v.speed*.16):v.currentSpeed*.56)*dt;
+      v.bodyAngle=approachAngle(v.bodyAngle,Math.atan2(fireAhead?-8:v.currentSpeed*.56,v.sideVel||.001),dt*v.turnRate);
+      var stillHot=fireThreatAt(v.x,v.y+25,vrFire+12,v);
+      if(!stillHot&&v.fireEvadeT<=0){
+        var back=v.fireReturnState;v.fireReturnState=null;v.fireEscapeX=null;
+        v.state=back==='unload'||back==='toShoulder'||back==='support'?'road':back||'road';
+        if(v.routeX!=null)v.routeX=v.x;
+        if(v.shoulderX!=null)v.shoulderX=clamp(v.x+20,30,W-30);
+      }
+    }else if(v.state==='reverseWreck'){
       var rw=v.avoidWreck;
       if(!rw){clearWreckAvoid(v);}
       else{
@@ -5568,6 +5689,7 @@ function updateAlliedTeam(dt){
     if(!u.alive){u.deadT+=dt;continue;}
     if(u.state==='woundedRun'){u.woundedRunLeft=(u.woundedRunLeft||0)-dt*u.speed*.33;u.y=Math.max(H*.53,u.y-dt*u.speed*.19);if(u.woundedRunLeft<=0){u.state='woundedCrawl';u.woundedCrawlT=rand(5,15);}continue;}
     if(u.state==='woundedCrawl'){u.woundedCrawlT-=dt;if(u.woundedCrawlT<=0)killInfantry(u,'wound');continue;}
+    if(evadeInfantryFire(u,dt))continue;
     updateAlliedEngineer(u,dt);
     var nearest=null,nd=250*250;
     for(var j=0;j<gameState.infantry.length;j++){
@@ -5649,6 +5771,13 @@ function updateAlliedTeam(dt){
     // The identical enemy chassis now drives NORTH and steers around living
     // vehicles as well as wrecks instead of sliding through them.
     var targetX=v.routeX+Math.sin(gameState.time*.9+v.steerPhase)*12;
+    var fireHazard=fireThreatAt(v.x,v.y-26,vehicleBodyRadius(v)+18,v)||fireThreatAt(v.x,v.y,vehicleBodyRadius(v)+16,v);
+    if(fireHazard){
+      var escape=vehicleFireBypass(v,fireHazard,true);
+      v.fireEscapeX=escape.x;v.fireEscapeUntil=gameState.time+1.4;
+    }
+    if(v.fireEscapeX!=null&&gameState.time<(v.fireEscapeUntil||0))targetX=v.fireEscapeX;
+    else v.fireEscapeX=null;
     var solidCover=gameState.map&&gameState.map.cover?gameState.map.cover.filter(function(c){return !c.destroyed&&coverUsableForFire(c);}):[];
     var blocks=gameState.vehicles.concat(a.armor,gameState.wrecks,a.allies,gameState.infantry,solidCover);
     var vr=vehicleBodyRadius(v),nearestBlock=null,blockDist=1e8;
@@ -5665,15 +5794,19 @@ function updateAlliedTeam(dt){
     if(!nearestBlock&&gameState.time>(v.avoidUntil||0))v.avoidSide=0;
     targetX=clamp(targetX,vr+8,W-vr-8);
     var goalSpeed=v.y>H*.565?v.speed*.77:v.speed*.16;
+    if(fireHazard)goalSpeed=Math.min(goalSpeed,v.speed*.56);
     if(nearestBlock&&blockDist<30)goalSpeed*=.40;
     v.currentSpeed=approachValue(v.currentSpeed,goalSpeed,v.accel*dt);
     var lateral=clamp((targetX-v.x)*1.4,-v.currentSpeed*.63,v.currentSpeed*.63);
     v.sideVel+=(lateral-(v.sideVel||0))*(1-Math.exp(-5*dt));
     var vx=v.sideVel,vy=v.y>H*.565?-v.currentSpeed*.85:0;
+    // Until lateral clearance is reached, pause or back away rather than crossing napalm.
+    if(fireHazard&&Math.abs(targetX-v.x)>vehicleBodyRadius(v)+11)vy=Math.max(0,v.speed*.09);
     v.x=clamp(v.x+vx*dt,vr+4,W-vr-4);
     v.y=Math.max(H*.565,v.y+vy*dt);
     if(Math.abs(vx)+Math.abs(vy)>2)v.bodyAngle=approachAngle(v.bodyAngle,Math.atan2(vy,vx),dt*v.turnRate*1.5);
     // Resolve any residual penetration by separating contact surfaces.
+    separateVehiclesFromBuildings();
     for(j=0;j<blocks.length;j++){
       var o=blocks[j];if(o===v||o.alive===false&&gameState.wrecks.indexOf(o)<0)continue;
       var radius=vr+(o.role?7:solidCover.indexOf(o)>=0?coverRadius(o):gameState.wrecks.indexOf(o)>=0?wreckBodyRadius(o):vehicleBodyRadius(o))+4;
@@ -5703,7 +5836,7 @@ function updateAlliedTeam(dt){
           a.tracers.push({x:mx,y:my,px:mx,py:my,vx:Math.cos(bulletAngle)*680,vy:Math.sin(bulletAngle)*680,life:.50,damage:rand(3,4.6)*gameState.enemyProfile.vehicleDamage*(wp.damage||1),targetId:target.id,canHit:hit,owner:v});
         }else if(enemyVehicle){
           var h=Math.atan2(enemyVehicle.y-my,enemyVehicle.x-mx);
-          if(Math.abs(angleDelta(v.turretAngle,h))<.3&&Math.random()<.10)damageVehicle(enemyVehicle,rand(2,3.5)*gameState.enemyProfile.vehicleDamage*(wp.damage||1),'mg');
+          if(Math.abs(angleDelta(v.turretAngle,h))<.3&&!lineOfSightBlockedByWalls(v.x,v.y,enemyVehicle.x,enemyVehicle.y)&&Math.random()<.10)damageVehicle(enemyVehicle,rand(2,3.5)*gameState.enemyProfile.vehicleDamage*(wp.damage||1),'mg');
           emitRicochet(enemyVehicle.x+rand(-7,7),enemyVehicle.y+rand(-7,7),rand(0,TAU),.55);
         }
       }
