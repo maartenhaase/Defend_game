@@ -2189,6 +2189,7 @@ function dismountOne(v,mode,index){
   else if(gameState.levelIndex>=3&&rr<.42)role='lmg';
   else if(gameState.levelIndex>=6&&rr<.53)role='marksman';
   if(gameState.levelIndex>=10&&!v.rocketDismounted&&index>=2&&Math.random()<.12){role='grenadier';v.rocketDismounted=true;}
+  var safeExit=safeLanding988(px,py,6,true);px=safeExit.x;py=safeExit.y;
   var e=spawnInfantry(px,py,role,sq,'vehicle');
   e.aggressive=1.25;e.cover=null;e.fireCd=rand(.28,.46);e.decisionT=rand(.58,.92);
   e.state='dismount';e.stateT=0;e.dismountDur=troop?rand(.44,.56):rand(.30,.42);e.dismountT=e.dismountDur;e.dismountArc=troop?rand(6.8,8.2):5.2;
@@ -2251,6 +2252,7 @@ function spawnVehicle(type,count,vehicleId,direction,passengersOverride){
   else if(style==='s'||style==='dogleg')routeBias=(Math.random()<.5?-1:1)*Math.min(half*.16,14);
   var x=clamp(roadX+routeBias+rand(-5,5),roadX-half*.72,roadX+half*.72),spawnY=type==='trooptruck'?H*.105:safeTop+48;
   for(var vi=0;vi<gameState.vehicles.length;vi++){var ov=gameState.vehicles[vi];if(ov.alive&&ov.y<safeTop+125)spawnY=Math.min(spawnY,ov.y-72);}
+  if(gameState.map.vehicleLane988){x=gameState.map.vehicleLane988;shoulder=x+side*9;}
   var aim=Math.atan2(gameState.bunker.y-spawnY,gameState.bunker.x-x),transport=!!spec.transport,dismountRun=transport||(type==='halftrack'&&Math.random()<.62);
   var hasMG=spec.hasMG!=null?!!spec.hasMG:type!=='trooptruck',passengerCount=transport?(passengersOverride!=null?Math.max(0,passengersOverride|0):Math.max(1,count||cap)):cap;
   if(transport&&(type==='trooptruck'||type==='lighttruck'||type==='truck')&&passengersOverride!==0)passengerCount=clamp(passengerCount,6,10);
@@ -2259,7 +2261,7 @@ function spawnVehicle(type,count,vehicleId,direction,passengersOverride){
   var armorHp=armorTier?(24+armorTier*22+dna.vehicleClass*5):0;
   gameState.vehicles.push({
     id:id,type:type,vehicleId:spec.id,vehicleName:spec.name,vehicleClass:spec.class,vehicleFamily:spec.family,vehicleSpec:spec,
-    x:x,baseX:x,y:spawnY,hp:hp,maxHp:hp,speed:sp,baseSpeed:sp,currentSpeed:type==='trooptruck'?(gameState.levelIndex<4?sp*.78:sp*.62):sp*.36,accel:accel,turnRate:turn,
+    x:x,baseX:x,y:spawnY,roadLocked988:!!gameState.map.vehicleLane988,routeX:gameState.map.vehicleLane988||x,hp:hp,maxHp:hp,speed:sp,baseSpeed:sp,currentSpeed:type==='trooptruck'?(gameState.levelIndex<4?sp*.78:sp*.62):sp*.36,accel:accel,turnRate:turn,
     alive:true,state:'road',behavior:dismountRun?'dismount':'firepass',contactY:type==='trooptruck'?(gameState.levelIndex<4?H*.37:H*.43):H*rand(.30,.47),dropY:type==='trooptruck'?H*.465:H*rand(.40,.54),shoulderX:shoulder,
     passengers:passengerCount,unloadLeft:dismountRun?passengerCount:0,unloadIndex:0,unloadCd:0,dropped:false,stopT:0,stopBursts:Math.floor(rand(2,4)),
     bodyAngle:Math.PI/2,turretAngle:aim+rand(-.35,.35),turretVel:0,turretRecoil:0,turretAimT:rand(.20,.65),fireCd:rand(.42,.90),mgBurst:0,hasMG:hasMG,
@@ -2271,10 +2273,10 @@ function spawnVehicle(type,count,vehicleId,direction,passengersOverride){
   });
 }
 function spawnHeli(n){
-  var fromLeft=Math.random()<.5;
+  var fromLeft=Math.random()<.5,landing=safeLanding988(W*rand(.28,.72),H*rand(.47,.55),8,true);
   gameState.air.push({
     id:Math.random()*1e9|0,type:'heli',x:fromLeft?-100:W+100,y:H*rand(.25,.38),
-    targetX:W*rand(.28,.72),targetY:H*rand(.30,.44),vx:fromLeft?125:-125,
+    targetX:landing.x,targetY:Math.max(safeTop+98,landing.y-72),landingX:landing.x,landingY:landing.y,vx:fromLeft?125:-125,
     hp:120,alive:true,phase:'in',t:0,dropCount:Math.max(2,Math.min(4,n||3)),dropped:0,dropCd:0,rotor:0
   });
   gameState.message='HELICOPTER INSERTION';gameState.messageT=.65;
@@ -2288,7 +2290,8 @@ function spawnPlane(n){
   gameState.message='AIRBORNE CONTACT';gameState.messageT=.65;
 }
 function spawnPara(x,y){
-  gameState.paras.push({id:Math.random()*1e9|0,x:x,baseX:x,y:y,landingY:H*rand(.43,.62),vy:32+rand(-2,4),phase:rand(0,TAU),hp:22,alive:true});
+  var target=safeLanding988(x,H*rand(.43,.62),7,true);
+  gameState.paras.push({id:Math.random()*1e9|0,x:x,baseX:x,y:y,landingX:target.x,landingY:target.y,vy:32+rand(-2,4),phase:rand(0,TAU),hp:22,alive:true});
 }
 
 /* ---------- EFFECTS ---------- */
@@ -3135,7 +3138,7 @@ function updateInfantry(dt){
       e.vx=0;e.vy=0;e.rappelT=(e.rappelT||0)+dt;
       e.y=Math.min(e.rappelLandingY,e.y+dt*95);
       e.anim+=dt*5;
-      if(e.y>=e.rappelLandingY){e.state='cover';e.stateT=0;e.fireCd=rand(.35,.65);e.cover=nextForwardCover(e);e.rappelT=0;emitLandingFx(e.x,e.y,.7);}
+      if(e.y>=e.rappelLandingY){var touchdown=safeLanding988(e.x,e.y,6,true);e.x=touchdown.x;e.y=touchdown.y;e.state='cover';e.stateT=0;e.fireCd=rand(.35,.65);e.cover=nextForwardCover(e);e.rappelT=0;emitLandingFx(e.x,e.y,.7);}
       continue;
     }
     if(e.state==='parachuting'){
@@ -3491,11 +3494,11 @@ function updateVehicles(dt){
       }
     }
     if(v.state==='road'||v.state==='depart'||v.state==='toShoulder'){
-      avoidVehicleWorld986(v,false);
+      if(!v.roadLocked988)avoidVehicleWorld986(v,false);
       var bs=gameState.map&&gameState.map.cover||[];
       for(var ci2=0;ci2<bs.length;ci2++){
         var oc=bs[ci2];if(oc.kind!=='building'||oc.destroyed)continue;
-        if(oc.y>v.y-12&&oc.y<v.y+105&&Math.abs(oc.x-v.x)<oc.w*.5+vehicleBodyRadius(v)+14){
+        if(!v.roadLocked988&&oc.y>v.y-12&&oc.y<v.y+105&&Math.abs(oc.x-v.x)<oc.w*.5+vehicleBodyRadius(v)+14){
           var aside=v.x<oc.x?-1:1;
           var nextX=oc.x+aside*(oc.w*.5+vehicleBodyRadius(v)+19);
           v.routeX=clamp(nextX,vehicleBodyRadius(v)+12,W-vehicleBodyRadius(v)-12);
@@ -3518,6 +3521,7 @@ function updateVehicles(dt){
     if(v.state==='fireEvade'){
       v.fireEvadeT=Math.max(0,(v.fireEvadeT||0)-dt);
       var vrFire=vehicleBodyRadius(v),fireGoal=clamp(v.fireEscapeX==null?v.x:v.fireEscapeX,vrFire+5,W-vrFire-5);
+      if(v.roadLocked988)fireGoal=clamp(fireGoal,gameState.map.vehicleLane988-8,gameState.map.vehicleLane988+8);
       var fireAhead=fireThreatAt(v.x,v.y+24,vrFire+12,v);
       var lateral=clamp((fireGoal-v.x)*2.5,-Math.max(18,v.speed*.8),Math.max(18,v.speed*.8));
       v.sideVel+=(lateral-(v.sideVel||0))*(1-Math.exp(-5.6*dt));
@@ -3573,7 +3577,7 @@ function updateVehicles(dt){
       if((mobileFam==='motorcycle'||mobileFam==='quad'||mobileFam==='cavalry')&&v.y>safeTop+72&&v.y<v.contactY-14)vehicleMG(v,turretState);
       v.currentSpeed=approachValue(v.currentSpeed,v.speed*traffic,v.accel*dt);
       var tireBias=v.tireChaosT>0?(v.tirePull||1)*(gameState.map.corridorHalf||92)*.58:0;
-      var targetX=gameState.map.road.x+tireBias+Math.sin(v.zigT*v.zigFreq+v.zigPhase)*v.zigAmp;
+      var targetX=v.roadLocked988?gameState.map.vehicleLane988+clamp(tireBias,-4,4)+Math.sin(v.zigT*v.zigFreq+v.zigPhase)*1.7:gameState.map.road.x+tireBias+Math.sin(v.zigT*v.zigFreq+v.zigPhase)*v.zigAmp;
       var desiredSide=clamp((targetX-v.x)*.42,-v.currentSpeed*.18,v.currentSpeed*.18);
       v.sideVel+=(desiredSide-(v.sideVel||0))*(1-Math.exp(-3.6*dt));
       v.x+=v.sideVel*dt;v.y+=v.currentSpeed*DEVICE.enemySpeed*dt;
@@ -3664,10 +3668,11 @@ function updateAir(dt){
       }else if(a.phase==='hover'){
         a.dropCd-=dt;
         if(a.t>.40&&a.dropped<a.dropCount&&a.dropCd<=0){
-          var slot=a.dropped++,rx=a.x+(slot-(a.dropCount-1)/2)*13;
+          var slot=a.dropped++,rx=a.landingX+(slot-(a.dropCount-1)/2)*18;
+          var target=safeLanding988(rx,a.landingY,7,true);
           var role=Math.random()<.28?'medic':slot===0?'lmg':'rifle';
-          var soldier=spawnInfantry(rx,a.y+14,role,null,'heliUnload');
-          soldier.state='heliRappel';soldier.rappelLandingY=H*rand(.49,.56);soldier.rappelT=0;soldier.heloId=a.id;
+          var soldier=spawnInfantry(target.x,Math.min(a.y+14,target.y-30),role,null,'heliUnload');
+          soldier.x=target.x;soldier.state='heliRappel';soldier.rappelLandingY=target.y;soldier.rappelT=0;soldier.heloId=a.id;
           soldier.fireCd=999;soldier.cover=null;a.dropCd=.44;AudioSys.tone('door',.31);
         }
         if(a.t>3.0&&a.dropped>=a.dropCount){a.phase='out';a.vx=a.x<W*.5?-165:165;}
@@ -3684,8 +3689,8 @@ function updateAir(dt){
   }
   for(i=0;i<gameState.paras.length;i++){
     var p=gameState.paras[i];if(!p.alive)continue;
-    p.phase+=dt*2.3;p.baseX+=Math.sin(p.phase)*.18;p.x=p.baseX+Math.sin(p.phase)*10;p.y+=p.vy*dt;
-    if(p.y>=p.landingY){p.alive=false;var pe=spawnInfantry(p.x,p.landingY,'rifle',null,'parachuteLanding');pe.landSquash=.18;emitLandingFx(p.x,p.landingY,1.15);pushEffect({type:'chute',x:p.x,y:p.landingY,t:0,life:2.4});}
+    p.phase+=dt*2.3;p.baseX+=(p.landingX-p.baseX)*Math.min(1,dt*1.6);p.x=p.baseX+Math.sin(p.phase)*Math.min(10,Math.max(0,(p.landingY-p.y)*.09));p.y+=p.vy*dt;
+    if(p.y>=p.landingY){var touchdown=safeLanding988(p.landingX,p.landingY,7,true);p.alive=false;var pe=spawnInfantry(touchdown.x,touchdown.y,'rifle',null,'parachuteLanding');pe.landSquash=.18;emitLandingFx(touchdown.x,touchdown.y,1.15);pushEffect({type:'chute',x:touchdown.x,y:touchdown.y,t:0,life:2.4});}
   }
   gameState.air=gameState.air.filter(function(a){return a.x>-190&&a.x<W+190&&a.y<H+160;});
   gameState.paras=gameState.paras.filter(function(p){return p.alive;});
