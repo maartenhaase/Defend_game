@@ -907,7 +907,7 @@ function worldSegment986(x1,y1,x2,y2){
 function repelWorld986(u,r,vehicle){
   var hit=worldCircle986(u.x,u.y,r),count=0;
   while(hit&&count++<4){
-    var dx=u.x-hit.x,dy=u.y-hit.y,d=Math.hypot(dx,dy)||.01,depth=Math.max(0,r+hit.r+3-d);
+    var dx=u.x-hit.x,dy=u.y-hit.y,d=Math.hypot(dx,dy);if(d<.05){dx=1;dy=0;d=1;}var depth=Math.max(0,r+hit.r+3-d);
     u.x=clamp(u.x+dx/d*depth,r+10,W-r-10);u.y=clamp(u.y+dy/d*depth,safeTop+r+10,H-safeBottom-r-8);
     if(vehicle){u.currentSpeed=Math.min(u.currentSpeed,u.speed*.36);u.sideVel=(u.sideVel||0)+(dx<0?-6:6);}
     hit=worldCircle986(u.x,u.y,r);
@@ -4060,6 +4060,7 @@ function resolveHEHit(b){
   return false;
 }
 function updateShots(dt){
+  var i;
   // Continuous fire cadence uses primary cooldown.
   for(i=0;i<gameState.shots.length;i++){
     var b=gameState.shots[i];if(!b.active)continue;
