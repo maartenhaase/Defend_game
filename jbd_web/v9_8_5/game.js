@@ -2795,7 +2795,7 @@ function updateMedicBehavior(medic,dt){
 function updateInfantry(dt){
   for(var i=0;i<gameState.infantry.length;i++){
     var e=gameState.infantry[i];
-    e.anim+=dt*(e.state==='advance'?5.6:e.state==='crawl'?3.7:e.state==='dismount'?6.1:2.2);e.anim2+=dt*(2.1+(e.variant%3)*.22);e.crawlPhase+=dt*3.2;
+    e.anim+=dt*(e.state==='fireFlee'?7.2:e.state==='advance'?5.6:e.state==='crawl'?3.7:e.state==='dismount'?6.1:2.2);e.anim2+=dt*(2.1+(e.variant%3)*.22);e.crawlPhase+=dt*3.2;
     e.stateT+=dt;e.decisionT-=dt;e.muzzle=Math.max(0,e.muzzle-dt);e.recoil=Math.max(0,e.recoil-dt*8);e.suppression=Math.max(0,e.suppression-dt*.18);e.footFxCd=(e.footFxCd||0)-dt;e.landSquash=Math.max(0,(e.landSquash||0)-dt);
     if(e.morale==null)e.morale=1;
     var mateNear=false;for(var mi=0;mi<gameState.infantry.length;mi++){var me=gameState.infantry[mi];if(me!==e&&me.alive&&me.squadId===e.squadId&&dist(e.x,e.y,me.x,me.y)<78){mateNear=true;if(me.leader||me.role==='officer')e.morale=Math.min(1.08,e.morale+dt*.055);if(me.role==='radio')e.suppression=Math.max(0,e.suppression-dt*.055);if(me.role==='support'&&e.role==='lmg')e.fireCd=Math.max(0,e.fireCd-dt*.10);}}
@@ -2822,7 +2822,7 @@ function updateInfantry(dt){
       }
       continue;
     }
-    if((e.state==='advance'||e.state==='crawl')&&e.footFxCd<=0&&Math.abs(e.vx||0)+Math.abs(e.vy||0)>8){e.footFxCd=e.state==='crawl'?rand(.30,.42):rand(.20,.29);emitFootstepFx(e,e.state==='crawl'?.55:1);}
+    if((e.state==='advance'||e.state==='crawl'||e.state==='fireFlee')&&e.footFxCd<=0&&Math.abs(e.vx||0)+Math.abs(e.vy||0)>8){e.footFxCd=e.state==='crawl'?rand(.30,.42):rand(.20,.29);emitFootstepFx(e,e.state==='crawl'?.55:1);}
 
     e.bleedCd-=dt;
     if(e.burnT>0){
@@ -3145,7 +3145,7 @@ function updateVehicles(dt){
     v.smoke=Math.max(0,v.smoke-dt);v.dustCd-=dt;v.unloadCd-=dt;v.hitFlash=Math.max(0,(v.hitFlash||0)-dt);v.audioCd=(v.audioCd||0)-dt;v.exhaustCd=(v.exhaustCd||0)-dt;v.leakFxCd=(v.leakFxCd||0)-dt;
     if(v.fuelLeak){v.oilRadius=Math.min(18,(v.oilRadius||3)+dt*.58);if(v.leakFxCd<=0){v.leakFxCd=rand(.18,.30);pushEffect({type:'fuelDrop',x:v.x+rand(-5,5),y:v.y+rand(5,11),t:0,life:rand(.45,.75),r:rand(1.2,2.2)});}}
     if(v.fuelIgnited){v.fuelBurnT-=dt;if(Math.random()<dt*9)emitFlame(v.x+rand(-5,5),v.y+rand(-4,6),false);if(Math.random()<dt*7)emitSmoke(v.x+rand(-6,6),v.y+rand(-6,5),true);if(v.fuelBurnT<=0){explodeLiveVehicleFuel(v);continue;}}
-    if(v.zigT!=null)v.zigT+=dt;v.wheelT+=dt*Math.max(1,v.currentSpeed*.16);v.moveFxCd=(v.moveFxCd||0)-dt;if(v.currentSpeed>15&&v.moveFxCd<=0&&(v.state==='road'||v.state==='toShoulder'||v.state==='evadeWreck'||v.state==='depart')){v.moveFxCd=rand(.10,.18);emitVehicleMotionFx(v);}updateVehicleDamageParticles(v,dt);
+    if(v.zigT!=null)v.zigT+=dt;v.wheelT+=dt*Math.max(1,v.currentSpeed*.16);v.moveFxCd=(v.moveFxCd||0)-dt;if(v.currentSpeed>15&&v.moveFxCd<=0&&(v.state==='road'||v.state==='toShoulder'||v.state==='evadeWreck'||v.state==='fireEvade'||v.state==='depart')){v.moveFxCd=rand(.10,.18);emitVehicleMotionFx(v);}updateVehicleDamageParticles(v,dt);
     if(v.tireChaosT>0)v.tireChaosT=Math.max(0,v.tireChaosT-dt);
     var turretState=updateVehicleTurret(v,dt),traffic=vehicleFollowScale(v);
     var ableToEvade=v.state==='road'||v.state==='toShoulder'||v.state==='depart'||v.state==='approachStop'||v.state==='firestop'||v.state==='unload'||v.state==='support'||v.state==='fireEvade';
@@ -5685,7 +5685,7 @@ function updateAlliedTeam(dt){
   var a=gameState.arcade;if(!a)return;
   updateAlliedBullets(dt);
   for(var i=0;i<a.allies.length;i++){
-    var u=a.allies[i];u.anim+=dt*(u.state==='advance'?5.6:2.7);u.stateT+=dt;
+    var u=a.allies[i];u.anim+=dt*(u.state==='fireFlee'?7.2:u.state==='advance'?5.6:2.7);u.stateT+=dt;
     u.muzzle=Math.max(0,u.muzzle-dt);u.recoil=Math.max(0,u.recoil-dt*5);
     u.suppression=Math.max(0,u.suppression-dt*.25);
     if(!u.alive){u.deadT+=dt;continue;}
