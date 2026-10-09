@@ -4446,8 +4446,8 @@ function drawPatch(q,p){
   ctx.globalAlpha=q.a*.70;ctx.strokeStyle=tone(p.ground2,-.22);ctx.lineWidth=1.2;ctx.stroke();ctx.restore();
 }
 function drawEnvSprite(name,x,y,scale,rot,alpha){drawAtlas('env:'+name,x,y,scale||1,rot||0,alpha==null?1:alpha);}
-function drawTree(t,p){if(t.dead){drawEnvSprite(t.variant%2?'deadTree':'stump',t.x,t.y,.70+t.r*.035,t.variant*.2,1);return;}drawEnvSprite('bush'+(1+(t.variant%3)),t.x,t.y,(t.r/7.8)*.84,t.variant*.18,1);if(t.r>9)drawEnvSprite('bush2',t.x+2,t.y-3,(t.r/9)*.52,-.15,.90);}
-function drawRock(r,p){drawEnvSprite('boulder'+(1+(r.variant%3)),r.x,r.y,.50+r.r*.060,r.variant*.34,1);}
+function drawTree(t,p){if(t.kind==='palm'){drawEnvSprite('palm'+(1+t.variant%3),t.x,t.y,.71+t.r*.03,t.variant*.43,1);return;}if(t.dead){drawEnvSprite(t.variant%2?'deadTree':'stump',t.x,t.y,.70+t.r*.035,t.variant*.2,1);return;}drawEnvSprite('bush'+(1+(t.variant%3)),t.x,t.y,(t.r/7.8)*.84,t.variant*.18,1);if(t.r>9)drawEnvSprite('bush2',t.x+2,t.y-3,(t.r/9)*.52,-.15,.90);}
+function drawRock(r,p){drawEnvSprite(r.kind==='mountain'?'rockCliff986':'boulder'+(1+(r.variant%3)),r.x,r.y,r.kind==='mountain'?.43+r.r*.044:.50+r.r*.060,r.variant*.34,1);}
 function drawDecor(d,p){drawEnvSprite(d.type,d.x,d.y,d.s,d.rot,.96);}
 function drawBattleBuilding(c,p){
   // TOP-DOWN CUTAWAY: NEVER a roof. The player always sees the GROUND FLOOR.
@@ -4916,7 +4916,57 @@ function envTile(g,x,y,w,h,kind){
 function propShadow(g,cx,cy,rx,ry,a){g.save();g.globalAlpha=a==null?.24:a;g.fillStyle='#1b241d';g.beginPath();g.ellipse(cx+2.5,cy+3.5,rx,ry,.08,0,TAU);g.fill();g.restore();}
 function rockPoly(g,cx,cy,r,seed,p){var rnd=seeded(seed),pts=[];for(var i=0;i<8;i++){var a=i/8*TAU,rr=r*(.70+rnd()*.34);pts.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*.80]);}poly(g,pts,tone(p.rock,rnd()*.08-.03),p.line);g.save();g.globalAlpha=.35;g.fillStyle=tone(p.rock,.30);g.beginPath();g.ellipse(cx-r*.18,cy-r*.24,r*.32,r*.14,-.3,0,TAU);g.fill();g.restore();}
 function drawSandbagRow(g,x,y,w,h,curve){var p=gameState.map.palette,c=tone(p.road,.10),line=p.line,n=curve?7:6;propShadow(g,x+w/2,y+h*.58,w*.44,h*.22,.18);for(var i=0;i<n;i++){var t=n===1?0:i/(n-1),bx=x+4+t*(w-8),by=y+h*.48+(curve?Math.sin((t-.5)*Math.PI)*h*.22:0);g.fillStyle=c;g.strokeStyle=line;g.lineWidth=1;g.beginPath();g.ellipse(bx,by,5,3.2,curve?(t-.5)*.5:0,0,TAU);g.fill();g.stroke();P(g,bx-2,by-1,4,1,tone(c,.18));}}
+/* 13 detailed top-down world props, drawn to the pre-existing cached atlas. */
+function drawWorldSprite986(g,x,y,w,h,name){
+  if(['palm1','palm2','palm3','leafBush986','puddle986','mud986','pine986','rockCliff986','stoneWall986','garden986','lamp986','warning986','foxhole986'].indexOf(name)<0)return false;
+  var p=gameState.map.palette,rnd=seeded(name.length*389+level().seed),cx=x+w*.5,cy=y+h*.5;
+  function oval(x0,y0,rx,ry,fill){g.fillStyle=fill;g.beginPath();g.ellipse(x0,y0,rx,ry,0,0,TAU);g.fill();}
+  function ln(ax,ay,bx,by,color,width){g.strokeStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(ax,ay);g.lineTo(bx,by);g.stroke();}
+  g.save();propShadow(g,cx,cy,w*.43,h*.29,.22);
+  if(name.slice(0,4)==='palm'){
+    var n=name==='palm1'?9:name==='palm2'?11:8;
+    for(var j=0;j<n;j++){
+      var a=j*TAU/n+.13,dx=Math.cos(a),dy=Math.sin(a),len=w*(.34+rnd()*.14);
+      g.fillStyle=j%3===0?'#174d33':j%3===1?'#53854b':'#8ca96a';
+      g.beginPath();g.moveTo(cx,cy);g.quadraticCurveTo(cx+len*dx*.6-4*dy,cy+len*dy*.54+4*dx,cx+len*dx,cy+len*dy*.84);
+      g.quadraticCurveTo(cx+len*dx*.43+5*dy,cy+len*dy*.43-5*dx,cx,cy);g.fill();
+      ln(cx,cy,cx+len*dx,cy+len*dy*.84,'#245234',.7);
+      for(var f=1;f<5;f++){var t=f/6;ln(cx+len*dx*t,cy+len*dy*t*.84,cx+len*dx*t-2*dy,cy+len*dy*t*.84+2*dx,'#b4c78b',.7);}
+    }
+    oval(cx,cy,3.2,3.1,'#6d5334');oval(cx-1,cy-1,1.5,1.1,'#c6a67e');
+  }else if(name==='leafBush986'||name==='pine986'){
+    var count=name==='pine986'?8:13;
+    for(var k=0;k<count;k++){var angle=k*2.4,px=cx+Math.cos(angle)*w*.2,py=cy+Math.sin(angle)*h*.2,rx=name==='pine986'?w*.22:3+rnd()*5;
+      oval(px,py,rx,name==='pine986'?rx*.8:3+rnd()*6,k%3===0?'#22533b':k%3===1?'#53844a':'#90a96e');
+      ln(px-3,py+2,px+3,py-2,'#a3bf88',.65);
+    }
+  }else if(name==='puddle986'||name==='mud986'){
+    oval(cx,cy,w*.43,h*.30,name==='puddle986'?'#355f55':'#5e513b');
+    oval(cx+2,cy+2,w*.33,h*.2,name==='puddle986'?'#729689':'#8f7953');
+    for(var d=0;d<14;d++){var px2=cx+(rnd()-.5)*w*.70,py2=cy+(rnd()-.5)*h*.46;oval(px2,py2,1+rnd()*2,.6+rnd(),d%3?'#4d6154':'#aec3ac');}
+    ln(cx-w*.2,cy-h*.13,cx+w*.12,cy-h*.15,'#bed0b8',1);
+  }else if(name==='rockCliff986'){
+    rockPoly(g,cx,cy,Math.min(w,h)*.43,1281,p);
+    for(var z=0;z<8;z++){var xx=cx+(rnd()-.5)*w*.48,yy=cy+(rnd()-.5)*h*.45;ln(xx,yy,xx+3+rnd()*7,yy-3-rnd()*5,'#404e48',1);}
+    oval(cx-w*.16,cy-h*.19,w*.12,2,'#d1cec0');
+  }else if(name==='stoneWall986'){
+    for(var st=0;st<8;st++){var xx2=x+3+st*(w-6)/8;P(g,xx2,y+h*.28+(st%3),w/8+1,h*.42,st%2?'#aaa188':'#6c7468');ln(xx2,y+h*.59,xx2+4,y+h*.59,'#444b44',.8);}
+  }else if(name==='garden986'){
+    P(g,x+2,y+4,w-4,h-8,'#4d7945');
+    for(var rose=0;rose<19;rose++)oval(x+rnd()*w,y+rnd()*h,1+rnd()*2,1+rnd()*2,rose%3===0?'#b9a773':rose%2?'#8fac71':'#27563a');
+    ln(x+2,y+3,x+w-2,y+3,'#a69a77',2);
+  }else if(name==='lamp986'||name==='warning986'){
+    oval(cx+1,cy+h*.25,3,2,'#333d35');P(g,cx-1,y+6,3,h-10,'#454d45');
+    P(g,x+4,y+4,w-8,8,name==='warning986'?'#d4b36f':'#c0b6a5');
+    for(var q=0;q<3;q++)ln(x+6,y+6+q*2,x+w-6,y+6+q*2,name==='warning986'?'#9e4434':'#858578',.65);
+  }else if(name==='foxhole986'){
+    oval(cx,cy,w*.38,h*.29,'#897c53');oval(cx,cy,w*.28,h*.20,'#2f332c');
+    for(var sb=0;sb<10;sb++)oval(cx+Math.cos(sb*TAU/10)*w*.3,cy+Math.sin(sb*TAU/10)*h*.23,3.2,2,sb%2?'#aa9670':'#72694f');
+  }
+  g.restore();return true;
+}
 function envProp(g,x,y,w,h,name){
+  if(drawWorldSprite986(g,x,y,w,h,name))return;
   var p=gameState.map.palette,line=p.line,i,cx=x+w/2,cy=y+h/2;
   if(name.indexOf('bush')===0){
     var n=name==='bush1'?6:name==='bush2'?8:5;propShadow(g,cx,cy,w*.38,h*.24,.18);
@@ -5036,6 +5086,9 @@ function buildSpriteAtlas(){
   atlasAdd('turret:jeep',32,32,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'jeep');});atlasAdd('turret:scoutcar',34,34,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'scoutcar');});atlasAdd('turret:lighttruck',32,32,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'lighttruck');});atlasAdd('turret:truck',32,32,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'truck');});atlasAdd('turret:halftrack',38,38,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'halftrack');});
   ['groundGrass','groundSand','groundRubble','groundPale'].forEach(function(n){atlasAdd('env:'+n,36,36,function(gg,x,y,w,h){envTile(gg,x,y,w,h,n);});});
   [
+    ['palm1',65,61],['palm2',67,62],['palm3',61,59],['leafBush986',44,40],
+    ['puddle986',54,37],['mud986',49,34],['pine986',44,44],['rockCliff986',65,54],
+    ['stoneWall986',51,23],['garden986',43,31],['lamp986',28,40],['warning986',34,39],['foxhole986',42,32],
     ['bush1',30,26],['bush2',38,32],['bush3',26,23],
     ['boulder1',38,30],['boulder2',44,34],['boulder3',31,27],
     ['rubbleBrick',42,30],['rubbleConcrete',45,32],['rubbleWall',44,20],['debrisPatch',40,27],
