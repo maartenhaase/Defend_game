@@ -796,7 +796,7 @@ function populateDNAStartingWrecks(dna,rng){
     var fam=families[(dna.seedDigit+i*3)%families.length],spec=vehicleSpecFor(fam,gameState.levelIndex),type=spec.baseType||'trooptruck';
     var side=i%2?-1:1,x=clamp(gameState.map.road.x+side*(42+i*18)+(rng()-.5)*14,28,W-28),y=H*(.35+i*.16)+(rng()-.5)*24;
     var stage=dna.destruction>=8&&i===count-1?3:dna.destruction>=5?2:1;
-    var w={type:type,vehicleId:spec.id,vehicleName:spec.name,vehicleClass:spec.class,vehicleFamily:spec.family,vehicleSpec:spec,x:x,y:y,bodyAngle:Math.PI/2+rand(-.35,.35),variant:(dna.hash+i)%4,burnT:0,smokeCd:0,flameCd:0,bulletHoles:stage*5,shellHits:stage===3?32:stage===2?18:8,wreckStage:stage,carcass:stage===3,panelLoss:stage,exploded:stage>=2,softDisabled:false,fuelLeak:false,fuelIgnited:false,fuelBurnT:0,oilRadius:2.5};
+    var w={type:type,vehicleId:spec.id,vehicleName:spec.name,vehicleClass:spec.class,vehicleFamily:spec.family,vehicleSpec:spec,x:x,y:y,bodyAngle:Math.PI/2+(rng()-.5)*.7,variant:(dna.hash+i)%4,burnT:0,smokeCd:0,flameCd:0,bulletHoles:stage*5,shellHits:stage===3?32:stage===2?18:8,wreckStage:stage,carcass:stage===3,panelLoss:stage,exploded:stage>=2,softDisabled:false,fuelLeak:false,fuelIgnited:false,fuelBurnT:0,oilRadius:2.5};
     ensureWreckState(w);gameState.wrecks.push(w);
   }
 }
@@ -896,7 +896,7 @@ function buildMap(){
   if(!noRoad&&layout.secondary!=='none')surface.push({x:roadX+(rng()-.5)*18,y:junctionY,type:'gravel',rot:layout.secondary==='cross'?Math.PI/2:.18,s:.92,a:.20});
   if(!noRoad&&gameState.levelIndex>=4)surface.push({x:roadX+corridorHalf*.70,y:H*.49,type:'gravel',rot:.1,s:.72,a:.18});
   if(dna.destruction>=3)surface.push({x:roadX-corridorHalf*.72,y:H*.73,type:'scorch1',rot:-.2,s:.72+.03*dna.destruction,a:.12+.012*dna.destruction});
-  for(var gx=0;gx<Math.floor(dna.ground/2);gx++)surface.push({x:clamp(roadX+rand(-corridorHalf*.85,corridorHalf*.85),18,W-18),y:H*(.27+gx*.11)+rand(-14,14),type:noRoad?'scorch1':gx%2?'gravel':'trackStraight',rot:rand(-.28,.28),s:.52+rand(0,.28),a:.08+dna.ground*.014});
+  if(!noRoad)for(var gx=0;gx<Math.floor(dna.ground/2);gx++)surface.push({x:clamp(roadX+(rng()-.5)*corridorHalf*1.7,18,W-18),y:H*(.27+gx*.11)+(rng()-.5)*28,type:gx%2?'gravel':'trackStraight',rot:(rng()-.5)*.56,s:.52+rng()*.28,a:.08+dna.ground*.014});
   var buildingCount=(L.theme==='village'?3+Math.min(4,act):L.theme==='industrial'?3+Math.min(4,act):
     L.theme==='metropolis'?4+Math.min(4,act):L.theme==='suburb'?2+Math.min(4,act):
     L.theme==='ruins'?3+Math.min(3,act):L.theme==='forest'?Math.floor(act/2):
@@ -4096,7 +4096,7 @@ function drawZoneArchitecture(m,p){
   ctx.save();
   if(t==='forest'){
     ctx.globalAlpha=.18;ctx.fillStyle=tone(p.veg,-.18);
-    for(i=0;i<10;i++){x=i%2?W*.91:W*.09;y=H*(.16+i*.075);ctx.beginPath();ctx.arc(x+rand(-8,8),y,28+(i%3)*7,0,TAU);ctx.fill();}
+    for(i=0;i<10;i++){x=i%2?W*.91:W*.09;y=H*(.16+i*.075);ctx.beginPath();ctx.arc(x+(seed()-.5)*16,y,28+(i%3)*7,0,TAU);ctx.fill();}
   }else if(t==='desert'){
     ctx.globalAlpha=.22;ctx.strokeStyle=tone(p.ground2,.20);ctx.lineWidth=3;
     for(i=0;i<7;i++){y=H*(.15+i*.12);ctx.beginPath();ctx.moveTo(0,y);ctx.quadraticCurveTo(W*.28,y-12,W*.52,y+4);ctx.quadraticCurveTo(W*.78,y+18,W,y-3);ctx.stroke();}
@@ -5327,6 +5327,13 @@ function updateAlliedBullets(dt){
   for(var i=0;i<a.tracers.length;i++){
     var b=a.tracers[i];b.px=b.x;b.py=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.life<=0)continue;
+    // Friendly bullets cannot shoot through buildings either.
+    var shielded=false,obstacles=gameState.map&&gameState.map.cover||[];
+    for(var bj=0;bj<obstacles.length;bj++){
+      var wall=obstacles[bj];if(wall.kind!=='building'||wall.destroyed||!bulletHitsBuilding(b,wall))continue;
+      damageCover(wall,.65,'ally',b.x,b.y);b.life=0;shielded=true;break;
+    }
+    if(shielded)continue;
     var enemy=null;
     for(var j=0;j<gameState.infantry.length;j++){
       var e=gameState.infantry[j];if(e.id===b.targetId&&e.alive){enemy=e;break;}
