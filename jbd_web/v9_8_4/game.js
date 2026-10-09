@@ -941,7 +941,7 @@ function freshState(){
     profile:null,bunker:{x:W*.5,y:H-78,hp:100,maxHp:100,angle:-Math.PI/2},
     aim:{x:W*.5,y:H*.35},pointer:{down:false,t0:0,heFired:false},
     heat:0,overheat:false,eff:.75,hitMarker:0,hitPulse:0,streak:0,streakT:0,message:'',messageT:0,shake:0,screenFlash:0,hitStop:0,wave:0,
-    stats:{shots:0,hits:0,kills:0,vehicleKills:0,airKills:0,misses:0,damageTaken:0},
+    stats:{shots:0,hits:0,kills:0,vehicleKills:0,airKills:0,misses:0,damageTaken:0,buildingsDestroyed:0},
     infantry:[],vehicles:[],air:[],paras:[],shots:[],enemyShots:[],effects:[],craters:[],wrecks:[],blood:[],fireZones:[],
     events:[],eventCursor:0,burstQueue:[],map:null,primaryAmmo:0,primaryCooldown:0,primaryReloadT:0,primaryReloadShell:false,
     artillery:[],smokeZones:[],ambientBattleT:0,concussion:0,battleBeat:0,battleLockT:0,battleDirectorError:false
@@ -966,7 +966,7 @@ function resetLevel(){
   gameState.bunker.maxHp=gameState.profile.maxHp;gameState.bunker.hp=gameState.profile.maxHp;
   gameState.primaryAmmo=gameState.profile.primaryMag;gameState.primaryCooldown=0;gameState.primaryReloadT=0;gameState.primaryReloadShell=false;resetGrenadeSlots();gameState.lastStandUsed=false;
   gameState.heat=0;gameState.overheat=false;gameState.eff=.75;gameState.hitMarker=0;gameState.hitPulse=0;gameState.streak=0;gameState.streakT=0;gameState.message='';gameState.messageT=0;gameState.shake=0;gameState.screenFlash=0;gameState.hitStop=0;gameState.wave=0;
-  gameState.stats={shots:0,hits:0,kills:0,vehicleKills:0,airKills:0,misses:0,damageTaken:0};
+  gameState.stats={shots:0,hits:0,kills:0,vehicleKills:0,airKills:0,misses:0,damageTaken:0,buildingsDestroyed:0};
   gameState.infantry=[];gameState.vehicles=[];gameState.air=[];gameState.paras=[];gameState.shots=[];gameState.enemyShots=[];gameState.effects=[];gameState.craters=[];gameState.wrecks=[];gameState.blood=[];gameState.fireZones=[];gameState.killZones=[];gameState.burstQueue=[];gameState.artillery=[];gameState.smokeZones=[];gameState.ambientBattleT=.8;gameState.concussion=0;gameState.battleBeat=0;gameState.battleLockT=0;gameState.battleDirectorError=false;gameState.pointer.down=false;gameState.pointer.heFired=false;
   buildMap();
   gameState.events=buildEncounterPlan();
@@ -3359,7 +3359,8 @@ function coverHeight(c){
 function coverIntegrity(c){return c&&c.integrity!=null?c.integrity:5;}
 function coverBlocksShot(c){
   var s=coverIntegrity(c);
-  if(s<=1)return false;
+  if(s<=1||c.destroyed)return false;
+  if(c.kind==='building')return true;
   if(s===2)return Math.random()<.48;
   return true;
 }
@@ -3373,12 +3374,65 @@ function coverMaterial(c){
 function coverAudioMaterial(c){
   var m=coverMaterial(c);return m==='steel'?'metal':m==='wood'?'wood':m==='sand'?'sand':'ground';
 }
+
+function buildingMaxHealth(c){
+  if(c.sprite==='factory')return 148;
+  if(c.material==='wood')return 78;
+  return c.isCompound?125:108;
+}
+function collapseBuilding(c){
+  if(c.collapseT!=null)return;
+  c.collapseT=0;c.destroyed=true;c.integrity=1;c.structuralHp=0;c.hitProgress=0;
+  var wood=c.material==='wood',n=IS_IPHONE?12:20;
+  for(var i=0;i<n;i++){
+    var a=rand(0,TAU),sp=rand(24,wood?100:85);
+    pushEffect({type:'debris',x:c.x+rand(-c.w*.40,c.w*.40),y:c.y+rand(-c.h*.38,c.h*.38),
+      vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-rand(28,88),rot:rand(0,TAU),vr:rand(-11,11),
+      t:0,life:rand(.65,1.25),material:wood?'wood':'stone'});
+  }
+  for(i=0;i<(IS_IPHONE?8:13);i++)pushEffect({type:'smoke',
+    x:c.x+rand(-c.w*.40,c.w*.40),y:c.y+rand(-c.h*.20,c.h*.35),
+    vx:rand(-22,22),vy:rand(-40,-9),r:rand(6,12),t:0,life:rand(.55,1.3),shade:rand(.30,.68)});
+  pushEffect({type:'shockRing',x:c.x,y:c.y,r:3,maxR:Math.max(c.w,c.h)*.90,t:0,life:.32,soft:true,material:'stone'});
+  gameState.shake=Math.max(gameState.shake||0,2.8);
+  AudioSys.breakMaterial(wood?'wood':'ground',.95,{pan:clamp((c.x-W*.5)/(W*.55),-.8,.8)});
+  if(gameState.stats)gameState.stats.buildingsDestroyed=(gameState.stats.buildingsDestroyed||0)+1;
+  // Removing full-height cover immediately opens lines of fire and frees vehicle paths.
+  for(i=0;i<gameState.infantry.length;i++){
+    var e=gameState.infantry[i];
+    if(e.cover===c){e.cover=null;e.state='advance';e.stateT=0;}
+  }
+  if(gameState.arcade){
+    for(i=0;i<gameState.arcade.allies.length;i++){
+      var u=gameState.arcade.allies[i];if(u.cover===c)u.cover=null;
+    }
+  }
+}
 function damageCover(c,units,kind,x,y){
   if(!c||c.destroyed)return 0;
   if(c.integrity==null)c.integrity=5;
   if(c.hitProgress==null)c.hitProgress=0;
   var before=c.integrity;
-  c.hitProgress+=Math.max(.25,units||1)*(c.kind==='building'?.44:1);
+  if(c.kind==='building'){
+    var maxHP=c.maxStructuralHp||buildingMaxHealth(c);
+    if(c.maxStructuralHp==null)c.maxStructuralHp=maxHP;
+    if(c.structuralHp==null)c.structuralHp=maxHP;
+    // MG fire chips masonry steadily; explosives can tear down whole facades.
+    // Allied fire is deliberately less effective against structures than the player's.
+    var factor=kind==='he'?16:kind==='fire'?4.5:kind==='enemy'?3.6:kind==='ally'?1.6:7.5;
+    c.structuralHp=Math.max(0,c.structuralHp-Math.max(.2,units||1)*factor);
+    var fraction=c.structuralHp/maxHP;
+    c.integrity=clamp(1+Math.ceil(fraction*4),2,5);
+    if(c.structuralHp<=0){collapseBuilding(c);return before-1;}
+    if(c.integrity<before){
+      for(var j=0;j<4;j++)pushEffect({type:'coverChip',
+        x:c.x+rand(-c.w*.38,c.w*.38),y:c.y+rand(-c.h*.35,c.h*.35),
+        vx:rand(-44,44),vy:rand(-68,-19),rot:rand(0,TAU),vr:rand(-8,8),
+        t:0,life:rand(.30,.58),material:coverMaterial(c)});
+    }
+    return before-c.integrity;
+  }
+  c.hitProgress+=Math.max(.25,units||1);
   while(c.hitProgress>=2&&c.integrity>1){
     c.hitProgress-=2;c.integrity--;AudioSys.breakMaterial(coverAudioMaterial(c),c.integrity<=2?.55:.34,{pan:clamp((c.x-W*.5)/(W*.55),-.8,.8)});
     pushEffect({type:'coverChip',x:x==null?c.x:x,y:y==null?c.y:y,vx:rand(-42,42),vy:rand(-62,-15),rot:rand(0,TAU),vr:rand(-9,9),t:0,life:rand(.30,.58),material:coverMaterial(c)});
@@ -3387,7 +3441,7 @@ function damageCover(c,units,kind,x,y){
   }
   if(c.integrity<=1){
     c.integrity=1;c.destroyed=true;c.hitProgress=0;
-    for(var i=0;i<(IS_IPHONE?5:9);i++)pushEffect({type:'coverChip',x:c.x+rand(-5,5),y:c.y+rand(-3,3),vx:rand(-72,72),vy:rand(-82,12),rot:rand(0,TAU),vr:rand(-12,12),t:0,life:rand(.38,.78),material:coverMaterial(c)});
+    for(var k=0;k<(IS_IPHONE?5:9);k++)pushEffect({type:'coverChip',x:c.x+rand(-5,5),y:c.y+rand(-3,3),vx:rand(-72,72),vy:rand(-82,12),rot:rand(-12,12),vr:rand(-12,12),t:0,life:rand(.38,.78),material:coverMaterial(c)});
     AudioSys.breakMaterial(coverAudioMaterial(c),.82,{pan:clamp((c.x-W*.5)/(W*.55),-.8,.8)});emitGroundImpact(c.x,c.y,1.05,coverAudioMaterial(c),true);
     pushEffect({type:'damage',x:c.x,y:c.y-8,text:'DESTROYED',t:0,life:.55});
   }
@@ -3777,6 +3831,11 @@ function updateEffects(dt){
     }
   }
   gameState.effects=gameState.effects.filter(function(e){return e.t<e.life;});
+  if(gameState.map&&gameState.map.cover)for(var di=0;di<gameState.map.cover.length;di++){
+    var building=gameState.map.cover[di];
+    if(building.kind==='building'&&building.destroyed)
+      building.collapseT=Math.min(2,(building.collapseT||0)+dt);
+  }
 
   for(i=0;i<gameState.wrecks.length;i++){
     var w=gameState.wrecks[i];
@@ -3863,7 +3922,7 @@ function completeLevel(){
   var dyn=evaluateAdaptiveDifficulty(false);saveGame();
   overlay.classList.remove('hidden');titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'40 MAPS COMPLETE':'MAP CLEARED';
   subEl.textContent=(gameState.encounterName||'SECTOR')+' voltooid. Damage target '+dyn.band.min+'-'+dyn.band.max+' HP; resultaat '+Math.round(dyn.damage)+' HP ('+dyn.rating+'). Volgende map enemy '+adaptiveLabel(dyn.value)+'.';
-  summaryEl.style.display='block';summaryEl.textContent=riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus);
+  summaryEl.style.display='block';summaryEl.textContent=riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · BUILDINGS '+(gameState.stats.buildingsDestroyed||0)+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus);
   shopEl.style.display='block';restartBtn.style.display='none';deployBtn.style.display='block';deployBtn.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'MAP 1 AGAIN':'NEXT MAP';renderShop();
 }
 function weaponPreview(kind,lvl){
@@ -3998,6 +4057,27 @@ function drawDecor(d,p){drawEnvSprite(d.type,d.x,d.y,d.s,d.rot,.96);}
 function drawBattleBuilding(c,p){
   var x=c.x,y=c.y,w=c.w,h=c.h,condition=coverIntegrity(c),damaged=5-condition,wood=c.material==='wood';
   ctx.save();ctx.translate(x,y);
+  if(c.destroyed){
+    // Permanent low ruined footprint, NOT the original intact roof.
+    var collapse=clamp((c.collapseT||0)/.72,0,1);
+    ctx.fillStyle='rgba(15,17,14,.30)';ctx.fillRect(-w*.5+4,-h*.5+6,w,h);
+    ctx.fillStyle=wood?'#5b4736':p.rock;
+    var rng=seeded((c.id*799+c.variant*23)>>>0);
+    for(var ri=0;ri<27;ri++){
+      var px=(rng()-.5)*w*.93,py=(rng()-.5)*h*.90,sz=3+rng()*(wood?8:10);
+      ctx.globalAlpha=.50+rng()*.40;
+      ctx.fillRect(px,py+3,sz,2+rng()*5);
+    }
+    ctx.globalAlpha=1;ctx.strokeStyle=wood?'#6b5038':p.building;ctx.lineWidth=3;
+    ctx.strokeRect(-w*.5+2,-h*.5+2,w-4,h-4);
+    if(collapse<1){
+      ctx.save();ctx.globalAlpha=(1-collapse)*.82;ctx.translate(0,collapse*h*.17);
+      ctx.scale(1,Math.max(.08,1-collapse*.88));
+      ctx.fillStyle=p.roof;ctx.fillRect(-w*.5+4,-h*.5+4,w-8,h-8);
+      ctx.restore();
+    }
+    ctx.restore();return;
+  }
   var wall=wood?'#70573e':c.sprite==='factory'?'#4b5554':c.sprite==='desertPost'?'#b59b65':p.building;
   ctx.fillStyle='rgba(0,0,0,.32)';ctx.fillRect(-w*.5+4,-h*.5+6,w,h);
   ctx.fillStyle=tone(wall,-.28);ctx.fillRect(-w*.5,-h*.5,w,h);
