@@ -1001,7 +1001,7 @@ function prepareRoad988(m){
     var x=clamp(opts[i],clearance+21,W-clearance-21),score=roadConflicts988(m,x)+i*.03;
     if(score<best){best=score;lane=x;}
   }
-  m.road.x=lane;m.road.bendX=lane;m.road.present=true;m.road.width=47;m.road.style='straight';m.road.secondary='none';
+  m.road.x=lane;m.road.bendX=lane;m.road.present=true;m.road.width=level().theme==='mountain'||level().theme==='jungle'?34:47;m.road.style='straight';m.road.secondary='none';
   m.vehicleLane988=lane;
   m.cover=m.cover.filter(function(c){
     var size=c.kind==='building'?c.w/2:(c.r||8);
@@ -1163,7 +1163,8 @@ function buildMap(){
   gameState.map={palette:p,units:unitPalette(p),compoundCover:compoundCover,road:{x:roadX,bendX:bendX,junctionY:junctionY,width:layout.roadWidth,style:layout.style,secondary:layout.secondary,present:!noRoad},compound:compound,patches:patches,cover:cover,decor:decor,trees:trees,rocks:rocks,surface:surface,setpieces:setpieces,corridorHalf:corridorHalf,layoutName:layout.name,layout:layout,weatherDigit:dna.weather,groundDigit:dna.ground,dnaCode:dna.code,zoneTheme:L.theme,zoneType:L.type};
   generateBiome986(gameState.map,L,dna,rng);
   populateDNAStartingWrecks(dna,rng);
-  if(missionUsesRoad988())prepareRoad988(gameState.map);
+  // A drivable track is reserved for BOTH armies, including allied reinforcements in air-only missions.
+  if(gameState.startMode!=='demo')prepareRoad988(gameState.map);
   if(L.theme==='coast')gameState.map.decor.push({x:W*.13,y:H*.28,type:'lighthouse988',s:.82,rot:0});
 }
 /* ---------- GAME STATE ---------- */
@@ -5947,11 +5948,11 @@ function spawnAlliedArmor(kills){
   // Exact same spawn function and vehicleSpec as opposing vehicles.
   spawnVehicle('jeep',0,id,undefined,0);
   var v=gameState.vehicles.pop();
-  v.allied=true;v.team='allied';v.x=clamp(gameState.bunker.x+rand(-45,45),25,W-25);
+  v.allied=true;v.team='allied';v.x=gameState.map.vehicleLane988||gameState.map.road.x;v.roadLocked988=!!gameState.map.vehicleLane988;
   // Every arriving Allied vehicle enters at the SOUTH edge and drives toward the center.
   v.y=Math.min(H-30,gameState.bunker.y+rand(12,30));
   v.bodyAngle=-Math.PI/2;v.turretAngle=-Math.PI/2;v.turretTarget=-Math.PI/2;
-  v.passengers=0;v.unloadLeft=0;v.hasMG=true;v.routeX=v.x+rand(-20,20);
+  v.passengers=0;v.unloadLeft=0;v.hasMG=true;v.routeX=v.x;
   v.steerPhase=rand(0,TAU);v.state='alliedApproach';v.currentSpeed=v.speed*.55;
   v.crewOut=false;v.hitCount=0;v.fireCd=rand(.55,1.0);
   a.armor.push(v);
@@ -6195,8 +6196,8 @@ function updateAlliedTeam(dt){
     if(v.fuelIgnited){v.fuelBurnT-=dt;if(v.fuelBurnT<=0){explodeLiveVehicleFuel(v);continue;}}
     // The identical enemy chassis now drives NORTH and steers around living
     // vehicles as well as wrecks instead of sliding through them.
-    var hardX=avoidVehicleWorld986(v,true);
-    var targetX=(hardX==null?v.routeX:hardX)+Math.sin(gameState.time*.9+v.steerPhase)*12;
+    var hardX=v.roadLocked988?null:avoidVehicleWorld986(v,true);
+    var targetX=v.roadLocked988?gameState.map.vehicleLane988+Math.sin(gameState.time*.9+v.steerPhase)*1.8:(hardX==null?v.routeX:hardX)+Math.sin(gameState.time*.9+v.steerPhase)*12;
     var fireHazard=fireThreatAt(v.x,v.y-26,vehicleBodyRadius(v)+18,v)||fireThreatAt(v.x,v.y,vehicleBodyRadius(v)+16,v);
     if(fireHazard){
       var escape=vehicleFireBypass(v,fireHazard,true);
@@ -6204,7 +6205,7 @@ function updateAlliedTeam(dt){
     }
     if(v.fireEscapeX!=null&&gameState.time<(v.fireEscapeUntil||0))targetX=v.fireEscapeX;
     else v.fireEscapeX=null;
-    var solidCover=gameState.map&&gameState.map.cover?gameState.map.cover.filter(function(c){return !c.destroyed&&coverUsableForFire(c);}):[];
+    var solidCover=v.roadLocked988?[]:gameState.map&&gameState.map.cover?gameState.map.cover.filter(function(c){return !c.destroyed&&coverUsableForFire(c);}):[];
     var blocks=gameState.vehicles.concat(a.armor,gameState.wrecks,a.allies,gameState.infantry,solidCover);
     var vr=vehicleBodyRadius(v),nearestBlock=null,blockDist=1e8;
     for(var j=0;j<blocks.length;j++){
@@ -6219,6 +6220,7 @@ function updateAlliedTeam(dt){
     }
     if(!nearestBlock&&gameState.time>(v.avoidUntil||0))v.avoidSide=0;
     targetX=clamp(targetX,vr+8,W-vr-8);
+    if(v.roadLocked988)targetX=clamp(targetX,gameState.map.vehicleLane988-10,gameState.map.vehicleLane988+10);
     var goalSpeed=v.y>H*.565?v.speed*.77:v.speed*.16;
     if(fireHazard)goalSpeed=Math.min(goalSpeed,v.speed*.56);
     if(nearestBlock&&blockDist<30)goalSpeed*=.40;
@@ -6229,6 +6231,7 @@ function updateAlliedTeam(dt){
     // Until lateral clearance is reached, pause or back away rather than crossing napalm.
     if(fireHazard&&Math.abs(targetX-v.x)>vehicleBodyRadius(v)+11)vy=Math.max(0,v.speed*.09);
     v.x=clamp(v.x+vx*dt,vr+4,W-vr-4);
+    if(v.roadLocked988)v.x=clamp(v.x,gameState.map.vehicleLane988-11,gameState.map.vehicleLane988+11);
     v.y=Math.max(H*.565,v.y+vy*dt);
     if(Math.abs(vx)+Math.abs(vy)>2)v.bodyAngle=approachAngle(v.bodyAngle,Math.atan2(vy,vx),dt*v.turnRate*1.5);
     // Resolve any residual penetration by separating contact surfaces.
