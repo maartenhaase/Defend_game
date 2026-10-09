@@ -3611,7 +3611,7 @@ function damageCover(c,units,kind,x,y){
       }
     }
     if(wallIndex<0)return 0;
-    var wall=walls[wallIndex],factor=kind==='he'?10:kind==='fire'?3.2:kind==='enemy'?2.3:kind==='ally'?.9:5.7;
+    var wall=walls[wallIndex],factor=kind==='he'?7.0:kind==='fire'?3.2:kind==='enemy'?2.3:kind==='ally'?.9:5.7;
     var hit=Math.max(.2,units||1)*factor;
     var oldStage=wall.stage;
     wall.hp=Math.max(0,wall.hp-hit);
