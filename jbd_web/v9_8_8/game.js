@@ -5066,11 +5066,32 @@ function rockPoly(g,cx,cy,r,seed,p){var rnd=seeded(seed),pts=[];for(var i=0;i<8;
 function drawSandbagRow(g,x,y,w,h,curve){var p=gameState.map.palette,c=tone(p.road,.10),line=p.line,n=curve?7:6;propShadow(g,x+w/2,y+h*.58,w*.44,h*.22,.18);for(var i=0;i<n;i++){var t=n===1?0:i/(n-1),bx=x+4+t*(w-8),by=y+h*.48+(curve?Math.sin((t-.5)*Math.PI)*h*.22:0);g.fillStyle=c;g.strokeStyle=line;g.lineWidth=1;g.beginPath();g.ellipse(bx,by,5,3.2,curve?(t-.5)*.5:0,0,TAU);g.fill();g.stroke();P(g,bx-2,by-1,4,1,tone(c,.18));}}
 /* 13 detailed top-down world props, drawn to the pre-existing cached atlas. */
 function drawWorldSprite986(g,x,y,w,h,name){
-  if(['palm1','palm2','palm3','leafBush986','puddle986','mud986','pine986','rockCliff986','stoneWall986','garden986','lamp986','warning986','foxhole986'].indexOf(name)<0)return false;
+  if(['palm1','palm2','palm3','leafBush986','puddle986','mud986','pine986','rockCliff986','stoneWall986','garden986','lamp986','warning986','foxhole986','lighthouse988'].indexOf(name)<0)return false;
   var p=gameState.map.palette,rnd=seeded(name.length*389+level().seed),cx=x+w*.5,cy=y+h*.5;
   function oval(x0,y0,rx,ry,fill){g.fillStyle=fill;g.beginPath();g.ellipse(x0,y0,rx,ry,0,0,TAU);g.fill();}
   function ln(ax,ay,bx,by,color,width){g.strokeStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(ax,ay);g.lineTo(bx,by);g.stroke();}
   g.save();propShadow(g,cx,cy,w*.43,h*.29,.22);
+  if(name==='lighthouse988'){
+    // Bird's-eye coastal lighthouse: masonry ring, weathered lantern, beacon, rail and steps.
+    oval(cx+4,cy+5,w*.37,h*.36,'#2b3834');
+    oval(cx,cy,w*.39,h*.39,'#746d5b');
+    oval(cx,cy,w*.34,h*.34,'#b8b3a1');
+    for(var az=0;az<12;az++){
+      var theta=TAU*az/12;
+      ln(cx+Math.cos(theta)*w*.26,cy+Math.sin(theta)*h*.26,cx+Math.cos(theta)*w*.34,cy+Math.sin(theta)*h*.34,az%2?'#7c7768':'#eee6d1',2.8);
+    }
+    oval(cx,cy,w*.24,h*.24,'#ab3c34');
+    oval(cx,cy,w*.18,h*.18,'#e9e3cc');
+    oval(cx,cy,w*.125,h*.125,'#3d5953');
+    oval(cx,cy,w*.085,h*.085,'#f5d982');
+    oval(cx,cy,w*.047,h*.047,'#fff4bb');
+    for(var rail=0;rail<8;rail++){var ra=rail*TAU/8;
+      oval(cx+Math.cos(ra)*w*.31,cy+Math.sin(ra)*h*.31,1.7,1.7,'#3f4b46');
+    }
+    P(g,cx-w*.12,cy+h*.31,w*.24,h*.12,'#8e8574');
+    for(var st=0;st<3;st++)ln(cx-w*.12,cy+h*(.32+st*.035),cx+w*.12,cy+h*(.32+st*.035),'#56584f',1);
+    g.restore();return true;
+  }
   if(name.slice(0,4)==='palm'){
     var n=name==='palm1'?9:name==='palm2'?11:8;
     for(var j=0;j<n;j++){
@@ -5234,7 +5255,7 @@ function buildSpriteAtlas(){
   atlasAdd('turret:jeep',32,32,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'jeep');});atlasAdd('turret:scoutcar',34,34,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'scoutcar');});atlasAdd('turret:lighttruck',32,32,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'lighttruck');});atlasAdd('turret:truck',32,32,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'truck');});atlasAdd('turret:halftrack',38,38,function(gg,x,y,w,h){turretSprite(gg,x,y,w,h,'halftrack');});
   ['groundGrass','groundSand','groundRubble','groundPale'].forEach(function(n){atlasAdd('env:'+n,36,36,function(gg,x,y,w,h){envTile(gg,x,y,w,h,n);});});
   [
-    ['palm1',65,61],['palm2',67,62],['palm3',61,59],['leafBush986',44,40],
+    ['lighthouse988',65,65],['palm1',65,61],['palm2',67,62],['palm3',61,59],['leafBush986',44,40],
     ['puddle986',54,37],['mud986',49,34],['pine986',44,44],['rockCliff986',65,54],
     ['stoneWall986',51,23],['garden986',43,31],['lamp986',28,40],['warning986',34,39],['foxhole986',42,32],
     ['bush1',30,26],['bush2',38,32],['bush3',26,23],
@@ -5725,51 +5746,49 @@ function drawCrosshair(){
   ctx.restore();
 }
 function effColor(){return gameState.eff>=.86?'#89b766':gameState.eff>=.70?'#b0b46d':gameState.eff>=.50?'#e3bc58':gameState.eff>=.30?'#db793c':'#bb4535';}
+/* V9.8.8 MOBILE HUD: only HP, map, kills, encounter, countdown, MG and grenade. */
 function drawHud(){
-  var top=safeTop+9,bottom=H-safeBottom-14,L=level();
-  ctx.save();ctx.textBaseline='middle';ctx.fillStyle='rgba(22,28,23,.90)';ctx.strokeStyle='rgba(236,231,202,.42)';ctx.lineWidth=1.5;
-  roundRect(ctx,9,top,W-18,74,8);ctx.fill();ctx.stroke();
-  ctx.font='700 7px ui-monospace,SFMono-Regular,Menlo,monospace';ctx.fillStyle='#e7c76a';ctx.textAlign='center';
-  ctx.fillText('V9.8.7 · QUICK BATTLES · RISK '+Math.round((gameState.riskLevel||0)*100)+'%',W*.5,top+5);
-  ctx.font='800 12px system-ui,-apple-system,sans-serif';ctx.fillStyle='#f3efd8';ctx.textAlign='left';ctx.fillText('HP '+Math.max(0,Math.round(gameState.bunker.hp))+'/'+Math.round(gameState.bunker.maxHp),18,top+16);
-  ctx.textAlign='center';ctx.fillStyle=effColor();ctx.fillText('EFF '+Math.round(gameState.eff*100)+'%',W*.5,top+16);
-  ctx.textAlign='right';ctx.fillStyle='#f3efd8';ctx.fillText('KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills),W-18,top+16);
-  ctx.font='700 10px system-ui,-apple-system,sans-serif';ctx.textAlign='left';ctx.fillStyle='#bdc8ae';ctx.fillText('MAP '+(gameState.levelIndex+1)+'/40 · '+L.theme.toUpperCase()+' · '+(gameState.encounterName||'CONTACT'),18,top+36,W-36);
-  var hpFrac=clamp(gameState.bunker.hp/gameState.bunker.maxHp,0,1),hpSteps=Math.ceil(hpFrac*10),segX=18,segY=top+25,segW=7,segGap=2;
-  for(var hs=0;hs<10;hs++){ctx.fillStyle=hs<hpSteps?(hpSteps>6?'#86b563':hpSteps>3?'#e1b956':'#c9583e'):'#202620';roundRect(ctx,segX+hs*(segW+segGap),segY,segW,5,2);ctx.fill();}
-  ctx.font='700 8px system-ui,-apple-system,sans-serif';ctx.fillStyle='#aeb9a4';ctx.textAlign='left';ctx.fillText(hpSteps+'/10',segX+92,segY+3);
-  var bx=W*.5-42,by=top+45,bw=84;ctx.fillStyle='#0f1411';roundRect(ctx,bx,by,bw,5,3);ctx.fill();ctx.fillStyle=effColor();roundRect(ctx,bx+1,by+1,Math.max(1,(bw-2)*gameState.eff),3,2);ctx.fill();
-
-  var ggProgress=(gameState.gunGameKills||0)%15;
-  ctx.fillStyle='#151d17';roundRect(ctx,18,top+53,W-36,5,3);ctx.fill();
-  if(ggProgress>0){ctx.fillStyle='#e7bb55';roundRect(ctx,19,top+54,(W-38)*(ggProgress/15),3,2);ctx.fill();}
-  ctx.font='700 9px system-ui,-apple-system,sans-serif';ctx.textAlign='center';
-  ctx.fillStyle=(gameState.gunGameBannerT||0)>0?'#ffdc87':'#c5d2ba';
-  ctx.fillText(gameState.shortBattle?'TIME '+Math.max(0,Math.ceil(gameState.shortBattle.maxDuration-gameState.levelTime))+'s · NEXT ALLY '+(15-ggProgress)+' KILLS':((gameState.gunGameBannerT||0)>0?gameState.gunGameBannerName:'NEXT ALLIED SOLDIER '+(15-ggProgress)+' KILLS'),W*.5,top+65,W-42);
-  ctx.fillStyle='rgba(22,28,23,.90)';ctx.strokeStyle='rgba(236,231,202,.36)';roundRect(ctx,12,bottom-35,W-24,27,7);ctx.fill();ctx.stroke();
-  ctx.textAlign='left';ctx.font='800 10px system-ui,-apple-system,sans-serif';ctx.fillStyle=gameState.overheat?'#d95e42':'#d9ddc4';ctx.fillText(gameState.primaryReloadT>0?'RELOAD '+gameState.primaryReloadT.toFixed(1)+'s':'MG '+gameState.primaryAmmo+'/'+gameState.profile.primaryMag,21,bottom-22,W-155);
-  ctx.fillStyle='#0e1210';roundRect(ctx,64,bottom-27,W-92,8,4);ctx.fill();ctx.fillStyle=gameState.heat>.75?'#d95e42':'#e0b957';roundRect(ctx,65,bottom-26,Math.max(1,(W-94)*gameState.heat),6,3);ctx.fill();
-
-  var gs=gameState.grenadeSlots||[],grt=grenadeRechargeTime(),gx=W-22-gs.length*17,gy=bottom-31;
-  ctx.font='800 7px system-ui,-apple-system,sans-serif';ctx.textAlign='right';ctx.fillStyle='#c6cbb7';ctx.fillText('HE',gx-5,gy+7);
-  for(var gi=0;gi<gs.length;gi++){
-    var ready=gs[gi]<=0,q=ready?1:clamp(1-gs[gi]/grt,0,1),xx=gx+gi*17;
-    ctx.fillStyle='#101511';ctx.strokeStyle=ready?'#efb94f':'#5e6759';ctx.lineWidth=1;roundRect(ctx,xx,gy,13,13,3);ctx.fill();ctx.stroke();
-    ctx.fillStyle=ready?'#efb94f':'#596357';roundRect(ctx,xx+2,gy+11-(9*q),9,9*q,2);ctx.fill();
-    if(!ready){ctx.fillStyle='#d5d8ca';ctx.font='700 6px system-ui,-apple-system,sans-serif';ctx.textAlign='center';ctx.fillText(Math.ceil(gs[gi]),xx+6.5,gy+6);}
+  var top=safeTop+8,bottom=H-safeBottom-13,L=level(),p=gameState.profile;
+  ctx.save();ctx.textBaseline='middle';ctx.textAlign='left';
+  ctx.fillStyle='rgba(16,24,19,.86)';ctx.strokeStyle='rgba(227,223,193,.35)';ctx.lineWidth=1;
+  roundRect(ctx,10,top,W-20,60,9);ctx.fill();ctx.stroke();
+  // Row one: three spaced counters; never draw one over another.
+  ctx.font='800 12px system-ui,-apple-system,sans-serif';ctx.fillStyle='#eee9d0';
+  ctx.textAlign='left';ctx.fillText('HP '+Math.max(0,Math.round(gameState.bunker.hp)),20,top+16);
+  ctx.textAlign='center';ctx.fillText((gameState.levelIndex+1)+'/40',W*.5,top+16);
+  ctx.textAlign='right';ctx.fillText('K '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills),W-20,top+16);
+  // Row two: short environment and objective label with reserved timer column.
+  ctx.font='700 8px system-ui,-apple-system,sans-serif';ctx.fillStyle='#9eb19b';ctx.textAlign='left';
+  var biome=({checkpoint:'BORDER',mountain:'MOUNTAIN',industrial:'FACTORY',metropolis:'CITY'})[L.theme]||L.theme.toUpperCase();
+  ctx.fillText(biome,20,top+38,Math.max(44,W*.24));
+  ctx.font='700 10px system-ui,-apple-system,sans-serif';ctx.fillStyle='#e0c372';ctx.textAlign='center';
+  var label=gameState.shortBattle?gameState.shortBattle.label:(gameState.encounterName||'CONTACT');
+  ctx.fillText(label,W*.52,top+37,Math.max(65,W*.49));
+  ctx.font='800 10px system-ui,-apple-system,sans-serif';ctx.fillStyle='#e9e4cb';ctx.textAlign='right';
+  ctx.fillText(gameState.shortBattle?Math.max(0,Math.ceil(gameState.shortBattle.maxDuration-gameState.levelTime))+'s':'',W-20,top+38);
+  var health=clamp(gameState.bunker.hp/Math.max(1,gameState.bunker.maxHp),0,1);
+  ctx.fillStyle='#303b32';roundRect(ctx,20,top+52,W-40,3,2);ctx.fill();
+  ctx.fillStyle=health>.5?'#85ad6f':health>.25?'#d5ad55':'#d25c48';
+  if(health>0){roundRect(ctx,20,top+52,(W-40)*health,3,2);ctx.fill();}
+  // Compact lower ammo bar with independent slots: don't let labels cross.
+  ctx.fillStyle='rgba(16,24,19,.87)';ctx.strokeStyle='rgba(228,223,197,.38)';
+  roundRect(ctx,11,bottom-30,W-22,27,8);ctx.fill();ctx.stroke();
+  ctx.font='800 11px system-ui,-apple-system,sans-serif';ctx.textAlign='left';ctx.fillStyle='#e5e5d0';
+  ctx.fillText(gameState.primaryReloadT>0?'MG '+gameState.primaryReloadT.toFixed(1)+'s':'MG '+gameState.primaryAmmo+'/'+p.primaryMag,22,bottom-16,Math.max(75,W*.33));
+  var gs=gameState.grenadeSlots||[],gx=W-20-gs.length*18,gy=bottom-24;
+  ctx.font='800 9px system-ui,-apple-system,sans-serif';ctx.textAlign='right';ctx.fillStyle='#d8d4c0';ctx.fillText('HE',gx-7,bottom-15);
+  var cooldown=grenadeRechargeTime();
+  for(var j=0;j<gs.length;j++){
+    var ready=gs[j]<=0,q=ready?1:clamp(1-gs[j]/cooldown,0,1),xx=gx+j*18;
+    ctx.fillStyle='#121b16';ctx.strokeStyle=ready?'#f0bf53':'#667466';
+    roundRect(ctx,xx,gy,14,14,3);ctx.fill();ctx.stroke();
+    ctx.fillStyle=ready?'#f2c05a':'#657365';
+    roundRect(ctx,xx+2,gy+12-10*q,10,10*q,2);ctx.fill();
   }
-
-  if(gameState.pointer.down){
-    var hold=gameState.pointer.dragAim?0:(performance.now()-gameState.pointer.t0)/1000*gameState.profile.chargeScale,charge=clamp(hold/HE_HOLD,0,1),label=gameState.pointer.heFired?'HE!':gameState.pointer.dragAim?'MG':hold<.16?'MG':'HE';
-    ctx.textAlign='right';ctx.fillStyle=hold<.16?'#f0ecd6':'#f09642';ctx.fillText(gameState.pointer.heFired?'HE':(hold<.16?'MG':'CHARGE'),W*.68,bottom-22,64);ctx.fillStyle='#111612';roundRect(ctx,W-84,bottom-14,62,4,2);ctx.fill();ctx.fillStyle='#ef8a3a';roundRect(ctx,W-83,bottom-13,60*charge,2,1);ctx.fill();
-  }
-  if(gameState.streak>1&&gameState.streakT>0){
-    ctx.textAlign='left';ctx.fillStyle='#f0c75d';ctx.fillText('STREAK '+gameState.streak,20,bottom-5);
-    if(gameState.streak>=5){ctx.textAlign='right';ctx.fillStyle='#ffffff';ctx.fillText('FOCUS +'+Math.round((combatFocus()-1)*100)+'%',W-20,bottom-5);}
-  }
-  if(gameState.messageT>0){
-    var my=top+84;ctx.fillStyle='rgba(22,28,23,.92)';ctx.strokeStyle='#e6be55';roundRect(ctx,W*.5-82,my,164,22,7);ctx.fill();ctx.stroke();
-    ctx.textAlign='center';ctx.fillStyle='#f1cc63';ctx.font='800 11px system-ui,-apple-system,sans-serif';ctx.fillText(gameState.message,W*.5,my+11);
+  // A single tiny focus pip rather than a large permanent RAMPAGE banner.
+  if(gameState.arcade&&gameState.arcade.focus>1){
+    var fx=W*.51,fw=clamp((gameState.arcade.focus||0)/100,0,1)*Math.min(65,W*.17);
+    ctx.fillStyle='#b88642';ctx.fillRect(fx,bottom-16,fw,3);
   }
   ctx.restore();
 }
@@ -6285,28 +6304,12 @@ function drawAlliedTeam(){
   }
 }
 function drawArcadeOverlay(){
-  var a=gameState.arcade;if(!a||gameState.mode!=='playing')return;
-  var top=safeTop+88;
-  ctx.save();ctx.fillStyle='rgba(12,21,17,.76)';roundRect(ctx,10,top,Math.min(220,W-20),36,7);ctx.fill();
-  ctx.font='bold 11px system-ui';ctx.fillStyle='#f0e5c6';
-  ctx.fillText('RAMPAGE [F] '+Math.round(a.focus)+'%',19,top+14);
-  if(gameState.startMode==='demo'&&gameState.demoShowcase){
-    var demo=gameState.demoShowcase,next=DEMO_SCRIPT[demo.next];
-    ctx.font='bold 11px system-ui';ctx.textAlign='left';ctx.fillStyle='#b5edd1';
-    ctx.fillText('DEMO LOOP '+demo.cycle,19,top+51);
-    if(next){ctx.font='10px system-ui';ctx.fillStyle='#e0e5c5';
-      ctx.fillText('NEXT '+Math.max(0,Math.ceil(next.t-(gameState.time-demo.base)))+'s · '+next.name,19,top+64);}
-  }
-  ctx.fillStyle='#273b32';ctx.fillRect(19,top+21,184,7);
-  ctx.fillStyle=a.focus>=100?'#ffae45':'#d4aa5b';ctx.fillRect(19,top+21,184*a.focus/100,7);
-  if(a.focusT>0){
-    ctx.fillStyle='rgba(210,46,17,'+(.10+.08*Math.sin(gameState.time*23))+')';ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#fff0ae';ctx.textAlign='center';ctx.font='900 25px system-ui';
-    ctx.fillText('RAMPAGE  '+a.focusT.toFixed(1),W/2,safeTop+154);
-  }
+  var a=gameState.arcade;if(!a||gameState.mode!=='playing'||a.focus<99&&a.focusT<=0)return;
+  ctx.save();ctx.fillStyle='rgba(18,27,22,.72)';roundRect(ctx,13,safeTop+75,82,20,5);ctx.fill();
+  ctx.fillStyle='#e7bf69';ctx.textAlign='center';ctx.font='800 10px system-ui,-apple-system,sans-serif';
+  ctx.fillText(a.focusT>0?'FOCUS '+Math.ceil(a.focusT)+'s':'FOCUS READY',54,safeTop+89);
   ctx.restore();
 }
-
 /* V9.7.7: battlefield ambience director, no campaign AI modifications. */
 function battleVoice(e,kind){
   if(!gameState||!e||Math.random()>(kind==='death'?.65:.38))return;
