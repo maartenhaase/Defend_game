@@ -95,6 +95,12 @@ function randomLevelCode(){
   // Choose a complete environment DNA, not a disguised variant of Easy's opening forest road.
   a[15]=(Math.random()*9)|0;
   if(a[15]===6){a[17]=Math.random()<.70?0:5;} // Desert is primarily roadless dunes/basins.
+  // Combat intensity still progresses by map number; random DNA should change terrain,
+  // composition and tactics, not create impossible level-1 armored elite swarms.
+  var ri=gameState&&gameState.levelIndex||0;
+  var ceiling=clamp(2+Math.floor(ri/5),2,9);
+  [0,1,2,5,6,10,14].forEach(function(g){a[g]=Math.min(a[g],ceiling);});
+  a[12]=Math.min(a[12],Math.min(9,ceiling+2));
   if(a[15]===0&&Math.random()<.45)a[17]=0; // Off-road woodland ambush.
   if([2,3,4,5,9].indexOf(a[15])>=0)a[17]=Math.max(3,a[17]);
   // Keep damage target sane and theme valid while every other gene remains free.
@@ -301,8 +307,8 @@ function weaponUpgradeCost(kind,lvl){
 function primaryStats(index){
 var w=PRIMARY_DB[0],u=(gameState&&gameState.save&&gameState.save.upgrades)||{};
 var dmg=clamp(u.damage||0,0,SKILL_MAX),range=clamp(u.range||0,0,SKILL_MAX),rate=clamp(u.rate||0,0,SKILL_MAX),mag=clamp(u.magazine||0,0,SKILL_MAX),aim=clamp(u.aiming||0,0,SKILL_MAX),reload=clamp(u.reload||0,0,SKILL_MAX);
-var cycle=Math.max(.16,w.cycle*Math.pow(.885,rate));
-return {id:w.id,name:w.name,damage:w.damage*(1+dmg*.125),speed:w.speed,rangeFactor:Math.min(1.05,w.range+range*.044),spread:w.spread*Math.pow(.90,aim),burst:Math.min(4,1+Math.floor(rate/4)),burstGap:cycle,heatScale:w.heatScale,cool:.28+rate*.012,visual:Math.floor((dmg+rate+mag+range)/4),mag:w.mag+mag*4,reload:w.reload*Math.pow(.925,reload),cycle,projectile:w.projectile,splash:0,homing:0,era:w.era,cls:w.cls,ammo:w.ammo,aimLevel:aim,reloadLevel:reload,mode:'auto',pellets:1,group:4,variant:0};
+var cycle=Math.max(.17,w.cycle*Math.pow(.925,rate));
+return {id:w.id,name:w.name,damage:w.damage*(1+dmg*.115),speed:w.speed,rangeFactor:Math.min(1.05,w.range+range*.044),spread:w.spread*Math.pow(.90,aim),burst:Math.min(4,1+Math.floor(rate/4)),burstGap:cycle,heatScale:w.heatScale,cool:.28+rate*.012,visual:Math.floor((dmg+rate+mag+range)/4),mag:w.mag+mag*4,reload:w.reload*Math.pow(.925,reload),cycle,projectile:w.projectile,splash:0,homing:0,era:w.era,cls:w.cls,ammo:w.ammo,aimLevel:aim,reloadLevel:reload,mode:'auto',pellets:1,group:4,variant:0};
 }
 function specialStats(lvl){
   lvl=clamp(lvl|0,0,MAX_WEAPON_LEVEL);var w=SPECIAL_DB[lvl],t=lvl/MAX_WEAPON_LEVEL;
@@ -1672,7 +1678,7 @@ function spawnInfantry(x,y,role,squad,spawnMode){
   if(!autoParachute&&spawnMode!=='vehicle'&&spawnMode!=='parachuteLanding'&&spawnMode!=='heliUnload')requestedY=Math.min(requestedY,safeTop-22-rand(0,10));
   var actualSpawnY=autoParachute?safeTop-rand(82,126):requestedY;
 
-  var rd=infantryRoleDef(role),prog=enemyProgression(gameState.levelIndex),baseHp=gameState.levelIndex===0?18:gameState.levelIndex===1?24:gameState.levelIndex===2?30:38;
+  var rd=infantryRoleDef(role),prog=enemyProgression(gameState.levelIndex),baseHp=19+Math.min(21,gameState.levelIndex*1.8);
   var doc=currentDoctrine(),zr=currentZoneRule(),hp=baseHp*rd.hp*prog.infantryHp,speed=rd.speed*prog.infantrySpeed*doc.enemySpeed*zr.enemySpeed,id=Math.random()*1e9|0;
   var dna=levelDNA(),armorTier=0,armorChance=gameState.levelIndex<7?0:clamp(.18+(gameState.levelIndex-7)*.018+dna.infantrySkill*.035,0,.82);
   if(Math.random()<armorChance&&role!=='medic'&&role!=='radio')armorTier=gameState.levelIndex<16?1:gameState.levelIndex<28?2:3;
@@ -3841,7 +3847,7 @@ function completeLevel(){
   gameState.levelComplete=true;gameState.mode='shop';
   var mapNo=gameState.levelIndex+1,milestone=mapNo%5===0;
   var riskReward=dynamicRewardMultiplier()*currentZoneRule().reward,baseSupply=Math.round((48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0))*levelDNA().rewardScale*riskReward),chainBonus=gameState.runBonusSupply||0;gameState.save.supply+=baseSupply+chainBonus;
-  var points=1;if(mapNo>=5)points++;if(mapNo>=15)points++;if(mapNo>=25)points++;if(milestone)points++;if(gameState.eff>=.90)points++;
+  var points=2;if(mapNo>=10)points++;if(mapNo>=22)points++;if(milestone)points++;if(gameState.eff>=.90)points++;
   points+=gameState.objectiveBonusAP||0;gameState.save.arsenalPoints=(gameState.save.arsenalPoints||0)+points;
   gameState.save.bestLevel=Math.max(gameState.save.bestLevel,Math.min(CAMPAIGN_LENGTH-1,gameState.levelIndex+1));
   var dyn=evaluateAdaptiveDifficulty(false);saveGame();
@@ -3861,9 +3867,9 @@ function weaponPreview(kind,lvl){
 }
 function skillPreview(key,lvl){
   var n=Math.min(SKILL_MAX,lvl+1),u=gameState.save.upgrades;
-  if(key==='damage')return (10.0*(1+lvl*.125)).toFixed(1)+' → '+(10.0*(1+n*.125)).toFixed(1)+' damage';
+  if(key==='damage')return (10.0*(1+lvl*.115)).toFixed(1)+' → '+(10.0*(1+n*.115)).toFixed(1)+' damage';
   if(key==='range')return Math.round((.68+lvl*.044)*100)+'% → '+Math.round((.68+n*.044)*100)+'% screen range';
-  if(key==='rate')return (.45*Math.pow(.885,lvl)).toFixed(2)+' → '+(.45*Math.pow(.885,n)).toFixed(2)+' seconds per shot';
+  if(key==='rate')return (.45*Math.pow(.925,lvl)).toFixed(2)+' → '+(.45*Math.pow(.925,n)).toFixed(2)+' seconds per shot';
   if(key==='magazine')return (24+lvl*4)+' → '+(24+n*4)+' rounds per magazine';
   if(key==='reload')return (2.50*Math.pow(.925,lvl)).toFixed(2)+' → '+(2.50*Math.pow(.925,n)).toFixed(2)+' seconds to reload';
   if(key==='aiming')return Math.round(100*Math.pow(.9,lvl))+'% → '+Math.round(100*Math.pow(.9,n))+'% spread';
@@ -3874,9 +3880,9 @@ function renderShop(){
   supplyEl.textContent='FIELD MACHINE GUN · '+gameState.profile.primaryMag+' ROUNDS · '+(gameState.save.arsenalPoints||0)+' UPGRADE POINTS';
   shopGrid.innerHTML='';
   ['damage','range','rate','magazine','reload','aiming','armor'].forEach(function(key){
-    var lvl=up[key]||0,max=lvl>=SKILL_MAX,cost=1;
+    var lvl=up[key]||0,max=lvl>=SKILL_MAX,cost=lvl<4?1:lvl<9?2:3;
     var b=document.createElement('button');b.type='button';b.className='shopBtn'+(max||gameState.save.arsenalPoints<cost?' disabled':'');
-    b.innerHTML='<strong>'+UPGRADES[key].label+' · '+lvl+'/'+SKILL_MAX+'</strong><span>'+(max?'MAX LEVEL':skillPreview(key,lvl))+'</span><em>'+(max?'MAX':'1 UPGRADE POINT')+'</em>';
+    b.innerHTML='<strong>'+UPGRADES[key].label+' · '+lvl+'/'+SKILL_MAX+'</strong><span>'+(max?'MAX LEVEL':skillPreview(key,lvl))+'</span><em>'+(max?'MAX':cost+' UPGRADE POINT'+(cost>1?'S':''))+'</em>';
     b.disabled=max||gameState.save.arsenalPoints<cost;
     b.addEventListener('click',function(){
       if((gameState.save.arsenalPoints||0)<cost||max)return;
