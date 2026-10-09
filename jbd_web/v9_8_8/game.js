@@ -948,6 +948,94 @@ function avoidVehicleWorld986(v,north){
   }
   return null;
 }
+/* V9.8.8: landings and road routes are validated against actual physical geometry. */
+function freeLanding988(x,y,r,units){
+  var m=gameState&&gameState.map;if(!m)return false;
+  if(x<r+18||x>W-r-18||y<safeTop+100+r||y>H-safeBottom-108-r)return false;
+  for(var i=0;i<m.rocks.length;i++){var rock=m.rocks[i];if(Math.hypot(x-rock.x,y-rock.y)<r+rock.r+8)return false;}
+  for(i=0;i<m.cover.length;i++){var c=m.cover[i];if(c.destroyed)continue;
+    if(c.kind==='building'&&Math.abs(x-c.x)<c.w/2+r+8&&Math.abs(y-c.y)<c.h/2+r+8)return false;
+    if(c.worldSolid&&Math.hypot(x-c.x,y-c.y)<r+(c.r||9)+7)return false;
+  }
+  for(i=0;i<gameState.wrecks.length;i++){var w=gameState.wrecks[i];if(Math.hypot(x-w.x,y-w.y)<r+wreckBodyRadius(w)+7)return false;}
+  for(i=0;i<gameState.vehicles.length;i++){var v=gameState.vehicles[i];if(v.alive&&Math.hypot(x-v.x,y-v.y)<r+vehicleBodyRadius(v)+9)return false;}
+  var armor=gameState.arcade&&gameState.arcade.armor||[];
+  for(i=0;i<armor.length;i++)if(armor[i].alive&&Math.hypot(x-armor[i].x,y-armor[i].y)<r+vehicleBodyRadius(armor[i])+7)return false;
+  for(i=0;i<gameState.fireZones.length;i++){var f=gameState.fireZones[i];if(Math.hypot(x-f.x,y-f.y)<r+(f.radius||f.r||16)+8)return false;}
+  if(units)for(i=0;i<gameState.infantry.length;i++){var e=gameState.infantry[i];if(e.alive&&e.state!=='parachuting'&&Math.hypot(x-e.x,y-e.y)<r+8)return false;}
+  return true;
+}
+function safeLanding988(x,y,r,units){
+  var mx=clamp(x,r+20,W-r-20),my=clamp(y,safeTop+101+r,H-safeBottom-110-r);
+  if(freeLanding988(mx,my,r,units))return {x:mx,y:my,safe:true};
+  // Search circles from close to far; no RNG, making repeatable terrain and landing tests.
+  for(var rad=14;rad<195;rad+=14)for(var i=0;i<20;i++){
+    var a=TAU*i/20+rad*.013,nx=mx+Math.cos(a)*rad,ny=my+Math.sin(a)*rad*.8;
+    if(freeLanding988(nx,ny,r,units))return {x:nx,y:ny,safe:true};
+  }
+  for(var yy=safeTop+116;yy<H-safeBottom-113;yy+=18)for(var xx=28;xx<W-27;xx+=18)
+    if(freeLanding988(xx,yy,r,units))return {x:xx,y:yy,safe:true};
+  return {x:mx,y:my,safe:false};
+}
+function missionUsesRoad988(){
+  if(!gameState||gameState.startMode==='demo')return false;
+  var idx=gameState.levelIndex,offset=gameState.startMode==='random'?((levelDNA().hash>>>9)%SHORT_BATTLES_987.length):0;
+  var kind=SHORT_BATTLES_987[(idx+offset)%SHORT_BATTLES_987.length][0];
+  return ['trucks','armor','mixed','scouts','motorcycles','convoy','crossfire','breakthrough'].indexOf(kind)>=0;
+}
+function roadConflicts988(m,lane){
+  var count=0,clearance=30;
+  for(var i=0;i<m.cover.length;i++){
+    var c=m.cover[i];if(c.destroyed)continue;
+    if(c.kind==='building'&&Math.abs(c.x-lane)<c.w/2+clearance)count+=c.isCompound?12:3;
+    else if(c.worldSolid&&Math.abs(c.x-lane)<(c.r||9)+clearance)count+=2;
+  }
+  for(i=0;i<m.rocks.length;i++)if(Math.abs(m.rocks[i].x-lane)<m.rocks[i].r+clearance)count+=2;
+  for(i=0;i<gameState.wrecks.length;i++)if(Math.abs(gameState.wrecks[i].x-lane)<wreckBodyRadius(gameState.wrecks[i])+clearance)count++;
+  return count;
+}
+function prepareRoad988(m){
+  // Use one unbroken, visible physical road for vehicle objectives even on mountain/jungle maps.
+  var opts=[m.road.x,W*.5,W*.35,W*.65,W*.26,W*.74,W*.43,W*.57],lane=null,best=Infinity,clearance=32;
+  for(var i=0;i<opts.length;i++){
+    var x=clamp(opts[i],clearance+21,W-clearance-21),score=roadConflicts988(m,x)+i*.03;
+    if(score<best){best=score;lane=x;}
+  }
+  m.road.x=lane;m.road.bendX=lane;m.road.present=true;m.road.width=47;m.road.style='straight';m.road.secondary='none';
+  m.vehicleLane988=lane;
+  m.cover=m.cover.filter(function(c){
+    var size=c.kind==='building'?c.w/2:(c.r||8);
+    if(c.destroyed||Math.abs(c.x-lane)>=size+clearance)return true;
+    // Relocate buildings outward; discard only a prop that cannot fit without blocking the road.
+    var side=c.x<lane?-1:1,tries=[side,-side];
+    for(var k=0;k<tries.length;k++){
+      var nx=lane+tries[k]*(clearance+size+16);
+      if(nx<size+17||nx>W-size-17)continue;
+      var collision=false;
+      if(c.kind==='building')for(var j=0;j<m.cover.length;j++){var other=m.cover[j];if(other===c||other.kind!=='building'||other.destroyed)continue;
+        if(Math.abs(nx-other.x)<size+other.w/2+9&&Math.abs(c.y-other.y)<c.h/2+other.h/2+8){collision=true;break;}
+      }
+      if(!collision){c.x=nx;if(c.isCompound&&m.compound)m.compound.x=nx;return true;}
+    }
+    return false;
+  });
+  m.rocks=m.rocks.filter(function(q){return Math.abs(q.x-lane)>=q.r+clearance;});
+  for(i=0;i<gameState.wrecks.length;i++){
+    var w=gameState.wrecks[i],wr=wreckBodyRadius(w);
+    if(Math.abs(w.x-lane)<wr+clearance)w.x=clamp(lane+(w.x<lane?-1:1)*(wr+clearance+16),wr+12,W-wr-12);
+  }
+}
+function roadClear988(m){
+  if(!m.vehicleLane988)return true;
+  var x=m.vehicleLane988,r=25;
+  for(var i=0;i<m.cover.length;i++){var c=m.cover[i];if(c.destroyed)continue;
+    if(c.kind==='building'&&Math.abs(c.x-x)<c.w/2+r)return false;
+    if(c.worldSolid&&Math.abs(c.x-x)<(c.r||9)+r)return false;
+  }
+  for(i=0;i<m.rocks.length;i++)if(Math.abs(m.rocks[i].x-x)<m.rocks[i].r+r)return false;
+  for(i=0;i<gameState.wrecks.length;i++)if(Math.abs(gameState.wrecks[i].x-x)<wreckBodyRadius(gameState.wrecks[i])+r)return false;
+  return true;
+}
 function buildMap(){
   var L=level(),dna=levelDNA(),rng=seeded((L.seed+dna.hash+gameState.levelIndex*19)>>>0),basePalette=BASE_PALETTES[L.theme]||BASE_PALETTES.forest,p=levelPalette(basePalette,L.stage),zv=zoneVisual(L.theme);
   var layout=Object.assign({},mapLayoutForLevel(gameState.levelIndex,L)),stage=L.stage,act=L.actStage||0;
@@ -1075,6 +1163,8 @@ function buildMap(){
   gameState.map={palette:p,units:unitPalette(p),compoundCover:compoundCover,road:{x:roadX,bendX:bendX,junctionY:junctionY,width:layout.roadWidth,style:layout.style,secondary:layout.secondary,present:!noRoad},compound:compound,patches:patches,cover:cover,decor:decor,trees:trees,rocks:rocks,surface:surface,setpieces:setpieces,corridorHalf:corridorHalf,layoutName:layout.name,layout:layout,weatherDigit:dna.weather,groundDigit:dna.ground,dnaCode:dna.code,zoneTheme:L.theme,zoneType:L.type};
   generateBiome986(gameState.map,L,dna,rng);
   populateDNAStartingWrecks(dna,rng);
+  if(missionUsesRoad988())prepareRoad988(gameState.map);
+  if(L.theme==='coast')gameState.map.decor.push({x:W*.13,y:H*.28,type:'lighthouse988',s:.82,rot:0});
 }
 /* ---------- GAME STATE ---------- */
 
