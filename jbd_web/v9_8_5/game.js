@@ -975,7 +975,7 @@ function resetLevel(){
   if(gameState.map&&gameState.map.layoutName)gameState.encounterName=(gameState.encounterName||'CONTACT')+' · '+gameState.map.layoutName;
   gameState.eventCursor=0;
   gameState.mode='playing';gameState.message=(gameState.zoneRule.name+' · '+currentDoctrine().name);gameState.messageT=1.8;
-  gameState.gunGameBannerName='2-SHOT BURST MG · YOU ARE THE FIREPOWER';gameState.gunGameBannerT=2.6;
+  gameState.gunGameBannerName='2-SHOT BURST MG · USE COVER & FIRE ESCAPE';gameState.gunGameBannerT=2.6;
   spawnAlliedTeam(true);spawnAlliedTeam(true);startBattleBarrage();
 }
 
@@ -3461,7 +3461,7 @@ function buildingWalls(c){
   if(c.walls)return c.walls;
   var w=c.w||38,h=c.h||34,x=c.x,y=c.y,wood=c.material==='wood';
   var hp=wood?34:(c.sprite==='factory'?68:52);
-  var gap=6, l=x-w*.5,r=x+w*.5,t=y-h*.5,b=y+h*.5,midX=x,midY=y;
+  var gap=11, l=x-w*.5,r=x+w*.5,t=y-h*.5,b=y+h*.5,midX=x,midY=y;
   var raw=[
     ['north',0,l,t,midX,t],['north',1,midX,t,r,t],
     ['east',0,r,t,r,midY],['east',1,r,midY,r,b],
@@ -3927,6 +3927,7 @@ function updateShots(dt){
 function updateFireZones(dt){
   for(var i=0;i<gameState.fireZones.length;i++){
     var z=gameState.fireZones[i];z.t-=dt;z.tick-=dt;z.fx-=dt;
+    if(z.t<=0)continue;
     if(z.fx<=0){
       z.fx=z.plasma?.07:z.source==='napalm'?.075:(z.source==='vehicle'?.075:.11);
       var a=rand(0,TAU),rr=Math.sqrt(Math.random())*z.radius*.82,fx=z.x+Math.cos(a)*rr,fy=z.y+Math.sin(a)*rr;
@@ -4005,6 +4006,7 @@ function updateEnemyShots(dt){
     }
     if(stopped)continue;
     arcadeNearMiss(b);alliedIncomingFire(b);
+    if(b.life<=0)continue; // Once Allied armor/infantry absorbs the shot, no second bunker hit.
     if(b.kind==='rocket'){
       b.trailCd=(b.trailCd||0)-dt;
       if(b.trailCd<=0){b.trailCd=.045;pushEffect({type:'smoke',x:b.x,y:b.y,vx:rand(-6,6),vy:rand(-9,3),r:rand(1.8,3.2),t:0,life:rand(.26,.46),shade:.28});if(Math.random()<.48)pushEffect({type:'ember',x:b.x,y:b.y,vx:-b.vx*.05+rand(-6,6),vy:-b.vy*.05+rand(-6,6),t:0,life:rand(.10,.22)});}
@@ -4150,7 +4152,7 @@ function skillPreview(key,lvl){
   if(key==='damage')return (15.0*(1+lvl*.115)).toFixed(1)+' → '+(15.0*(1+n*.115)).toFixed(1)+' damage';
   if(key==='range')return Math.round((.54+lvl*.036)*100)+'% → '+Math.round((.54+n*.036)*100)+'% screen range';
   if(key==='rate')return (.56*Math.pow(.94,lvl)).toFixed(2)+' → '+(.56*Math.pow(.94,n)).toFixed(2)+' seconds BURST recovery';
-  if(key==='magazine')return (26+lvl*4)+' → '+(24+n*4)+' rounds per magazine';
+  if(key==='magazine')return (26+lvl*4)+' → '+(26+n*4)+' rounds per magazine';
   if(key==='reload')return (2.45*Math.pow(.925,lvl)).toFixed(2)+' → '+(2.45*Math.pow(.925,n)).toFixed(2)+' seconds to reload';
   if(key==='aiming')return Math.round(100*Math.pow(.9,lvl))+'% → '+Math.round(100*Math.pow(.9,n))+'% spread';
   return 'Bunker HP and armor upgrade';
@@ -4241,7 +4243,7 @@ restartBtn.addEventListener('click',function(){
   try{localStorage.removeItem(SAVE_KEY);}catch(e){}
   restoreCampaignMaps();gameState=freshState();gameState.profile=playerProfile();gameState.bunker.maxHp=gameState.profile.maxHp;gameState.bunker.hp=gameState.profile.maxHp;
   overlay.classList.remove('hidden');restartBtn.style.display='none';deployBtn.style.display='none';summaryEl.style.display='none';shopEl.style.display='none';
-  titleEl.textContent='V9.8.4 · CHOOSE YOUR RUN';subEl.textContent='Easy, Hard, Random DNA of Demo Map. In de demo verschijnen alle grote voertuigtypen, medics, helicopters, parachutisten, rook, artillerie, mitrailleur-flybys en napalm.';
+  titleEl.textContent='V9.8.5 · CHOOSE YOUR RUN';subEl.textContent='Easy, Hard, Random DNA of Demo Map. In de demo verschijnen alle grote voertuigtypen, medics, helicopters, parachutisten, rook, artillerie, mitrailleur-flybys en napalm.';
   if(modeSelectEl)modeSelectEl.style.display='grid';
 });
 
@@ -5740,6 +5742,25 @@ function updateAlliedTeam(dt){
     u.angle=nearest?Math.atan2(nearest.y-u.y,nearest.x-u.x):-Math.PI/2;
     if(u.defendFort&&u.defendFort.owner===u.id&&dist(u.x,u.y,u.defendFort.x,u.defendFort.y)>5){u.x=u.defendFort.x;u.y=u.defendFort.y+3;u.state='cover';}
     if(u.building)continue;
+    // Medics are SUPPORT, not machine-gun equivalents: stabilize a wounded comrade.
+    if(u.role==='medic'&&u.alive){
+      u.medicCd=Math.max(0,(u.medicCd||0)-dt);
+      if(u.medicCd<=0){
+        var patient=null,patientDist=42;
+        for(var mj=0;mj<a.allies.length;mj++){
+          var m=a.allies[mj];if(m===u||!m.alive||m.burnT>0||m.hp>=m.maxHp*.88)continue;
+          var md=dist(u.x,u.y,m.x,m.y);
+          if(md<patientDist){patient=m;patientDist=md;}
+        }
+        if(patient){
+          patient.hp=Math.min(patient.maxHp,patient.hp+patient.maxHp*.17);
+          patient.bleedT=0;patient.morale=Math.min(1,patient.morale+.16);
+          u.medicCd=6.5;
+          pushEffect({type:'spark',x:patient.x,y:patient.y-7,vx:0,vy:-15,t:0,life:.4});
+        }
+      }
+      u.fireCd=Math.max(u.fireCd,.75);
+    }
     u.fireCd-=dt;
     if(nearest&&nd<235*235&&u.fireCd<=0){
       u.fireCd=enemyFireDelay(u,rand(u.role==='lmg'?.50:.83,u.role==='lmg'?.82:1.20)) * 1.60 / Math.max(.72,u.aimSkill||1);
@@ -6142,7 +6163,7 @@ window.addEventListener('error',function(e){
   try{
     var box=document.createElement('div');
     box.style.cssText='position:fixed;left:8px;right:8px;bottom:78px;z-index:9999;background:#651d1d;color:#fff;padding:8px;font:11px monospace';
-    box.textContent='JBD V9.8.4 ERROR: '+(e.message||'unknown')+(e.lineno?' @ line '+e.lineno:'');document.body.appendChild(box);
+    box.textContent='JBD V9.8.5 ERROR: '+(e.message||'unknown')+(e.lineno?' @ line '+e.lineno:'');document.body.appendChild(box);
   }catch(_){}
 });
 
