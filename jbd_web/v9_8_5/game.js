@@ -2731,7 +2731,50 @@ function separateSoldierFromBuildings(e){
     }
   }
 }
+function routeInfantryAroundWalls(e,tx,ty){
+  var covers=gameState&&gameState.map&&gameState.map.cover||[];
+  // Keep a brief navigation objective to avoid ping-ponging between building corners.
+  if(e.navWallId!=null&&Math.hypot(e.navX-e.x,e.navY-e.y)>7&&gameState.time<(e.navUntil||0)){
+    if(!nearbySolidWall(e.navX,e.navY,4))return {x:e.navX,y:e.navY};
+  }
+  e.navWallId=null;
+  var path={px:e.x,py:e.y,x:tx,y:ty};
+  for(var i=0;i<covers.length;i++){
+    var c=covers[i];if(c.kind!=='building'||c.destroyed)continue;
+    var r=Math.max(c.w,c.h)*.5+15;
+    if(Math.abs(e.x-c.x)>r+120&&Math.abs(tx-c.x)>r+120)continue;
+    if(buildingWallHit(path,c)<0)continue;
+    var pad=14; // soldier radius + distance from solid corner
+    var corners=[
+      {x:c.x-c.w*.5-pad,y:c.y-c.h*.5-pad},
+      {x:c.x+c.w*.5+pad,y:c.y-c.h*.5-pad},
+      {x:c.x-c.w*.5-pad,y:c.y+c.h*.5+pad},
+      {x:c.x+c.w*.5+pad,y:c.y+c.h*.5+pad}
+    ];
+    // The south-facing doorway is an alternative route for soldiers entering rooms.
+    if(Math.abs(e.x-c.x)<c.w*.28)corners.push({x:c.x,y:c.y+c.h*.5+pad});
+    var best=null,score=1e9;
+    for(var j=0;j<corners.length;j++){
+      var q=corners[j];
+      if(q.x<15||q.x>W-15||q.y<safeTop+8||q.y>H-safeBottom-22)continue;
+      if(buildingWallHit({px:e.x,py:e.y,x:q.x,y:q.y},c)>=0)continue;
+      var hazard=fireThreatAt(q.x,q.y,12);
+      var blocked=nearbySolidWall(q.x,q.y,5);
+      var cost=Math.hypot(q.x-e.x,q.y-e.y)+Math.hypot(tx-q.x,ty-q.y)*.76+
+        (hazard?950:0)+(blocked?700:0);
+      if(cost<score){score=cost;best=q;}
+    }
+    if(best){
+      e.navWallId=c.id;e.navX=best.x;e.navY=best.y;
+      e.navUntil=gameState.time+3.0;
+      return best;
+    }
+  }
+  return {x:tx,y:ty};
+}
 function steerInfantry(e,tx,ty,speed,dt,sharpness){
+  var adjusted=routeInfantryAroundWalls(e,tx,ty);
+  tx=adjusted.x;ty=adjusted.y;
   var dx=tx-e.x,dy=ty-e.y,d=Math.sqrt(dx*dx+dy*dy)||1;
   var dvx=dx/d*speed,dvy=dy/d*speed,k=1-Math.exp(-(sharpness||7)*dt);
   e.vx+=(dvx-(e.vx||0))*k;e.vy+=(dvy-(e.vy||0))*k;
