@@ -167,6 +167,7 @@ function drawWorld(){
   const y=sy(d.wy);if(y< -65||y>H+65)continue;
   originals.drawActor(d.kind==="vehicle"?"wreck":"corpse",g,d.x,y,
     {role:d.role||"rifle",time:state.time,dir:"down",variant:d.variant||0});
+  if(d.kind!=="vehicle")originals.drawActor("blood",g,d.x,y+3,{angle:d.variant*.32});
  }
 }
 function gunSound(){
@@ -188,6 +189,7 @@ function popSound(freq=190){if(!audio)return;try{
 }catch(e){}}
 function audioUnlock(){if(audio){audio.resume?.();return;}const AC=window.AudioContext||window.webkitAudioContext;if(AC){try{audio=new AC();}catch(e){}}}
 function burst(x,wy,color,n=9){
+ if(n>=9){state.fx.push({x,wy,r:n>=20?34:17,t:0,life:.55});if(state.fx.length>35)state.fx.shift();}
  for(let i=0;i<n;i++){let a=Math.random()*TAU,s=20+Math.random()*90;
   state.particles.push({x,wy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:1+Math.random()*3,t:.3+Math.random()*.45,color});
  }
@@ -350,6 +352,7 @@ function updateZones(dt){
  state.fireZones=state.fireZones.filter(f=>f.t>0);
  for(const f of state.smokes)f.t-=dt;state.smokes=state.smokes.filter(f=>f.t>0);
  for(const p of state.particles){p.x+=p.vx*dt;p.wy+=p.vy*dt;p.vx*=Math.exp(-dt*3);p.vy*=Math.exp(-dt*3);p.t-=dt;}
+ for(const boom of state.fx)boom.t+=dt;state.fx=state.fx.filter(e=>e.t<e.life);
  state.particles=state.particles.filter(p=>p.t>0).slice(-140);
 }
 function step(dt){
@@ -489,12 +492,11 @@ function drawInfantry(){
  }
 }
 function drawEffects(){
- for(const f of state.fireZones){
-  let y=sy(f.wy),r=f.radius;
-  g.fillStyle="rgba(229,109,33,.27)";g.beginPath();g.arc(f.x,y,r,0,TAU);g.fill();
-  for(let i=0;i<13;i++){let a=i*TAU/13+state.time*.27,rr=r*(.2+.65*(i%5)/5);
-   ellipse(g,f.x+Math.cos(a)*rr,y+Math.sin(a)*rr,5+Math.sin(state.time*13+i)*3,8,"#e8813b99");}
- }
+ // Napalm uses the V9.8.8 ORIGINAL flame painter rather than placeholder circles.
+ for(const f of state.fireZones)originals.drawActor("napalm",g,f.x,sy(f.wy),
+   {radius:f.radius,t:f.t,maxT:10,time:state.time});
+ for(const fx of state.fx)originals.drawActor("explosion",g,fx.x,sy(fx.wy),
+   {r:fx.r,t:fx.t,life:fx.life,time:state.time});
  for(const f of state.smokes){let y=sy(f.wy);g.fillStyle="rgba(184,193,178,.19)";g.beginPath();g.arc(f.x,y,f.radius,0,TAU);g.fill();}
  for(const b of state.shots){
   let y=sy(b.wy);g.strokeStyle=b.owner==="enemy"?"#db8360":b.owner==="ally"?"#bac8a7":"#ffe4a0";g.lineWidth=b.owner==="player"?2.1:1.2;
