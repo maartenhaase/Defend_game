@@ -1199,7 +1199,7 @@ function resetLevel(){
   gameState.damageTarget=levelDamageBand(gameState.levelIndex,gameState.profile.maxHp);
   gameState.adaptiveEvaluated=false;
   gameState.enemyProfile=enemyProgression(gameState.levelIndex);
-  gameState.time=0;gameState.levelTime=0;gameState.levelComplete=false;gameState.shortBattle=null;gameState.shortBattleWithdrawn=false;gameState.gunGameBannerT=0;gameState.stageIntroT=1.55;gameState.waveIntroT=0;gameState.waveIntroText='';gameState.recoveryT=0;gameState.runBonusSupply=0;gameState.objectiveBonusSupply=0;gameState.objectiveBonusAP=0;gameState.opportunities=[];gameState.bunkerGraceT=0;
+  gameState.time=0;gameState.levelTime=0;gameState.levelComplete=false;gameState.shortBattle=null;gameState.shortBattleWithdrawn=false;gameState.gunGameBannerT=0;gameState.stageIntroT=1.55;gameState.waveIntroT=0;gameState.waveIntroText='';gameState.recoveryT=0;gameState.runBonusSupply=0;gameState.objectiveBonusSupply=0;gameState.objectiveBonusAP=0;gameState.opportunities=[];gameState.bunkerGraceT=1.80;
   gameState.bunker.x=W*.5;gameState.bunker.y=H-Math.max(72,safeBottom+52);
   gameState.bunker.maxHp=gameState.profile.maxHp;gameState.bunker.hp=gameState.profile.maxHp;
   gameState.primaryAmmo=gameState.profile.primaryMag;gameState.primaryCooldown=0;gameState.primaryReloadT=0;gameState.primaryReloadShell=false;resetGrenadeSlots();gameState.lastStandUsed=false;
@@ -2299,6 +2299,9 @@ function spawnPara(x,y){
 
 function pushEffect(e){
   if(e&&e.type==='damage')return;
+  if(gameState.effects.length>=DEVICE.maxEffects-12&&e&&
+      (e.type==='dust'||e.type==='grassBlade'||e.type==='grit'||e.type==='groundClod'||e.type==='snowChip'||e.type==='smoke')&&
+      (gameState.effects.length>=DEVICE.maxEffects-4||Math.random()<.65))return;
   gameState.effects.push(e);
   if(gameState.effects.length>DEVICE.maxEffects)gameState.effects.splice(0,gameState.effects.length-DEVICE.maxEffects);
 }
@@ -2356,7 +2359,7 @@ function explode(x,y,r,crater){
   emitDebris(x,y,IS_IPHONE?(huge?9:big?6:3):(huge?18:big?11:6));
   for(i=0;i<(IS_IPHONE?(huge?5:2):(huge?10:4));i++)pushEffect({type:'shrapnel',x:x,y:y,vx:rand(-175,175),vy:rand(-160,48),t:0,life:rand(.20,.54)});
   if(crater!==false&&Math.random()<.84){gameState.craters.push({x:x+rand(-2,2),y:y+rand(-2,2),r:clamp(r*rand(.30,.47),5,18),seed:Math.random()*9999|0,rot:rand(0,TAU)});if(gameState.craters.length>14)gameState.craters.shift();}
-  gameState.shake=Math.max(gameState.shake||0,clamp(r*(huge?.35:.28),3.3,12));gameState.screenFlash=Math.max(gameState.screenFlash||0,clamp(r/57,.08,.44));gameState.hitStop=Math.max(gameState.hitStop||0,huge?.09:big?.058:.030);
+  gameState.shake=Math.max(gameState.shake||0,clamp(r*(huge?.35:.28),3.3,12));gameState.screenFlash=Math.max(gameState.screenFlash||0,clamp(r/57,.08,.44));gameState.hitStop=Math.max(gameState.hitStop||0,huge?.048:big?.028:.012);
   AudioSys.tone('boom',huge?1:.90);if(gameState&&gameState.map){blastCover(x,y,r,huge?7.2:big?5.6:3.5);applyBlastShock(x,y,r,huge?1.25:big?1:.75);}
 }
 
@@ -3062,6 +3065,11 @@ function routeInfantryAroundWalls(e,tx,ty){
   return {x:tx,y:ty};
 }
 function steerInfantry(e,tx,ty,speed,dt,sharpness){
+  if((e.detourT||0)>0){
+    e.detourT=Math.max(0,e.detourT-dt);
+    tx=clamp(e.x+(e.detourSide||1)*50,22,W-22);
+    ty=clamp(e.y+42,safeTop+36,H*.76);
+  }
   var adjusted=routeInfantryAroundWalls(e,tx,ty);
   tx=adjusted.x;ty=adjusted.y;
   var dx=tx-e.x,dy=ty-e.y,d=Math.sqrt(dx*dx+dy*dy)||1;
@@ -3174,11 +3182,16 @@ function updateInfantry(dt){
     var tactical=tacticalPoint(e),bdx=gameState.bunker.x-e.x,bdy=gameState.bunker.y-e.y,dB=Math.sqrt(bdx*bdx+bdy*bdy)||1;var aimAng=Math.atan2(bdy,bdx);e.angle=approachAngle(e.angle||aimAng,aimAng,dt*4.8);
     var playerReach=H*gameState.profile.primaryRangeFactor*.94;
     if(dB>playerReach&&(e.state==='cover'||e.state==='covering'||e.state==='fire'||e.state==='prone')){e.state='advance';e.stateT=0;e.cover=null;e.forceDirectT=Math.max(e.forceDirectT,1.2);}
-    if(e.noProgressT>1.65&&dB>120){e.state='advance';e.cover=null;e.tactic='direct';e.flankX=gameState.bunker.x;e.forceDirectT=2.2;e.noProgressT=0;e.stuckT=0;}
+    if(e.noProgressT>1.65&&dB>120){
+      e.state='advance';e.cover=null;e.forceDirectT=1.1;
+      e.detourAttempts=(e.detourAttempts||0)+1;
+      e.detourSide=(e.detourAttempts%2?1:-1)*(e.id%2?-1:1);
+      e.detourT=1.25;e.noProgressT=0;e.stuckT=0;
+    }
 
     if(e.morale<.18&&!e.wounded&&e.state!=='panic'){e.state='panic';e.stateT=0;e.panicT=rand(1.8,3.8);e.cover=null;e.fireCd=999;}
     if(e.suppression>.70&&e.state!=='suppressed'&&e.state!=='crawl'&&e.state!=='panic'){e.state='suppressed';e.stateT=0;e.cover=nearestCover(e)||nextForwardCover(e);}
-    if(e.stuckT>1.55){e.state='advance';e.cover=null;e.tactic='direct';e.forceDirectT=2.0;e.stuckT=0;e.flankX=gameState.bunker.x;}
+    if(e.stuckT>1.55){e.state='advance';e.cover=null;e.detourSide=-(e.detourSide||1);e.detourT=1.20;e.forceDirectT=.65;e.stuckT=0;}
 
     if(e.cover&&!coverUsableForFire(e.cover)&&(e.state==='cover'||e.state==='covering'||e.state==='crawl'||e.state==='suppressed')){
       e.lastCoverId=e.cover.id;e.cover=null;e.state='advance';e.stateT=0;e.forceDirectT=Math.max(e.forceDirectT,.45);
@@ -3765,7 +3778,7 @@ function fireWeapon(kind,x,y){
   }else gameState.shots.push(shot);
   if(kind==='he'&&grenadeSlot>=0)gameState.grenadeSlots[grenadeSlot]=grenadeRechargeTime();
   if(kind==='mg'){
-    gameState.primaryAmmo=Math.max(0,gameState.primaryAmmo-1);gameState.primaryCooldown=gameState.profile.primaryCycle;
+    gameState.primaryAmmo=Math.max(0,gameState.primaryAmmo-1);gameState.primaryCooldown=Math.max(.035,gameState.profile.primaryCycle+Math.min(0,gameState.primaryCooldown));
     if(gameState.profile.primaryMode!=='auto')gameState.burstQueue.length=0;
         if(gameState.primaryAmmo<=0)beginPrimaryReload();
   }
@@ -4410,7 +4423,7 @@ function update(dt){
   gameState.messageT=Math.max(0,gameState.messageT-dt);gameState.stageIntroT=Math.max(0,(gameState.stageIntroT||0)-dt);gameState.waveIntroT=Math.max(0,(gameState.waveIntroT||0)-dt);gameState.recoveryT=Math.max(0,(gameState.recoveryT||0)-dt);gameState.bunkerGraceT=Math.max(0,(gameState.bunkerGraceT||0)-dt);gameState.hitMarker=Math.max(0,gameState.hitMarker-dt);gameState.hitPulse=Math.max(0,(gameState.hitPulse||0)-dt*7);gameState.bunkerKick=Math.max(0,(gameState.bunkerKick||0)-dt*18);gameState.shake=Math.max(0,(gameState.shake||0)-dt*20);gameState.screenFlash=Math.max(0,(gameState.screenFlash||0)-dt*1.9);
   gameState.streakT=Math.max(0,gameState.streakT-dt);if(gameState.streakT<=0)gameState.streak=0;
   gameState.gunGameBannerT=Math.max(0,(gameState.gunGameBannerT||0)-dt);
-  gameState.primaryCooldown=Math.max(0,gameState.primaryCooldown-dt);updateGrenadeSlots(dt);
+  gameState.primaryCooldown=gameState.pointer.down?Math.max(-dt,gameState.primaryCooldown-dt):Math.max(0,gameState.primaryCooldown-dt);updateGrenadeSlots(dt);
   if(gameState.primaryReloadT>0){gameState.primaryReloadT=Math.max(0,gameState.primaryReloadT-dt);if(gameState.primaryReloadT===0){
     if(gameState.primaryReloadShell){
       gameState.primaryAmmo=Math.min(gameState.profile.primaryMag,gameState.primaryAmmo+1);
@@ -4456,14 +4469,17 @@ function completeLevel(){
   if(gameState.levelComplete)return;
   gameState.levelComplete=true;gameState.mode='shop';
   var mapNo=gameState.levelIndex+1,milestone=mapNo%5===0;
-  var riskReward=dynamicRewardMultiplier()*currentZoneRule().reward,baseSupply=Math.round((48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0))*levelDNA().rewardScale*riskReward*(gameState.shortBattleWithdrawn?.65:1)),chainBonus=gameState.runBonusSupply||0;gameState.save.supply+=baseSupply+chainBonus;
-  var points=2;if(mapNo>=10)points++;if(mapNo>=22)points++;if(milestone)points++;if(gameState.eff>=.90)points++;
+  var riskReward=dynamicRewardMultiplier()*currentZoneRule().reward,baseSupply=Math.round((48+gameState.levelIndex*4.4+gameState.eff*24+(milestone?18:0))*levelDNA().rewardScale*riskReward*(gameState.shortBattleWithdrawn?.65:1)),chainBonus=gameState.runBonusSupply||0;
+  var fastClear=!!gameState.shortBattle&&!gameState.shortBattleWithdrawn&&gameState.levelTime<gameState.shortBattle.maxDuration*.60&&gameState.stats.kills>=2;
+  if(fastClear)chainBonus+=Math.round(baseSupply*.12);
+  gameState.save.supply+=baseSupply+chainBonus;
+  var points=2;if(mapNo>=10)points++;if(mapNo>=22)points++;if(milestone)points++;if(gameState.eff>=.90)points++;if(fastClear)points++;
   points+=gameState.objectiveBonusAP||0;gameState.save.arsenalPoints=(gameState.save.arsenalPoints||0)+points;
   gameState.save.bestLevel=Math.max(gameState.save.bestLevel,Math.min(CAMPAIGN_LENGTH-1,gameState.levelIndex+1));
   var dyn=evaluateAdaptiveDifficulty(false);saveGame();
   overlay.classList.remove('hidden');titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'40 MAPS COMPLETE':gameState.shortBattleWithdrawn?'SECTOR HELD · ENEMY WITHDREW':'MAP CLEARED';
   subEl.textContent=(gameState.shortBattleWithdrawn?'Time over: resterende vijanden teruggetrokken, 65% basisvoorraad. ':'')+(gameState.encounterName||'SECTOR')+' voltooid. Damage target '+dyn.band.min+'-'+dyn.band.max+' HP; resultaat '+Math.round(dyn.damage)+' HP ('+dyn.rating+'). Volgende map enemy '+adaptiveLabel(dyn.value)+'.';
-  summaryEl.style.display='block';summaryEl.textContent=riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · BUILDINGS '+(gameState.stats.buildingsDestroyed||0)+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus);
+  summaryEl.style.display='block';summaryEl.textContent=(fastClear?'QUICK CLEAR +12% SUPPLY +1 AP · ':'')+riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · BUILDINGS '+(gameState.stats.buildingsDestroyed||0)+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus);
   shopEl.style.display='block';restartBtn.style.display='none';deployBtn.style.display='block';deployBtn.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'MAP 1 AGAIN':'NEXT MAP';renderShop();
 }
 function weaponPreview(kind,lvl){
@@ -5299,6 +5315,13 @@ function infantryThreatReady(e){
   return (e.fireCd||0)<(e.role==='marksman'?.34:e.role==='lmg'?.20:.13);
 }
 function drawInfantryThreatTell(e,x,y){
+  if(e.alive&&e.state==='rocketAim'){
+    var pct=1-clamp((e.rocketAimT||0)/Math.max(.1,e.rocketAimTotal||1),0,1);
+    ctx.save();ctx.globalAlpha=.76;ctx.strokeStyle=pct>.65?'#f5b45a':'#ffd27a';ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.arc(x,y-3,10.5,-Math.PI/2,-Math.PI/2+TAU*pct);ctx.stroke();
+    ctx.fillStyle='#efbe72';ctx.beginPath();ctx.moveTo(x-3,y-17);ctx.lineTo(x+3,y-17);ctx.lineTo(x,y-21);ctx.closePath();ctx.fill();
+    ctx.restore();return;
+  }
   if(!infantryThreatReady(e)||e.rocketUnit)return;
   var blink=((gameState.time*14)|0)&1;if(!blink&&e.role!=='marksman')return;
   var a=e.angle||0,mx=x+Math.cos(a)*9,my=y-3+Math.sin(a)*9;
