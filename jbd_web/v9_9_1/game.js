@@ -619,9 +619,9 @@ var AudioSys=(function(){
     build();opts=opts||{};var now=performance.now(),minGap=kind==='mg'?24:kind==='enemy'?55:kind==='engine'?95:8;
     if(lastPlay[kind]&&now-lastPlay[kind]<minGap)return;lastPlay[kind]=now;
     var pan=opts.pan==null?(rnd()*.08-.04):opts.pan,vol=volume==null?1:volume;
-    if(kind==='mg'){playPrimaryShot(vol,pan);return;}
+    if(kind==='mg'){playPrimaryShot(vol,pan);distantTail('mg',vol,pan);return;}
     if(kind==='enemy'){var ek=rnd()<.55?'akReport':'hkReport';if(rec[ek])playHowl(rec[ek],Math.min(.24,vol*.28),.96+rnd()*.08,pan);return;}
-    if(kind==='boom'){var bh=rec.explosionSample||rec.explosionReal;if(bh)playHowl(bh,Math.min(1,vol*.92),.96+rnd()*.05,pan);return;}
+    if(kind==='boom'){var bh=rec.explosionSample||rec.explosionReal;if(bh)playHowl(bh,Math.min(1,vol*.82),.96+rnd()*.05,pan);distantTail('boom',vol,pan);return;}
     if(kind==='he'){playSupportLaunch(vol,pan);return;}
     if(kind==='hit'||kind==='flesh'){
       var fk=['flesh0','flesh1','flesh2'][(rnd()*3)|0];
@@ -672,30 +672,98 @@ var AudioSys=(function(){
     else{h=rec.rifle0||rec.karVerified||rec.sniper;rate=.98+rnd()*.04;single=h===rec.rifle0;}
     if(h)playRecorded(h,'enemyWeapon',level,rate,pan,single);
   }
+  // Battlefield mix V9.9.1: separate physically-plausible transient textures.
+  // These are deterministic broad-spectrum grains, NOT repeated gunshot samples.
+  // Uses Howler's already-unlocked WebAudio context, with tight limits for iPhone.
+  var impactBuffer=null,lastTextureAt={},lastWhizAt=-100,lastTailAt=-100,lastAmbienceAt=-100;
+  function impactContext(){var a=window.Howler&&window.Howler.ctx;return a&&a.state==='running'&&typeof a.createBufferSource==='function'?a:null;}
+  function impactNoise(ctx){
+    if(impactBuffer&&impactBuffer.sampleRate===ctx.sampleRate)return impactBuffer;
+    var length=Math.max(4096,Math.floor(ctx.sampleRate*.30)),b=ctx.createBuffer(1,length,ctx.sampleRate),data=b.getChannelData(0);
+    for(var i=0;i<length;i++)data[i]=(rnd()*2-1)*(.85+.15*rnd());
+    impactBuffer=b;return b;
+  }
+  var TEXTURE_MIX={
+    ground:{hi:80,lo:1950,len:.070,level:.14},sand:{hi:280,lo:3400,len:.055,level:.105},
+    mud:{hi:60,lo:1050,len:.092,level:.13},snow:{hi:190,lo:1500,len:.065,level:.075},
+    stone:{hi:530,lo:5500,len:.047,level:.11},concrete:{hi:420,lo:4800,len:.058,level:.13},
+    wood:{hi:180,lo:2600,len:.080,level:.10},rubber:{hi:65,lo:850,len:.073,level:.085},
+    armor:{hi:450,lo:4500,len:.072,level:.09},metal:{hi:700,lo:6600,len:.055,level:.095}
+  };
+  function noiseTexture(material,vol,pan,tail){
+    var ctx=impactContext();if(!ctx)return false;
+    material=TEXTURE_MIX[material]?material:'ground';
+    var now=ctx.currentTime,config=TEXTURE_MIX[material],gap=material==='metal'||material==='armor'?.022:.037;
+    if(!tail&&now-(lastTextureAt[material]||-10)<gap)return true;
+    if(!tail)lastTextureAt[material]=now;
+    try{
+      var src=ctx.createBufferSource(),hp=ctx.createBiquadFilter(),lp=ctx.createBiquadFilter(),env=ctx.createGain();
+      var stereo=ctx.createStereoPanner?ctx.createStereoPanner():null;
+      src.buffer=impactNoise(ctx);src.playbackRate.value=(tail?.65:.90)+rnd()*(tail?.10:.22);
+      hp.type='highpass';hp.frequency.value=tail?45:config.hi;
+      lp.type='lowpass';lp.frequency.value=tail?750:config.lo;
+      if(stereo)stereo.pan.value=clamp(pan||0,-.85,.85);
+      src.connect(hp);hp.connect(lp);lp.connect(env);if(stereo){env.connect(stereo);stereo.connect(ctx.destination);}else env.connect(ctx.destination);
+      var dur=tail?.20:config.len*(.82+rnd()*.30),start=now+(tail?.057:0);
+      var amp=clamp(vol,0,1)*(tail?.018:config.level)*(.88+rnd()*.22);
+      env.gain.setValueAtTime(.0001,start);
+      env.gain.exponentialRampToValueAtTime(Math.max(.0002,amp),start+(tail?.017:.003));
+      env.gain.exponentialRampToValueAtTime(.0001,start+dur);
+      src.start(start,Math.max(0,rnd()*.08),Math.max(.02,dur+.012));src.stop(start+dur+.015);
+      return true;
+    }catch(e){return false;}
+  }
+  function distantTail(kind,vol,pan){
+    var ctx=impactContext();if(!ctx)return;
+    if(ctx.currentTime-lastTailAt<(kind==='boom'?.18:.31))return;
+    lastTailAt=ctx.currentTime;
+    noiseTexture(kind==='boom'?'mud':'ground',clamp(vol,0,1)*(kind==='boom'?1.0:.42),pan,true);
+  }
+  function nearMissWhiz(vol,pan){
+    var ctx=impactContext();if(!ctx||ctx.currentTime-lastWhizAt<.17)return false;
+    lastWhizAt=ctx.currentTime;
+    try{
+      var src=ctx.createBufferSource(),band=ctx.createBiquadFilter(),env=ctx.createGain(),st=ctx.createStereoPanner?ctx.createStereoPanner():null;
+      src.buffer=impactNoise(ctx);src.playbackRate.value=1.15+rnd()*.38;
+      band.type='bandpass';band.frequency.value=1600+rnd()*1300;band.Q.value=.75;
+      src.connect(band);band.connect(env);if(st){st.pan.value=clamp(pan||0,-.85,.85);env.connect(st);st.connect(ctx.destination);}else env.connect(ctx.destination);
+      var t=ctx.currentTime,amp=.035*clamp(vol,0,1);
+      env.gain.setValueAtTime(.0001,t);env.gain.exponentialRampToValueAtTime(Math.max(.0002,amp),t+.012);
+      env.gain.exponentialRampToValueAtTime(.0001,t+.090);
+      src.start(t,rnd()*.05,.11);src.stop(t+.115);
+      return true;
+    }catch(e){return false;}
+  }
   function materialImpactSound(material,vol,pan){
     build();material=material||'ground';vol=vol==null?.6:vol;pan=pan||0;
-    var sampleKey=material==='armor'?'impactArmor':material==='metal'?'impactMetal':material==='wood'?'impactWood':material==='sand'?'impactSand':material==='rubber'?'impactRubber':'impactEarth';
-    samplePlay(sampleKey,Math.min(.86,vol*.88),.94+rnd()*.12,pan);
-    var h,rate;
+    if(material==='earth')material='ground';
+    if(material==='sand'||material==='ground'||material==='mud'||material==='snow'||material==='stone'||material==='concrete'){
+      // Only the material's own filtered granule/crack texture: the previous version
+      // stacked the same indistinct recorded impact twice for all terrain types.
+      if(noiseTexture(material,vol,pan,false))return;
+      // Fallback when WebAudio is unavailable (for example before iOS gesture unlock).
+      if(material==='stone'||material==='concrete')samplePlay('impactMetal',Math.min(.23,vol*.36),1.18,pan);
+      else samplePlay('impactEarth',Math.min(.29,vol*.42),material==='sand'?1.14:material==='mud'?.73:.98,pan);
+      return;
+    }
     if(material==='armor'){
-      h=rec.steel2||rec.metalHeavy||rec.steel0;if(h)playHowl(h,Math.min(.48,vol*.50),.70+rnd()*.08,pan);
-      if(rec.metalHeavy)playHowl(rec.metalHeavy,Math.min(.25,vol*.28),.64+rnd()*.05,pan*.6);return;
+      noiseTexture('armor',vol*.55,pan,false);
+      var ah=rec.metalHeavy||rec.steel2;if(ah)playHowl(ah,Math.min(.40,vol*.52),.75+rnd()*.10,pan);
+      return;
     }
     if(material==='metal'){
-      h=['steel0','steel1','steel2'].map(function(k){return rec[k];}).filter(Boolean);if(h.length)playHowl(h[(rnd()*h.length)|0],Math.min(.42,vol*.44),.96+rnd()*.15,pan);return;
+      noiseTexture('metal',vol*.60,pan,false);
+      var m=['steel0','steel1','steel2'].map(function(k){return rec[k];}).filter(Boolean);
+      if(m.length)playHowl(m[(rnd()*m.length)|0],Math.min(.38,vol*.50),.93+rnd()*.13,pan);
+      return;
     }
     if(material==='wood'){
-      if(rec.genericReal)playHowl(rec.genericReal,Math.min(.32,vol*.34),1.20+rnd()*.14,pan);
-      if(rec.ground1)playHowl(rec.ground1,Math.min(.22,vol*.20),1.24+rnd()*.10,pan*.5);return;
+      noiseTexture('wood',vol*.8,pan,false);
+      samplePlay('impactWood',Math.min(.38,vol*.50),.94+rnd()*.10,pan);
+      return;
     }
-    if(material==='sand'){
-      h=['ground0','ground1','ground2'].map(function(k){return rec[k];}).filter(Boolean);if(h.length)playHowl(h[(rnd()*h.length)|0],Math.min(.28,vol*.30),.68+rnd()*.10,pan);return;
-    }
-    if(material==='rubber'){
-      if(rec.genericReal)playHowl(rec.genericReal,Math.min(.25,vol*.27),.62+rnd()*.08,pan);
-      if(rec.ground0)playHowl(rec.ground0,Math.min(.15,vol*.16),.78,pan*.4);return;
-    }
-    h=['ground0','ground1','ground2'].map(function(k){return rec[k];}).filter(Boolean);if(h.length)playHowl(h[(rnd()*h.length)|0],Math.min(.32,vol*.34),.88+rnd()*.13,pan);
+    if(material==='rubber'){noiseTexture('rubber',vol*.8,pan,false);return;}
+    noiseTexture('ground',vol,pan,false);
   }
   function materialBreakSound(material,vol,pan){
     materialImpactSound(material,vol,pan);
@@ -708,7 +776,7 @@ var AudioSys=(function(){
     }else if(material==='metal'||material==='armor'){
       setTimeout(function(){if(rec.metalHeavy)playHowl(rec.metalHeavy,Math.min(.48,v*.50),material==='armor'?.62:.82,(pan||0)*.7);},44);
     }else if(material==='sand'||material==='ground'){
-      setTimeout(function(){if(rec.ground2)playHowl(rec.ground2,Math.min(.34,v*.36),material==='sand'?.68:.86,pan||0);},32);
+      setTimeout(function(){noiseTexture(material==='sand'?'sand':'ground',Math.min(.36,v*.40),pan||0,false);},32);
     }else if(material==='rubber'){
       setTimeout(function(){if(rec.genericReal)playHowl(rec.genericReal,Math.min(.30,v*.32),.56,pan||0);},28);
     }
@@ -731,7 +799,17 @@ var AudioSys=(function(){
     enginePulse:function(volume){play('engine',volume==null?.18:volume,{rate:.94+rnd()*.10,pan:rnd()*.12-.06});},
     vehicle:function(v){if(unlocked){unlockCtx();vehicleSound(v);}},
     ensure:function(){if(unlocked)unlockCtx();},
-    ambience:function(){if(unlocked)unlockCtx();},
+    ambience:function(dt){
+      if(!unlocked)return;
+      var ctx=impactContext();if(!ctx)return;
+      if(ctx.currentTime-lastAmbienceAt>10.5+rnd()*4){
+        lastAmbienceAt=ctx.currentTime;
+        // Extremely low, broad distant movement: no perpetual click or hiss.
+        noiseTexture('mud',.24,rnd()*.8-.4,true);
+      }
+    },
+    whiz:function(volume,opts){if(unlocked)nearMissWhiz(volume==null?.45:volume,opts&&opts.pan||0);},
+    _audioAudit:function(){return {materials:Object.keys(TEXTURE_MIX),cached:!!impactBuffer,webAudio:!!impactContext(),oldRepeatedGroundLayersDisabled:true};},
     recordedMode:function(){return true;}
   };
   build();return api;
@@ -4166,7 +4244,7 @@ function emitGroundImpact(x,y,power,audioMaterial,silentAudio){
   }else{
     for(var c=0;c<(IS_IPHONE?2:4);c++)pushEffect({type:'groundClod',x:x+rand(-3,3),y:y+rand(-2,2),vx:rand(-40,40),vy:rand(-52,-15),rot:rand(0,TAU),vr:rand(-9,9),t:0,life:rand(.25,.46),material:'earth'});
   }
-  if(!silentAudio){var am=audioMaterial||(theme==='desert'||theme==='coast'?'sand':'ground');AudioSys.impact(am,.70,{pan:clamp((x-W*.5)/(W*.55),-.8,.8)});}
+  if(!silentAudio){var am=audioMaterial||(theme==='desert'||theme==='coast'?'sand':theme==='snow'?'snow':theme==='jungle'?'mud':theme==='mountain'?'stone':'ground');AudioSys.impact(am,.62,{pan:clamp((x-W*.5)/(W*.55),-.8,.8)});}
 }
 function primaryObstacleHit(b){
   var m=gameState.map,i,c,d;
@@ -4192,7 +4270,7 @@ function primaryObstacleHit(b){
     }
   }
   for(i=0;i<m.trees.length;i++){c=m.trees[i];if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r*.58)){emitGroundImpact(b.x,b.y,.72,'wood');b.active=false;return true;}}
-  for(i=0;i<m.rocks.length;i++){c=m.rocks[i];if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r+.5)){pushEffect({type:'impactFlash',x:b.x,y:b.y,r:3,t:0,life:.07});emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.72);AudioSys.impact('ground',.66,{pan:clamp((b.x-W*.5)/(W*.55),-.8,.8)});b.active=false;return true;}}
+  for(i=0;i<m.rocks.length;i++){c=m.rocks[i];if(pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<Math.max(4,c.r+.5)){pushEffect({type:'impactFlash',x:b.x,y:b.y,r:3,t:0,life:.07});emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.72);AudioSys.impact('stone',.58,{pan:clamp((b.x-W*.5)/(W*.55),-.8,.8)});b.active=false;return true;}}
   // Compound bullets are handled with the same damage model as all houses.
   return false;
 }
@@ -4343,7 +4421,7 @@ function updateEnemyShots(dt){
       b.life=0;stopped=true;break;
     }
     if(stopped)continue;
-    if(worldSegment986(b.px,b.py,b.x,b.y)){if(b.kind==='grenade'||b.kind==='rocket'||b.kind==='shell')explode(b.x,b.y,18,true);else emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.55);b.life=0;continue;}
+    if(worldSegment986(b.px,b.py,b.x,b.y)){if(b.kind==='grenade'||b.kind==='rocket'||b.kind==='shell')explode(b.x,b.y,18,true);else{emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.55);AudioSys.impact('stone',.34,{pan:clamp((b.x-W*.5)/(W*.55),-.8,.8)});}b.life=0;continue;}
     arcadeNearMiss(b);alliedIncomingFire(b);
     if(b.life<=0)continue; // Once Allied armor/infantry absorbs the shot, no second bunker hit.
     if(b.kind==='rocket'){
@@ -5909,7 +5987,7 @@ function arcadeNearMiss(b){
   // 4. NEAR-MISS FEEDBACK: a close projectile that did not hit grants focus once.
   if(!b.arcadeNearMiss&&d2>30*30&&d2<72*72){
     b.arcadeNearMiss=true;
-    a.nearMisses++;a.focus=Math.min(100,a.focus+5);
+    a.nearMisses++;a.focus=Math.min(100,a.focus+5);AudioSys.whiz(.55,{pan:clamp((b.x-W*.5)/(W*.55),-.85,.85)});
     // Dodging enemy fire helps charge rampage.
   }
 }
