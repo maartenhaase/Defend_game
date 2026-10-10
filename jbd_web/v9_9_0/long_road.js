@@ -79,6 +79,40 @@ function getChunk(k){
  if(!state.chunks.has(k))state.chunks.set(k,makeChunk(k));
  return state.chunks.get(k);
 }
+function readSave(){
+ try{const x=JSON.parse(localStorage.getItem(SAVE_KEY));return x&&x.version===989&&x.stats&&x.stats.hp>0?x:null;}catch(e){return null;}
+}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+function saveProgress(){
+ if(!state||phase==="gameover"||phase==="menu")return;
+ const keys=["distance","speed","time","hp","maxHp","kills","allyKills","killGoal","choices","mag","ammo","reload","reloadT","fireCycle","damage","spread","range","ap","blast","vehicleBonus","allyPower","medic","spawnT","spawnCount"];
+ const stats={};for(const k of keys)stats[k]=state[k];
+ const payload={version:989,seed,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}catch(e){}
+}
+function restoreProgress(payload){
+ let x=makeState();
+ Object.assign(x,payload.stats);
+ x.powers=Object.assign(x.powers,payload.powers||{});
+ x.roadX=roadAt(x.distance);
+ x.escorts=(payload.escorts||[]).slice(0,5).map((a,i)=>({
+   id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd,
+   x:x.roadX+(i%2?-30:30),wy:x.distance+Math.min(playerY()-H*.52,72+i*18)
+ }));
+ if(!x.escorts.length)x.escorts=makeState().escorts;
+ x.chunks=new Map();x.enemies=[];x.shots=[];x.particles=[];x.fireZones=[];x.smokes=[];
+ x.spawnT=Math.min(2.2,x.spawnT||2.2);
+ return x;
+}
+function makeState(){
+ return {distance:0,speed:SPEED,time:0,hp:140,maxHp:140,kills:0,allyKills:0,killGoal:THRESHOLD,choices:0,
+  mag:50,ammo:50,reload:2.5,reloadT:0,fireCd:0,fireCycle:.1,damage:12,spread:.062,range:600,ap:0,blast:0,vehicleBonus:1,
+  escorts:[{id:1,side:-1,forward:75,wy:75,x:W*.5-30,role:"rifle",fireCd:.4},{id:2,side:1,forward:92,wy:92,x:W*.5+30,role:"rifle",fireCd:.7},{id:3,side:-1,forward:108,wy:108,x:W*.5-8,role:"rifle",fireCd:1.1}],
+  allyPower:1,medic:false,powers:{napalm:0,artillery:0,smoke:0,supply:0},fx:[],fireZones:[],smokes:[],
+  enemies:[],shots:[],particles:[],chunks:new Map(),spawnT:2,spawnCount:0,overheat:0,flash:0,screenShake:0,wind:0,
+  aimX:W*.5,aimY:H*.25,roadX:W*.5,elite:0,damageT:0};
+}
+
 function propsAround(wy){
  let out=[];
  for(let k=Math.floor((wy-65)/CHUNK);k<=Math.floor((wy+65)/CHUNK);k++){
