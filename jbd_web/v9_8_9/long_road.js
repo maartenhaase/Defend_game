@@ -2,7 +2,7 @@
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("roadGame"),g=canvas.getContext("2d",{alpha:false});
-const ui={overlay:$("roadOverlay"),title:$("panelTitle"),body:$("panelBody"),choices:$("choiceRow"),start:$("startButton"),help:$("panelHelp"),
+const ui={overlay:$("roadOverlay"),title:$("panelTitle"),body:$("panelBody"),choices:$("choiceRow"),start:$("startButton"),newRun:$("newRun"),help:$("panelHelp"),
  hp:$("hp"),health:$("healthFill"),biome:$("biome"),progress:$("progress"),kills:$("kills"),next:$("nextChoice"),
  ammo:$("ammo"),powers:$("powerRow"),pause:$("pause"),target:$("targetLabel")};
 const SPEED=1.5,THRESHOLD=8,TAU=Math.PI*2;
@@ -10,7 +10,8 @@ const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),mix=(a,b,t)=>a+(b-a)*t;
 const dist=(x,y,x2,y2)=>Math.hypot(x-x2,y-y2);
 let W=390,H=780,DPR=1,CHUNK=780,state=null,phase="menu",holding=false,targetMode=null;
 let aim={x:195,y:280},last=0,uiTimer=0,seed=7919,textureCache=new Map(),spriteCache=new Map();
-let audio=null,lastMGSound=0;
+let audio=null,lastMGSound=0,saveClock=0;
+const SAVE_KEY="jbd989-long-road-v1";
 const BIOMES=[
  {key:"jungle",name:"JUNGLE",ground:"#4c6b47",accent:"#284c39",road:"#74684b",types:["palm","palm","leaf","log","hut","puddle","roots"]},
  {key:"city",name:"OLD CITY",ground:"#7b8278",accent:"#596858",road:"#9e9589",types:["house","house","garden","lamp","fence","wreck","wall"]},
@@ -87,6 +88,31 @@ function getChunk(k){if(!state.chunks.has(k))state.chunks.set(k,makeChunk(k));re
 function propsAround(wy){
  let list=[];for(let k=Math.floor((wy-60)/CHUNK);k<=Math.floor((wy+60)/CHUNK);k++)list.push(...getChunk(k).objects);
  return list;
+}
+function readSave(){
+ try{const x=JSON.parse(localStorage.getItem(SAVE_KEY));return x&&x.version===989&&x.stats&&x.stats.hp>0?x:null;}catch(e){return null;}
+}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+function saveProgress(){
+ if(!state||phase==="gameover"||phase==="menu")return;
+ const keys=["distance","speed","time","hp","maxHp","kills","allyKills","killGoal","choices","mag","ammo","reload","reloadT","fireCycle","damage","spread","range","ap","blast","vehicleBonus","allyPower","medic","spawnT","spawnCount"];
+ const stats={};for(const k of keys)stats[k]=state[k];
+ const payload={version:989,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}catch(e){}
+}
+function restoreProgress(payload){
+ let x=makeState();
+ Object.assign(x,payload.stats);
+ x.powers=Object.assign(x.powers,payload.powers||{});
+ x.roadX=roadAt(x.distance);
+ x.escorts=(payload.escorts||[]).slice(0,5).map((a,i)=>({
+   id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd,
+   x:x.roadX+(i%2?-30:30),wy:x.distance+Math.min(playerY()-H*.52,72+i*18)
+ }));
+ if(!x.escorts.length)x.escorts=makeState().escorts;
+ x.chunks=new Map();x.enemies=[];x.shots=[];x.particles=[];x.fireZones=[];x.smokes=[];
+ x.spawnT=Math.min(2.2,x.spawnT||2.2);
+ return x;
 }
 function makeState(){
  return {distance:0,speed:SPEED,time:0,hp:140,maxHp:140,kills:0,allyKills:0,killGoal:THRESHOLD,choices:0,
@@ -268,7 +294,7 @@ function fireMG(){
  // Looking near the tank is intentionally inaccurate; forward shots have controlled spread.
  const spread=state.spread*(.55+Math.random()*1.0),a=angle+(Math.random()-.5)*spread*2;
  const sx=state.roadX+Math.cos(a)*21,wy=state.distance+Math.sin(a)*18;
- state.shots.push({x:sx,wy,vx:Math.cos(a)*745,vy:Math.sin(a)*745,ttl:state.range/745,damage:state.damage,owner:"player",hits:0,pierce:state.ap,trail:2});
+ state.shots.push({x:sx,wy,vx:Math.cos(a)*745,vy:Math.sin(a)*745,ttl:state.range/745,damage:state.damage,owner:"player",hits:0,pierce:state.ap,hitIds:[],trail:2});
  state.ammo--;state.fireCd=state.fireCycle;state.flash=.09;state.screenShake=Math.max(state.screenShake,1.1);gunSound();
  if(state.ammo<=0)state.reloadT=state.reload;
  return true;
@@ -292,7 +318,7 @@ function damageEnemy(e,amount,source){
 }
 function addShot(owner,x,wy,tx,ty,damage,speed=300){
  const a=Math.atan2(ty-wy,tx-x),random=owner==="ally"?.12:.085,angle=a+(Math.random()-.5)*random;
- state.shots.push({owner,x,wy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,ttl:1.8,damage,pierce:0,hits:0});
+ state.shots.push({owner,x,wy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,ttl:1.8,damage,pierce:0,hits:0,hitIds:[]});
 }
 function projectileBlocked(x,wy){for(const o of propsAround(wy)){
  if(o.solid&&dist(x,wy,o.x,o.wy)<o.r*.85+2)return true;
@@ -305,10 +331,10 @@ function updateShots(dt){
    if(projectileBlocked(b.x,b.wy)){b.ttl=0;burst(b.x,b.wy,"#cab77e",3);break;}
    if(b.owner==="player"||b.owner==="ally"){
     let hit=null;
-    for(const e of state.enemies)if(e.alive&&!e._hitThisShot&&dist(b.x,b.wy,e.x,e.wy)<e.r+4){hit=e;break;}
+    for(const e of state.enemies)if(e.alive&&!b.hitIds.includes(e.id)&&dist(b.x,b.wy,e.x,e.wy)<e.r+4){hit=e;break;}
     if(hit){
       let dmg=b.damage*(hit.type==="vehicle"?state.vehicleBonus:1);
-      damageEnemy(hit,dmg,b.owner);b.hits++;
+      damageEnemy(hit,dmg,b.owner);b.hits++;b.hitIds.push(hit.id);
       if(state.blast>0){
        burst(b.x,b.wy,"#e1a55a",4);
        for(const e of state.enemies)if(e!==hit&&e.alive&&dist(e.x,e.wy,b.x,b.wy)<27)damageEnemy(e,state.blast,b.owner);
@@ -328,8 +354,7 @@ function updateShots(dt){
   b.ttl-=dt;
  }
  state.shots=state.shots.filter(b=>b.ttl>0&&Math.abs(sy(b.wy))<H+160&&b.x>-100&&b.x<W+100);
- for(const e of state.enemies)delete e._hitThisShot;
-}
+ }
 function damagePlayer(damage){
  state.hp=Math.max(0,state.hp-damage);state.damageT=.3;state.screenShake=Math.max(state.screenShake,2.8);
  if(state.hp<=0)gameOver();
@@ -403,6 +428,7 @@ function step(dt){
  if(state.reloadT===0&&state.ammo===0)state.ammo=state.mag;
  state.flash=Math.max(0,state.flash-dt);state.damageT=Math.max(0,state.damageT-dt);
  state.screenShake=Math.max(0,state.screenShake-dt*15);
+ saveClock+=dt;if(saveClock>=12){saveClock=0;saveProgress();}
  if(holding&&targetMode===null)fireMG();
  state.spawnT-=dt;
  if(state.spawnT<=0){state.spawnT=clamp(6.2-state.distance/2200,3.2,6.2);spawnAttack();}
@@ -452,7 +478,7 @@ function applyUpgrade(id){
  case "supply":state.powers.supply++;break;
  case "engine":state.speed=Math.min(2,state.speed+.15);break;
  }
- state.killGoal+=THRESHOLD;targetMode=null;phase="playing";
+ state.killGoal+=THRESHOLD;targetMode=null;phase="playing";saveProgress();
  ui.overlay.classList.add("hidden");refreshPowers();updateUi();
 }
 function addEscort(role){
@@ -600,15 +626,15 @@ function resize(){
  textureCache.clear();
  aim.x=W*.5;aim.y=H*.29;
 }
-function start(){
- audioUnlock();state=makeState();phase="playing";holding=false;targetMode=null;
+function start(fresh=false){
+ audioUnlock();state=!fresh&&readSave()?restoreProgress(readSave()):makeState();phase="playing";holding=false;targetMode=null;saveClock=0;ui.newRun.style.display="none";
  ui.overlay.classList.add("hidden");ui.target.style.display="none";
  ui.start.style.display="";ui.choices.style.display="none";refreshPowers();updateUi();last=performance.now();
 }
 function showPause(){
  if(!state)return;
  if(phase==="playing"){
-  phase="paused";holding=false;ui.title.textContent="LONG ROAD — PAUSED";
+  phase="paused";holding=false;saveProgress();ui.title.textContent="LONG ROAD — PAUSED";
   ui.body.textContent=state.kills+" eigen kills. "+Math.floor(state.distance)+" pixels afgelegd. De wereld blijft precies staan tot je verdergaat.";
   ui.choices.style.display="none";ui.start.style.display="block";ui.start.textContent="VERDER RIJDEN";
   ui.help.textContent="De klassieke game blijft apart beschikbaar via het menu.";
@@ -616,7 +642,7 @@ function showPause(){
  }else if(phase==="paused"){phase="playing";ui.overlay.classList.add("hidden");}
 }
 function gameOver(){
- phase="gameover";holding=false;ui.title.textContent="TANK DESTROYED";
+ phase="gameover";clearSave();holding=false;ui.title.textContent="TANK DESTROYED";
  ui.body.textContent="Je scoorde "+state.kills+" eigen kills, koos "+state.choices+" upgrades en reed "+Math.round(state.distance)+" pixels over de lange weg.";
  ui.choices.style.display="none";ui.start.style.display="block";ui.start.textContent="OPNIEUW LONG ROAD";
  ui.help.textContent="Nieuwe run: opnieuw willekeurige tactische upgrades.";
@@ -636,7 +662,8 @@ canvas.addEventListener("pointermove",ev=>{if(!state)return;aim=mousePos(ev);if(
 canvas.addEventListener("pointerup",()=>holding=false);
 canvas.addEventListener("pointercancel",()=>holding=false);
 canvas.addEventListener("contextmenu",ev=>ev.preventDefault());
-ui.start.addEventListener("click",()=>{if(phase==="paused"){phase="playing";ui.overlay.classList.add("hidden");last=performance.now();}else start();});
+ui.start.addEventListener("click",()=>{if(phase==="paused"){phase="playing";ui.overlay.classList.add("hidden");last=performance.now();}else start(phase==="gameover");});
+ui.newRun.addEventListener("click",()=>{clearSave();start(true);});
 ui.pause.addEventListener("click",showPause);
 window.addEventListener("keydown",ev=>{
  if(ev.code==="Escape"||ev.code==="KeyP"){if(phase==="playing"||phase==="paused")showPause();}
@@ -646,10 +673,16 @@ window.addEventListener("keyup",ev=>{if(ev.code==="Space")holding=false;});
 window.addEventListener("blur",()=>{holding=false;if(phase==="playing")showPause();});
 window.addEventListener("resize",resize);
 resize();ui.overlay.classList.remove("hidden");
+if(readSave()){
+ const old=readSave();ui.start.textContent="DOORGAAN MET LONG ROAD";
+ ui.newRun.style.display="block";ui.newRun.textContent="NIEUWE RUN";
+ ui.body.textContent="Vervolg je lange reis vanaf "+Math.round(old.stats.distance)+" pixels, met "+old.stats.kills+" eigen kills en "+old.stats.choices+" gekozen upgrades. De volledige wereld blijft doorlopend.";
+}
 requestAnimationFrame(frame);
 window.__JBDLongRoad={
  BIOMES,UPGRADE,blendAt,stageAt,roadAt,makeChunk,getState:()=>state,getPhase:()=>phase,
  start,step,spawnAttack,spawnEnemy,safeGround:groundPoint,fire:fireMG,applyUpgrade,chooseOptions,launchSpecial,draw,
+ saveProgress,readSave,restoreProgress,clearSave,
  setAim:(x,y)=>{aim={x,y};},setPhase:(x)=>{phase=x;},forceKill:(n)=>{for(let i=0;i<n;i++){state.kills++;if(state.kills>=state.killGoal)offerUpgrade();}},
  advance:(pixels)=>{state.distance+=pixels;state.roadX=roadAt(state.distance);state.chunks.clear();}
 };
