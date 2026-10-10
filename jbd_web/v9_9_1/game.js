@@ -495,6 +495,8 @@ var AudioSys=(function(){
       REC_URLS.cannonReal='https://raw.githubusercontent.com/6WENHAO/DS-Games/532ea73974a0c9d22cde876c80fad2536143863a/%E5%86%AC%E7%9C%A0%E3%81%AE%E6%9D%BE%E9%BC%A0_/%E6%88%98%E4%BA%89%E9%9B%B7%E9%9C%86/assets/audio/cannon_fire.ogg';
   function build(){
     if(ready)return;ready=true;
+    // Shared Howler handles avoid decoding identical recordings repeatedly on iPhone.
+    var sharedHowls=Object.create(null);
     if(window.Howl)Object.keys(REC_URLS).forEach(function(k){
       var u=REC_URLS[k],fmt=(u.indexOf('data:audio/wav')===0||/\.wav(?:\?|$)/i.test(u))?'wav':(u.indexOf('data:audio/ogg')===0||/\.ogg(?:\?|$)/i.test(u))?'ogg':'mp3';
       var isLocalRifle=(k==='rifle0'||k==='rifle1'||k==='rifle2');
@@ -506,7 +508,8 @@ var AudioSys=(function(){
       if(k==='trackSample')opts.sprite={pulse:[80,260]};
       if(k==='woodBreakSample')opts.sprite={hit:[0,650]};
       if(k==='groundSample')opts.sprite={hit:[0,260]};
-      rec[k]=new Howl(opts);
+      var cacheKey=u+'|'+JSON.stringify(opts.sprite||{});
+      rec[k]=sharedHowls[cacheKey]||(sharedHowls[cacheKey]=new Howl(opts));
     });
   }
   function unlockCtx(){try{if(window.Howler&&Howler.ctx&&Howler.ctx.state!=='running')Howler.ctx.resume();if(window.Howler)Howler.volume(1);}catch(e){}}
