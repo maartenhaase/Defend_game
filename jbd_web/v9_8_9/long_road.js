@@ -97,7 +97,7 @@ function saveProgress(){
  if(!state||phase==="gameover"||phase==="menu")return;
  const keys=["distance","speed","time","hp","maxHp","kills","allyKills","killGoal","choices","mag","ammo","reload","reloadT","fireCycle","damage","spread","range","ap","blast","vehicleBonus","allyPower","medic","spawnT","spawnCount"];
  const stats={};for(const k of keys)stats[k]=state[k];
- const payload={version:989,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
+ const payload={version:989,seed,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
  try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}catch(e){}
 }
 function restoreProgress(payload){
@@ -627,7 +627,7 @@ function resize(){
  aim.x=W*.5;aim.y=H*.29;
 }
 function start(fresh=false){
- audioUnlock();state=!fresh&&readSave()?restoreProgress(readSave()):makeState();phase="playing";holding=false;targetMode=null;saveClock=0;ui.newRun.style.display="none";
+ audioUnlock();const saved=fresh?null:readSave();seed=saved&&saved.seed||((Math.random()*0x7fffffff)|0)||7919;state=saved?restoreProgress(saved):makeState();state.roadX=roadAt(state.distance);phase="playing";holding=false;targetMode=null;saveClock=0;ui.newRun.style.display="none";spriteCache.clear();
  ui.overlay.classList.add("hidden");ui.target.style.display="none";
  ui.start.style.display="";ui.choices.style.display="none";refreshPowers();updateUi();last=performance.now();
 }
