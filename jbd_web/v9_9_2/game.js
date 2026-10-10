@@ -6665,8 +6665,6 @@ window.addEventListener('error',function(e){
   }catch(_){}
 });
 
-})();
-
 
 /* ---------- V9.9.2 CLASSIC INPUT, PERKS & DEMO ROAD FIX ---------- */
 (function(){
@@ -6803,4 +6801,6 @@ window.addEventListener('error',function(e){
     else if(ready){activateBtn.textContent='ACTIVEREN · RAMPAGE';activateBtn.disabled=false;activateBtn.classList.add('ready');}
     else{activateBtn.textContent='LADEN '+Math.floor(a.focus||0)+'%';activateBtn.disabled=true;activateBtn.classList.remove('ready');}
   },180);
+})();
+
 })();
