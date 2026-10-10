@@ -3002,7 +3002,7 @@ function damageBunker(dmg){
   gameState.bunker.hp-=real;gameState.stats.damageTaken+=real;gameState.eff=clamp(gameState.eff-.0052*real,0,1);addRisk(-Math.min(.11,real*.0036),0);
   gameState.recoveryT=Math.max(gameState.recoveryT||0,.45+Math.min(1.15,real*.055));
   pushEffect({type:'hit',x:gameState.bunker.x+rand(-18,18),y:gameState.bunker.y+rand(-10,10),t:0,life:.28});
-  AudioSys.tone('ground',.72);
+  AudioSys.impact('armor',.54,{pan:0});
   if(gameState.bunker.hp<=0){
     if(!gameState.lastStandUsed){
       gameState.lastStandUsed=true;gameState.bunker.hp=Math.max(10,gameState.bunker.maxHp*.12);
@@ -3979,7 +3979,7 @@ function coverMaterial(c){
     (c.kind==='sandbag'||c.kind==='snowbank')?'sand':'earth';
 }
 function coverAudioMaterial(c){
-  var m=coverMaterial(c);return m==='steel'?'metal':m==='wood'?'wood':m==='sand'?'sand':'ground';
+  var m=coverMaterial(c);return m==='steel'?'metal':m==='wood'?'wood':m==='sand'?'sand':m==='stone'?'stone':m==='brick'?'concrete':m==='concrete'?'concrete':'stone';
 }
 
 function buildingMaxHealth(c){
@@ -4244,7 +4244,7 @@ function emitGroundImpact(x,y,power,audioMaterial,silentAudio){
   }else{
     for(var c=0;c<(IS_IPHONE?2:4);c++)pushEffect({type:'groundClod',x:x+rand(-3,3),y:y+rand(-2,2),vx:rand(-40,40),vy:rand(-52,-15),rot:rand(0,TAU),vr:rand(-9,9),t:0,life:rand(.25,.46),material:'earth'});
   }
-  if(!silentAudio){var am=audioMaterial||(theme==='desert'||theme==='coast'?'sand':theme==='snow'?'snow':theme==='jungle'?'mud':theme==='mountain'?'stone':'ground');AudioSys.impact(am,.62,{pan:clamp((x-W*.5)/(W*.55),-.8,.8)});}
+  if(!silentAudio){var am=audioMaterial||(theme==='desert'||theme==='coast'?'sand':theme==='snow'?'snow':theme==='jungle'?'mud':theme==='mountain'?'stone':'ground');var distanceAttenuation=clamp(1-dist(x,y,gameState.bunker.x,gameState.bunker.y)/(H*.98),.28,.92);AudioSys.impact(am,.62*distanceAttenuation,{pan:clamp((x-W*.5)/(W*.55),-.8,.8)});}
 }
 function primaryObstacleHit(b){
   var m=gameState.map,i,c,d;
