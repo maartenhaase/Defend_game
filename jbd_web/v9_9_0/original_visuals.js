@@ -6618,6 +6618,20 @@ function bridgeDrawActor(kind,output,x,y,options){
       drawHeli({x:x,y:y,t:o.time||0,rotor:(o.time||0)*21,vx:16,alive:true});
     }else if(kind==='para'){
       drawPara({x:x,y:y,phase:(o.time||0)*3.7});
+    }else if(kind==='blood'){
+      drawAtlas('env:blood2',x,y,.60,o.angle||0,.8);
+    }else if(kind==='napalm'){
+      var oldZones=gameState.fireZones;
+      try{
+        gameState.fireZones=[{x:x,y:y,radius:o.radius||50,source:'napalm',t:o.t||1,maxT:o.maxT||10}];
+        drawFireZones();
+      }finally{gameState.fireZones=oldZones;}
+    }else if(kind==='explosion'){
+      var oldFx=gameState.effects;
+      try{
+        gameState.effects=[{type:'explosion',x:x,y:y,r:o.r||22,t:o.t||0,life:o.life||.6,seed:Math.round(x*19+y*29)}];
+        drawEffects();
+      }finally{gameState.effects=oldFx;}
     }else if(kind==='flame'){
       drawEnvSprite('scorch1',x,y,1.3,0,.80);
     }else if(kind==='shell'){
