@@ -5,7 +5,9 @@ const canvas=$("roadGame"),g=canvas.getContext("2d",{alpha:false});
 const ui={overlay:$("roadOverlay"),title:$("panelTitle"),body:$("panelBody"),choices:$("choiceRow"),start:$("startButton"),newRun:$("newRun"),help:$("panelHelp"),
  hp:$("hp"),health:$("healthFill"),biome:$("biome"),progress:$("progress"),kills:$("kills"),next:$("nextChoice"),
  ammo:$("ammo"),powers:$("powerRow"),pause:$("pause"),target:$("targetLabel")};
-const SPEED=1.5,THRESHOLD=8,TAU=Math.PI*2;
+const SPEED=28,THRESHOLD=8,TAU=Math.PI*2;
+const originals=window.JBDOriginalVisuals;
+if(!originals||!originals.renderSegment)throw new Error("V9.8.8 original graphics bridge not loaded");
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),mix=(a,b,t)=>a+(b-a)*t;
 const dist=(x,y,x2,y2)=>Math.hypot(x-x2,y-y2);
 let W=390,H=780,DPR=1,CHUNK=780,state=null,phase="menu",holding=false,targetMode=null;
@@ -59,7 +61,7 @@ function blendAt(wy){
  const a=biomeIndex%BIOMES.length,b=(biomeIndex+1)%BIOMES.length;
  return {a,b,t:frac<=3?0:clamp((frac-3)/2,0,1),section:biomeIndex,local:frac};
 }
-function roadAt(wy){return W*.5+Math.sin(wy/315+seed*.03)*W*.09+Math.sin(wy/145+seed*.001)*W*.023;}
+function roadAt(wy){return W*.5;} // exact road alignment across stitched map segments
 function groundPoint(x,wy,r=8){
  if(Math.abs(x-roadAt(wy))<40+r)return true;
  const list=propsAround(wy);
@@ -71,81 +73,47 @@ function sy(wy){return playerY()-(wy-state.distance);}
 function worldY(screenY){return state.distance+playerY()-screenY;}
 function visibleChunkRange(){return [Math.floor((state.distance+playerY()-H-80)/CHUNK)-1,Math.floor((state.distance+playerY()+90)/CHUNK)+1];}
 function makeChunk(k){
- const r=seeded(hash((k+1009)*71^seed)),objects=[];
- const count=20+Math.min(13,Math.floor(Math.max(0,k)/5));
- for(let i=0;i<count;i++){
-  const wy=k*CHUNK+r()*CHUNK,x=22+r()*(W-44);
-  const b=blendAt(wy),which=r()<b.t?b.b:b.a,biome=BIOMES[which],type=biome.types[(r()*biome.types.length)|0],size=type==="lighthouse"?45:type==="house"||type==="container"||type==="ruins"?34:15+r()*19;
-  if(Math.abs(x-roadAt(wy))<size+49)continue;
-  const o={x,wy,type,biome:which,r:Math.max(7,size*.38),size,variant:(r()*3)|0,solid:SOLID.has(type)};
-  let conflict=false;
-  for(let z=0;z<objects.length;z++){let q=objects[z];if(q.solid&&o.solid&&dist(q.x,q.wy,x,wy)<q.r+o.r+10){conflict=true;break;}}
-  if(!conflict)objects.push(o);
- }
- return {k,objects,bg:null};
+ return {k,objects:[],bg:null,theme:null,stamp:hash((k+1009)*71^seed)};
 }
-function getChunk(k){if(!state.chunks.has(k))state.chunks.set(k,makeChunk(k));return state.chunks.get(k);}
+function getChunk(k){
+ if(!state.chunks.has(k))state.chunks.set(k,makeChunk(k));
+ return state.chunks.get(k);
+}
 function propsAround(wy){
- let list=[];for(let k=Math.floor((wy-60)/CHUNK);k<=Math.floor((wy+60)/CHUNK);k++)list.push(...getChunk(k).objects);
- return list;
-}
-function readSave(){
- try{const x=JSON.parse(localStorage.getItem(SAVE_KEY));return x&&x.version===989&&x.stats&&x.stats.hp>0?x:null;}catch(e){return null;}
-}
-function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
-function saveProgress(){
- if(!state||phase==="gameover"||phase==="menu")return;
- const keys=["distance","speed","time","hp","maxHp","kills","allyKills","killGoal","choices","mag","ammo","reload","reloadT","fireCycle","damage","spread","range","ap","blast","vehicleBonus","allyPower","medic","spawnT","spawnCount"];
- const stats={};for(const k of keys)stats[k]=state[k];
- const payload={version:989,seed,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
- try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}catch(e){}
-}
-function restoreProgress(payload){
- let x=makeState();
- Object.assign(x,payload.stats);
- x.powers=Object.assign(x.powers,payload.powers||{});
- x.roadX=roadAt(x.distance);
- x.escorts=(payload.escorts||[]).slice(0,5).map((a,i)=>({
-   id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd,
-   x:x.roadX+(i%2?-30:30),wy:x.distance+Math.min(playerY()-H*.52,72+i*18)
- }));
- if(!x.escorts.length)x.escorts=makeState().escorts;
- x.chunks=new Map();x.enemies=[];x.shots=[];x.particles=[];x.fireZones=[];x.smokes=[];
- x.spawnT=Math.min(2.2,x.spawnT||2.2);
- return x;
-}
-function makeState(){
- return {distance:0,speed:SPEED,time:0,hp:140,maxHp:140,kills:0,allyKills:0,killGoal:THRESHOLD,choices:0,
-  mag:50,ammo:50,reload:2.5,reloadT:0,fireCd:0,fireCycle:.1,damage:12,spread:.062,range:600,ap:0,blast:0,vehicleBonus:1,
-  escorts:[{id:1,side:-1,forward:75,wy:75,x:W*.5-30,role:"rifle",fireCd:.4},{id:2,side:1,forward:92,wy:92,x:W*.5+30,role:"rifle",fireCd:.7},{id:3,side:-1,forward:108,wy:108,x:W*.5-8,role:"rifle",fireCd:1.1}],
-  allyPower:1,medic:false,powers:{napalm:0,artillery:0,smoke:0,supply:0},fx:[],fireZones:[],smokes:[],
-  enemies:[],shots:[],particles:[],chunks:new Map(),spawnT:2,spawnCount:0,overheat:0,flash:0,screenShake:0,wind:0,
-  aimX:W*.5,aimY:H*.25,roadX:W*.5,elite:0,damageT:0};
+ let out=[];
+ for(let k=Math.floor((wy-65)/CHUNK);k<=Math.floor((wy+65)/CHUNK);k++){
+  const c=getChunk(k);if(!c.bg)paintChunk(c);
+  out.push(...c.objects);
+ }
+ return out;
 }
 function paintChunk(chunk){
- const c=document.createElement("canvas");c.width=Math.ceil(W);c.height=Math.ceil(CHUNK);
- const b=c.getContext("2d",{alpha:false}),rr=seeded(hash((chunk.k+10)*4719^seed));
- for(let y=0;y<CHUNK;y+=6){
-  const wy=(chunk.k+1)*CHUNK-y-3,theme=blendAt(wy),aa=BIOMES[theme.a],bb=BIOMES[theme.b];
-  b.fillStyle=colorMix(aa.ground,bb.ground,theme.t);b.fillRect(0,y,W,7);
-  if(y%12===0){b.fillStyle=colorMix(aa.accent,bb.accent,theme.t);b.globalAlpha=.10;
-   b.fillRect((rr()*W)|0,y,8+rr()*25,1+rr()*4);b.globalAlpha=1;}
-  const x=roadAt(wy),road=colorMix(aa.road,bb.road,theme.t),width=47;
-  b.fillStyle="#4a493a";b.globalAlpha=.46;b.fillRect(x-width*.5-5,y,width+10,7);b.globalAlpha=1;
-  b.fillStyle=road;b.fillRect(x-width*.5,y,width,7);
-  b.fillStyle="rgba(31,31,29,.10)";b.fillRect(x-14,y,4,7);b.fillRect(x+10,y,4,7);
-  b.fillStyle="rgba(235,223,188,.10)";b.fillRect(x-2,y,3,7);
+ // These are original JBD 9.8.8 map images, produced by its own buildMap + drawMap.
+ const half=blendAt((chunk.k+.5)*CHUNK);
+ const first=originals.renderSegment(BIOMES[half.a].key,chunk.stamp);
+ const second=half.t>0?originals.renderSegment(BIOMES[half.b].key,chunk.stamp^0x7129c6ab):null;
+ const surface=document.createElement("canvas");surface.width=Math.ceil(W);surface.height=Math.ceil(CHUNK);
+ const c=surface.getContext("2d",{alpha:false});c.drawImage(first.canvas,0,0,W,CHUNK);
+ if(second){
+  for(let y=0;y<CHUNK;y+=8){
+   const t=blendAt((chunk.k+1)*CHUNK-y-4).t;
+   if(t<=0)continue;
+   c.globalAlpha=t;
+   c.drawImage(second.canvas,0,y,W,Math.min(8,CHUNK-y),0,y,W,Math.min(8,CHUNK-y));
+  }
+  c.globalAlpha=1;
  }
- // Persistent ground details drawn only once per chunk, not each frame.
- for(let n=0;n<CHUNK*.31;n++){
-  const yy=rr()*CHUNK,wy=(chunk.k+1)*CHUNK-yy,xx=rr()*W,bi=blendAt(wy);
-  if(Math.abs(xx-roadAt(wy))<31)continue;
-  b.fillStyle=colorMix(BIOMES[bi.a].accent,BIOMES[bi.b].accent,bi.t);
-  b.globalAlpha=.23+rr()*.19;
-  b.fillRect(xx,yy,rr()<.83?1:3,rr()<.72?2:5);
+ let objects=[];
+ function append(objs,isNext){
+  for(const o of objs){
+   let wy=(chunk.k+1)*CHUNK-o.y,t=blendAt(wy).t;
+   const selector=(hash(Math.round(o.x*53+wy*17+o.rx*149))%10000)/10000;
+   if((isNext&&selector>=t)||(!isNext&&selector<t))continue;
+   objects.push({x:o.x,wy,r:Math.max(o.rx,o.ry),rx:o.rx,ry:o.ry,type:o.kind,solid:true});
+  }
  }
- b.globalAlpha=1;
- chunk.bg=c;
+ append(first.collisions,false);if(second)append(second.collisions,true);
+ chunk.objects=objects;chunk.bg=surface;chunk.theme=BIOMES[half.a].key;
 }
 function prepareVisibleChunks(){
  let [lo,hi]=visibleChunkRange();
@@ -154,92 +122,21 @@ function prepareVisibleChunks(){
 }
 function ellipse(c,x,y,rx,ry,col){c.fillStyle=col;c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c.fill();}
 function line(c,x,y,x2,y2,col,w=1){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.stroke();}
-function sprite(type,biome,variant){
- const key=type+"|"+biome+"|"+variant;
- if(spriteCache.has(key))return spriteCache.get(key);
- const c=document.createElement("canvas");c.width=c.height=90;let b=c.getContext("2d");
- let r=seeded(hash(type.length*991+biome*711+variant*113)),cx=45,cy=44;
- let greens=["#1e5138","#458552","#779f63"],stone=["#70766f","#a1a69b","#c2bbaa"],wood=["#695942","#9b8969","#c7af86"];
- b.save();ellipse(b,cx+4,cy+7,32,25,"#131d1759");
- if(["palm","tree","pine","shrub","leaf","roots","scrub","garden"].includes(type)){
-  if(type==="palm"){
-   ellipse(b,cx,cy,7,7,"#725b3b");
-   for(let i=0;i<10;i++){let a=TAU*i/10+variant*.12,dx=Math.cos(a),dy=Math.sin(a),L=29+r()*9;
-    b.fillStyle=greens[(i+variant)%3];b.beginPath();b.moveTo(cx,cy);
-    b.quadraticCurveTo(cx+dx*L*.5-dy*8,cy+dy*L*.5+dx*8,cx+dx*L,cy+dy*L*.86);
-    b.quadraticCurveTo(cx+dx*L*.5+dy*7,cy+dy*L*.5-dx*7,cx,cy);b.fill();
-    line(b,cx,cy,cx+dx*L,cy+dy*L*.86,"#224632",1);}
-   ellipse(b,cx,cy,4,4,"#b9a177");
-  }else{
-   let n=type==="pine"?5:11;
-   for(let i=0;i<n;i++){let a=TAU*i/n,dd=type==="pine"?18:21;
-    ellipse(b,cx+Math.cos(a)*dd*.65,cy+Math.sin(a)*dd*.6,type==="pine"?19:9+r()*7,type==="pine"?13:11+r()*6,greens[(i+biome)%3]);}
-   if(type==="tree")ellipse(b,cx,cy,5,5,"#907a53");
-   for(let k=0;k<12;k++)line(b,cx+(r()-.5)*39,cy+(r()-.5)*28,cx+(r()-.5)*32,cy+(r()-.5)*30,"#8bab78",.6);
-  }
- }else if(["rock","snowbank","dune","rubble"].includes(type)){
-  let fill=type==="snowbank"?"#e7e8df":type==="dune"?"#cdb48a":"#898c85";
-  b.fillStyle=fill;b.strokeStyle="#50564c";b.lineWidth=2;
-  b.beginPath();b.moveTo(15,34);b.lineTo(30,17);b.lineTo(61,21);b.lineTo(76,45);b.lineTo(63,68);b.lineTo(25,65);b.closePath();b.fill();b.stroke();
-  b.fillStyle="#d7d5c6";b.beginPath();b.moveTo(20,33);b.lineTo(32,19);b.lineTo(58,22);b.lineTo(51,40);b.closePath();b.fill();
-  for(let i=0;i<8;i++){let x=28+r()*33,y=34+r()*22;line(b,x,y,x+3+r()*5,y-2-r()*5,"#545a57",1.2);}
- }else if(["house","hut","shed","watch","bunker","ruins","lighthouse"].includes(type)){
-  if(type==="lighthouse"){
-   ellipse(b,cx,cy,32,32,"#847c67");ellipse(b,cx,cy,27,27,"#c9c1a9");
-   for(let i=0;i<12;i++){let a=i*TAU/12;line(b,cx+Math.cos(a)*25,cy+Math.sin(a)*25,cx+Math.cos(a)*32,cy+Math.sin(a)*32,"#635947",3);}
-   ellipse(b,cx,cy,18,18,"#ba5644");ellipse(b,cx,cy,12,12,"#f8eed3");ellipse(b,cx,cy,7,7,"#c8b05c");
-  }else{
-   let roofless=type!=="watch",base=type==="hut"?"#9c8563":type==="ruins"?"#777a74":"#a09e8a";
-   b.fillStyle=base;b.fillRect(15,19,60,53);
-   b.strokeStyle="#48483e";b.lineWidth=5;
-   b.beginPath();b.moveTo(15,19);b.lineTo(75,19);b.moveTo(15,19);b.lineTo(15,72);b.moveTo(75,19);b.lineTo(75,72);
-   b.moveTo(15,72);b.lineTo(35,72);b.moveTo(55,72);b.lineTo(75,72);b.stroke();
-   if(roofless){
-    for(let i=0;i<7;i++){let x=20+r()*50,y=26+r()*36;b.fillStyle=i%2?"#6c6b5c":"#b4aa91";b.fillRect(x,y,5+r()*8,4+r()*5);}
-    b.fillStyle="#4e5049";b.fillRect(39,48,17,11);line(b,23,33,31,36,"#50584c",1.4);
-   }else{b.fillStyle="#686e5d";b.fillRect(23,25,42,40);line(b,29,30,59,30,"#b3b6a8",2);}
-  }
- }else if(["wire","fence","stonewall","wall","barrier","sandbags","log","roots","hay"].includes(type)){
-  if(type==="log"||type==="roots"||type==="hay"){
-   b.save();b.translate(cx,cy);b.rotate(-.28+variant*.24);
-   for(let i=0;i<4;i++){b.fillStyle=type==="hay"?"#bca977":"#69553c";b.fillRect(-32,-17+i*10,64,8);
-    for(let j=0;j<6;j++)line(b,-26+j*10,-16+i*10,-24+j*10,-11+i*10,"#c5a06d",.8);}b.restore();
-  }else if(type==="sandbags"){
-   for(let i=0;i<7;i++){ellipse(b,11+i*11,44+(i%2)*3,8,5,"#9b936b");line(b,7+i*11,42,12+i*11,42,"#d3c59b",1);}
-  }else{
-   for(let i=0;i<7;i++){
-    let x=15+i*10;b.fillStyle=type==="wire"?"#5b635b":type==="barrier"?"#bc9f68":"#918c7b";
-    b.fillRect(x,36,8,14);
-    if(type==="wire"){line(b,x,35,x+10,52,"#323d37",1);ellipse(b,x,43,2,2,"#404944");}
-    else if(type==="barrier")line(b,x,38,x+8,46,"#5b4a39",2);
-   }
-  }
- }else if(["container","crate","pipes","wreck"].includes(type)){
-  b.fillStyle=type==="container"?"#60716b":type==="wreck"?"#4b4a43":"#987d53";
-  b.fillRect(19,21,52,49);b.strokeStyle="#353d36";b.lineWidth=4;b.strokeRect(19,21,52,49);
-  if(type==="wreck"){ellipse(b,45,43,17,12,"#272d29");for(let i=0;i<7;i++)line(b,20+r()*50,22+r()*46,23+r()*50,23+r()*46,"#c09869",1);}
-  else for(let i=0;i<7;i++)line(b,23+i*7,24,23+i*7,66,"#454d43",1);
- }else if(["puddle","well"].includes(type)){
-  ellipse(b,cx,cy,28,23,"#445d55");ellipse(b,cx,cy,22,17,"#718f83");ellipse(b,cx-6,cy-7,10,3,"#c0cbbc");
- }else{ // noninteractive environmental accents
-  for(let i=0;i<10;i++)ellipse(b,cx+(r()-.5)*50,cy+(r()-.5)*46,3+r()*5,2+r()*4,greens[i%3]);
- }
- b.restore();spriteCache.set(key,c);return c;
-}
 function drawWorld(){
  prepareVisibleChunks();
  const [lo,hi]=visibleChunkRange();
  for(let k=lo;k<=hi;k++){
-  const chunk=getChunk(k),screenTop=sy((k+1)*CHUNK);
-  g.drawImage(chunk.bg,0,Math.floor(screenTop),W,Math.ceil(CHUNK)+1);
-  for(const o of chunk.objects){
-   let y=sy(o.wy),size=o.size*2.15;
-   if(y<-60||y>H+60)continue;
-   g.drawImage(sprite(o.type,o.biome,o.variant),o.x-size/2,y-size/2,size,size);
-  }
+  const ch=getChunk(k);
+  if(ch.bg)g.drawImage(ch.bg,0,Math.round(sy((k+1)*CHUNK)),W,Math.ceil(CHUNK)+1);
+ }
+ for(const d of state.decals||[]){
+  const y=sy(d.wy);if(y< -65||y>H+65)continue;
+  originals.drawActor(d.kind==="vehicle"?"wreck":"corpse",g,d.x,y,
+    {role:d.role||"rifle",time:state.time,dir:"down",variant:d.variant||0});
  }
 }
 function gunSound(){
+ if(originals.soundMG){originals.soundMG();return;}
  if(!audio)return;const now=audio.currentTime;if(now-lastMGSound<.045)return;lastMGSound=now;
  try{
   let count=audio.sampleRate*.038,buffer=audio.createBuffer(1,count,audio.sampleRate),data=buffer.getChannelData(0);
