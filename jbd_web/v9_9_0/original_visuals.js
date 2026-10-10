@@ -6587,18 +6587,18 @@ function bridgeBuildSegment(theme,segmentSeed){
   return out;
 }
 function bridgeDrawActor(kind,output,x,y,options){
-  var o=options||{},prev=ctx,prevState=gameState;
+  var o=options||{},prev=ctx,prevState=gameState,prevLevel=gameState?gameState.levelIndex:0;
   try{
     ctx=output;
     if(!gameState){gameState=freshState();gameState.levelIndex=0;gameState.profile=playerProfile();buildMap();}
-    gameState.time=o.time||0;
-    if(kind==='soldier'){
+    gameState.time=o.time||0;gameState.levelIndex=Math.max(0,SPR.level); // prevent expensive atlas rebuild every actor
+    if(kind==='soldier'||kind==='corpse'){
       // Existing 1,040+ faction/role/direction/pose sprites from the ORIGINAL atlas.
       drawSoldier({
         x:x,y:y,role:o.role||'rifle',faction:o.faction||'wehrmacht',variant:o.variant||0,
-        alive:true,state:'dismount',longPose:o.pose||(['walk1','walk2','walk3','walk4'][Math.floor((o.time||0)*5)%4]),
+        alive:kind!=='corpse',state:kind==='corpse'?'dead':'dismount',longPose:kind==='corpse'?'dead2':(o.pose||(['walk1','walk2','walk3','walk4'][Math.floor((o.time||0)*5)%4])),
         longDir:o.dir||'down',anim:o.time||0,anim2:o.time||0,stateT:1,dismountDur:0,
-        recoil:o.recoil||0,limp:0,angle:o.angle||-Math.PI/2,fireCd:1,muzzle:0,landSquash:0
+        recoil:o.recoil||0,limp:0,angle:o.angle||-Math.PI/2,fireCd:1,muzzle:0,landSquash:0,deadT:kind==='corpse'?.6:0
       });
     }else if(kind==='tank'||kind==='vehicle'){
       var typ=kind==='tank'?'halftrack':(o.type||'truck');
@@ -6611,6 +6611,9 @@ function bridgeDrawActor(kind,output,x,y,options){
         recoil:0,alive:true,mgBurst:0,damageT:0,
         vehicleSpec:null,vehicleClass:1,currentSpeed:18,speed:25
       },false);
+    }else if(kind==='wreck'){
+      drawAtlas('env:scorch1',x,y,1.2,0,.75);
+      drawAtlas('truck:wreck',x,y,.52,Math.PI,1);
     }else if(kind==='heli'){
       drawHeli({x:x,y:y,t:o.time||0,rotor:(o.time||0)*21,vx:16,alive:true});
     }else if(kind==='para'){
@@ -6620,7 +6623,7 @@ function bridgeDrawActor(kind,output,x,y,options){
     }else if(kind==='shell'){
       drawEnvSprite('scorch2',x,y,1.0,0,.75);
     }
-  }finally{ctx=prev;gameState=prevState;}
+  }finally{if(gameState)gameState.levelIndex=prevLevel;ctx=prev;gameState=prevState;}
 }
 window.JBDOriginalVisuals={
   version:'V9.8.8 — ORIGINAL ENGINE',themes:LONG_THEMES,
