@@ -13,7 +13,7 @@ const dist=(x,y,x2,y2)=>Math.hypot(x-x2,y-y2);
 let W=390,H=780,DPR=1,CHUNK=780,state=null,phase="menu",holding=false,targetMode=null;
 let aim={x:195,y:280},last=0,uiTimer=0,seed=7919,textureCache=new Map(),spriteCache=new Map();
 let audio=null,lastMGSound=0,saveClock=0;
-const SAVE_KEY="jbd989-long-road-v1";
+const SAVE_KEY="jbd990-original-art-v1";
 const BIOMES=[
  {key:"jungle",name:"JUNGLE",ground:"#4c6b47",accent:"#284c39",road:"#74684b",types:["palm","palm","leaf","log","hut","puddle","roots"]},
  {key:"city",name:"OLD CITY",ground:"#7b8278",accent:"#596858",road:"#9e9589",types:["house","house","garden","lamp","fence","wreck","wall"]},
@@ -47,7 +47,7 @@ const UPGRADE=[
  {id:"artillery",name:"ARTILLERY BARRAGE",desc:"+2 gerichte artillerieaanvallen.",cat:"TACTICAL"},
  {id:"smoke",name:"SMOKE SCREEN",desc:"+1 rookgordijn. Vermindert inkomende treffers.",cat:"TACTICAL"},
  {id:"supply",name:"SUPPLY DROP",desc:"+1 voorraadpakket. Kies de plek en herstel je tank.",cat:"TACTICAL"},
- {id:"engine",name:"LOW-GEAR UPGRADE",desc:"Tank rijdt iets sneller (tot 2 pixels/seconde).",cat:"MOBILITY"}
+ {id:"engine",name:"LOW-GEAR UPGRADE",desc:"Tank rijdt iets sneller (tot 40 pixels/seconde).",cat:"MOBILITY"}
 ];
 const COLORS={body:"#79856b",bodyDark:"#3f4c43",hull:"#717c6a",tan:"#aa936e",blue:"#6f8a83"};
 function seeded(n){let x=(n>>>0)||1;return ()=>{x=(x+0x6D2B79F5)|0;let t=Math.imul(x^(x>>>15),1|x);t^=t+Math.imul(t^(t>>>7),61|t);return ((t^(t>>>14))>>>0)/4294967296;};}
@@ -80,14 +80,14 @@ function getChunk(k){
  return state.chunks.get(k);
 }
 function readSave(){
- try{const x=JSON.parse(localStorage.getItem(SAVE_KEY));return x&&x.version===989&&x.stats&&x.stats.hp>0?x:null;}catch(e){return null;}
+ try{const x=JSON.parse(localStorage.getItem(SAVE_KEY));return x&&x.version===990&&x.stats&&x.stats.hp>0?x:null;}catch(e){return null;}
 }
 function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
 function saveProgress(){
  if(!state||phase==="gameover"||phase==="menu")return;
  const keys=["distance","speed","time","hp","maxHp","kills","allyKills","killGoal","choices","mag","ammo","reload","reloadT","fireCycle","damage","spread","range","ap","blast","vehicleBonus","allyPower","medic","spawnT","spawnCount"];
  const stats={};for(const k of keys)stats[k]=state[k];
- const payload={version:989,seed,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
+ const payload={version:990,seed,stats,escorts:state.escorts.map(a=>({id:a.id,side:a.side,forward:a.forward,role:a.role,fireCd:a.fireCd})),powers:state.powers};
  try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}catch(e){}
 }
 function restoreProgress(payload){
@@ -367,7 +367,7 @@ function step(dt){
 }
 function allowedUpgrades(){
  return UPGRADE.filter(u=>u.id!=="medic"||!state.medic).filter(u=>u.id!=="escort"||state.escorts.length<5)
- .filter(u=>u.id!=="engine"||state.speed<2).filter(u=>u.id!=="rate"||state.fireCycle>.058)
+ .filter(u=>u.id!=="engine"||state.speed<40).filter(u=>u.id!=="rate"||state.fireCycle>.058)
  .filter(u=>u.id!=="aim"||state.spread>.018);
 }
 function chooseOptions(){
@@ -407,7 +407,7 @@ function applyUpgrade(id){
  case "artillery":state.powers.artillery+=2;break;
  case "smoke":state.powers.smoke++;break;
  case "supply":state.powers.supply++;break;
- case "engine":state.speed=Math.min(2,state.speed+.15);break;
+ case "engine":state.speed=Math.min(40,state.speed+2);break;
  }
  state.killGoal+=THRESHOLD;targetMode=null;phase="playing";saveProgress();
  ui.overlay.classList.add("hidden");refreshPowers();updateUi();
