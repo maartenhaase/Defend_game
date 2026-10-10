@@ -6705,7 +6705,7 @@ window.addEventListener('error',function(e){
   document.body.appendChild(modal);
   var activateBtn=document.createElement('button');activateBtn.id='jbdActivate';activateBtn.type='button';activateBtn.textContent='ACTIVEREN';
   activateBtn.addEventListener('pointerdown',function(ev){ev.stopPropagation();});
-  activateBtn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(typeof activateArcadeFocus==='function')activateArcadeFocus();});
+  activateBtn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(gameState&&gameState.armedPerk){var perk=gameState.armedPerk;gameState.armedPerk=null;applyPerk(perk);return;}if(typeof activateArcadeFocus==='function')activateArcadeFocus();});
   document.body.appendChild(activateBtn);
 
   function pickTwo(){
@@ -6728,8 +6728,7 @@ window.addEventListener('error',function(e){
       if(perk.id==='mag')gameState.primaryAmmo=Math.min(gameState.profile.primaryMag,gameState.primaryAmmo+10);
     }
     saveGame();
-    if(gameState.arcade){gameState.arcade.focus=100;gameState.arcade.focusT=0;}
-    gameState.message=perk.name+' · UPGRADE READY';gameState.messageT=1.8;
+    gameState.message=perk.name+' ACTIVATED';gameState.messageT=1.8;
     gameState._perkPaused=false;perkOpen=false;modal.style.display='none';
   }
   function showPerkChoice(){
@@ -6739,7 +6738,7 @@ window.addEventListener('error',function(e){
     pickTwo().forEach(function(perk){
       var b=document.createElement('button');b.type='button';
       b.innerHTML='<strong>'+perk.name+'</strong><span>'+perk.desc+'</span>';
-      b.addEventListener('click',function(){applyPerk(perk);});
+      b.addEventListener('click',function(){gameState.armedPerk=perk;gameState._perkPaused=false;perkOpen=false;modal.style.display='none';gameState.message=perk.name+' READY · TAP ACTIVATE';gameState.messageT=2;});
       cards.appendChild(b);
     });
     modal.style.display='flex';
@@ -6797,7 +6796,8 @@ window.addEventListener('error',function(e){
     if(!gameState||gameState.mode!=='playing'){activateBtn.style.display='none';return;}
     activateBtn.style.display='block';
     var a=gameState.arcade||{},ready=a.focus>=100&&a.focusT<=0&&a.focusCd<=0;
-    if(a.focusT>0){activateBtn.textContent='ACTIEF '+Math.ceil(a.focusT)+'s';activateBtn.disabled=true;activateBtn.classList.remove('ready');}
+    if(gameState.armedPerk){activateBtn.textContent='ACTIVEREN · '+gameState.armedPerk.name;activateBtn.disabled=false;activateBtn.classList.add('ready');}
+    else if(a.focusT>0){activateBtn.textContent='ACTIEF '+Math.ceil(a.focusT)+'s';activateBtn.disabled=true;activateBtn.classList.remove('ready');}
     else if(ready){activateBtn.textContent='ACTIVEREN · RAMPAGE';activateBtn.disabled=false;activateBtn.classList.add('ready');}
     else{activateBtn.textContent='LADEN '+Math.floor(a.focus||0)+'%';activateBtn.disabled=true;activateBtn.classList.remove('ready');}
   },180);
