@@ -6921,7 +6921,7 @@ window.addEventListener('error',function(e){
 
   function ensureSupport994(){
     if(!gameState)return null;
-    if(!gameState.support994)gameState.support994={queue:[],markers:[],paras:[],lastAward:'',nextKill:(Math.floor((gameState.gunGameKills||0)/15)+1)*15,demo:false};
+    if(!gameState.support994){gameState.support994={queue:[],markers:[],paras:[],lastAward:'',nextKill:(Math.floor((gameState.gunGameKills||0)/15)+1)*15,demo:false};var qa994=new URLSearchParams(location.search).get('qa');if(qa994==='events')gameState.support994.queue=['rambo','tiger','napalm'];}
     return gameState.support994;
   }
   function eventById994(id){for(var i=0;i<EVENT994.length;i++)if(EVENT994[i].id===id)return EVENT994[i];return EVENT994[0];}
