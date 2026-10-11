@@ -7191,7 +7191,11 @@ window.addEventListener('error',function(e){
   var start994=startSelectedMode;
   startSelectedMode=function(mode){
     start994(mode);var s=ensureSupport994();s.nextKill=(Math.floor((gameState.gunGameKills||0)/15)+1)*15;
-    if(mode!=='demo'){s.queue=[];s.markers=[];s.paras=[];s.demo=false;}
+    if(mode!=='demo'){
+      s.queue=[];s.markers=[];s.paras=[];s.demo=false;
+      // Query-only deterministic event queue for browser QA; normal games still start empty.
+      if(new URLSearchParams(location.search).get('qa')==='events')s.queue=['rambo','tiger','napalm'];
+    }
   };
 
   var update994=update;
