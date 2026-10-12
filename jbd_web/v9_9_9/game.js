@@ -6920,12 +6920,11 @@ window.addEventListener('error',function(e){
   render=function(){render993Base();if(!gameState)return;ctx.setTransform(DPR,0,0,DPR,0,0);drawFireWarnings993();drawRoleMarks993();drawGrenadePreview993();drawHitMarker993();};
 })();
 
-/* ---------- V9.9.8 RANDOM FIELD EVENTS / AIRBORNE & TIGER FIX ---------- */
+/* ---------- V9.9.9 RANDOM FIELD EVENTS / BOLDER BATTLEFIELDS ---------- */
 (function(){
   var EVENT994=[
     {id:'napalm',name:'NAPALM STRIKE',short:'NAPALM'},
     {id:'artillery',name:'ARTILLERY STRIKE',short:'ARTILLERY'},
-    {id:'paras',name:'ALLIED PARA DROP',short:'PARA DROP'},
     {id:'rambo',name:'RAMBO',short:'RAMBO'},
     {id:'tiger',name:'ELITE TIGER TANK',short:'TIGER'}
   ];
@@ -6944,7 +6943,6 @@ window.addEventListener('error',function(e){
       gameState.support994={queue:[],markers:[],paras:[],lastAward:'',nextKill:(Math.floor((gameState.gunGameKills||0)/15)+1)*15,demo:false};
       var qa994=new URLSearchParams(location.search).get('qa');
       if(qa994==='events')gameState.support994.queue=['rambo','tiger','napalm'];
-      else if(qa994==='paras')gameState.support994.queue=['paras'];
     }
     return gameState.support994;
   }
@@ -7050,7 +7048,6 @@ window.addEventListener('error',function(e){
     if(forced&&s.queue[0]===forced)s.queue.shift();
     if(id==='napalm')napalmStrike994();
     else if(id==='artillery')artilleryStrike994();
-    else if(id==='paras')paraDrop994();
     else if(id==='rambo')spawnRambo994();
     else if(id==='tiger')spawnTiger994();
     gameState.screenFlash=Math.max(gameState.screenFlash||0,.12);gameState.shake=Math.max(gameState.shake||0,2);
@@ -7196,7 +7193,6 @@ window.addEventListener('error',function(e){
     {t:.6,name:'RIFLE SQUADS + MEDICS',action:'squads'},
     {t:2.8,name:'TROOP TRUCK',action:'trucks'},
     {t:5.5,name:'BONUS · NAPALM STRIKE',action:'bonusNapalm'},
-    {t:11,name:'BONUS · ALLIED PARA DROP',action:'bonusParas'},
     {t:17,name:'BONUS · RAMBO',action:'bonusRambo'},
     {t:23,name:'BONUS · ARTILLERY STRIKE',action:'bonusArtillery'},
     {t:30,name:'BONUS · ELITE TIGER',action:'bonusTiger'},
@@ -7212,14 +7208,13 @@ window.addEventListener('error',function(e){
   demoShowcaseAction=function(key){
     if(key==='bonusNapalm')return activateSupportEvent994('napalm');
     if(key==='bonusArtillery')return activateSupportEvent994('artillery');
-    if(key==='bonusParas')return activateSupportEvent994('paras');
     if(key==='bonusRambo')return activateSupportEvent994('rambo');
     if(key==='bonusTiger')return activateSupportEvent994('tiger');
     return demoAction994(key);
   };
   var prepDemo994=prepareDemoMap;
   prepareDemoMap=function(){
-    prepDemo994();var s=ensureSupport994();s.demo=true;s.queue=['napalm','artillery','paras','rambo','tiger'];s.nextKill=15;
+    prepDemo994();var s=ensureSupport994();s.demo=true;s.queue=['napalm','artillery','rambo','tiger'];s.nextKill=15;
     gameState.demoShowcase.base=gameState.time;gameState.demoShowcase.next=0;
     arcadeFlash('DEMO · FIVE NEW BONUSES READY',2.8);
   };
@@ -7231,7 +7226,6 @@ window.addEventListener('error',function(e){
       // Query-only deterministic event queue for browser QA; normal games still start empty.
       var qa997=new URLSearchParams(location.search).get('qa');
       if(qa997==='events')s.queue=['rambo','tiger','napalm'];
-      else if(qa997==='paras')s.queue=['paras'];
       else if(qa997==='tiger')s.queue=['tiger'];
     }
   };
