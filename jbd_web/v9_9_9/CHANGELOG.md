@@ -4,4 +4,5 @@
 - Jungle, bos, woestijn, sneeuw, dorp, kust, industrie, ruïnes, buitenwijk en stad zijn sterker van elkaar te onderscheiden.
 - Grondtexturen zijn zichtbaarder; gebouwen hebben een krachtiger invulvlak en een donkere rand voor betere leesbaarheid.
 - De bestaande levels, maplayouts, objecten, botsingen, eenheden en gameplay zijn behouden.
-- EASY/HARD, de Elite Tiger, paratroopers, Rambo, napalm, artillery en de bestaande bonussystemen blijven behouden.
+- Paratroopers zijn verwijderd uit de willekeurige bonusselectie; de bestaande gewone luchtlanding blijft staan.
+- EASY/HARD, de Elite Tiger, Rambo, napalm, artillery en de overige bonussen blijven behouden.
