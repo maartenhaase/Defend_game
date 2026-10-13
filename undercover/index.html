@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Undercover</title>
+<link rel="stylesheet" href="./style-v1.css">
+<script defer src="./words-v1.js"></script>
+<script defer src="./app-v1.js"></script>
+</head>
+<body>
+<main class="app">
+<header><div class="logo">🕵️</div><div><h1>Undercover</h1><p>iedereen heeft een woord — één woord is anders</p></div></header>
+
+<section id="setup">
+  <div class="hero">
+    <div class="eyebrow">SIMPEL • SNEL • ÉÉN TELEFOON</div>
+    <h2>Vind wie een ander woord heeft.</h2>
+    <p>Iedereen ziet geheim één woord. Eén speler krijgt een sterk verwant, maar ander woord. Geef om de beurt een korte omschrijving zonder je woord letterlijk te noemen.</p>
+    <div class="count">200 woordparen • 400 verschillende woorden</div>
+  </div>
+  <div class="card">
+    <div class="head"><div><h3>Spelers</h3><span>3–10 spelers</span></div><span id="playerCount"></span></div>
+    <div id="players" class="players"></div>
+    <button id="addPlayer" class="add" type="button">+ speler toevoegen</button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">ZO SPEEL JE</div>
+    <div class="rules">
+      <div class="rule"><div class="n">1</div><div>Geef de telefoon rond en bekijk alleen je eigen woord.</div></div>
+      <div class="rule"><div class="n">2</div><div>Iedereen geeft één korte hint over zijn woord. Niet té duidelijk.</div></div>
+      <div class="rule"><div class="n">3</div><div>Praat kort na en wijs samen de speler met het andere woord aan.</div></div>
+    </div>
+  </div>
+  <button id="startBtn" class="primary" type="button">Start ronde →</button>
+</section>
+
+<section id="handoff" class="hidden">
+  <div class="card center">
+    <div class="big">📱</div>
+    <div class="muted">Geef de telefoon aan</div>
+    <div id="handoffName" class="playername"></div>
+    <p class="muted">De anderen kijken weg.</p>
+    <button id="readyBtn" class="primary" type="button">Ik ben <span id="readyName"></span></button>
+  </div>
+</section>
+
+<section id="reveal" class="hidden">
+  <div class="card center">
+    <div class="eyebrow">ALLEEN VOOR JOU</div>
+    <div id="wordOwner" class="playername"></div>
+    <div class="wordbox">
+      <div class="wordlabel">JOUW WOORD</div>
+      <div id="secretWord" class="word"></div>
+    </div>
+    <p class="muted">Onthoud het. Je krijgt niet te zien of jouw woord het afwijkende woord is.</p>
+    <button id="seenBtn" class="primary" type="button">Onthouden — verberg & geef door</button>
+  </div>
+</section>
+
+<section id="talk" class="hidden">
+  <div class="card center">
+    <div class="eyebrow">TELEFOON WEG</div>
+    <div class="title">Geef om de beurt één hint.</div>
+    <div id="starter" class="starter"></div>
+    <p class="muted">Beschrijf je woord zonder het te noemen. Probeer te ontdekken wie nét over iets anders praat.</p>
+    <div class="rules">
+      <div class="rule"><div class="n">✓</div><div>“Je gebruikt het vaak in de ochtend.”</div></div>
+      <div class="rule"><div class="n">×</div><div>Niet: “Het begint met een K” of bijna het woord zelf zeggen.</div></div>
+    </div>
+    <button id="voteBtn" class="primary" type="button">We willen stemmen →</button>
+  </div>
+</section>
+
+<section id="vote" class="hidden">
+  <div class="card">
+    <div class="eyebrow">STEMMING</div>
+    <div class="title">Wie had het andere woord?</div>
+    <p class="muted">Bespreek het kort en kies samen één speler.</p>
+    <select id="suspect"></select>
+    <button id="revealBtn" class="danger" style="margin-top:12px" type="button">Ontmasker →</button>
+  </div>
+</section>
+
+<section id="result" class="hidden">
+  <div class="card center">
+    <div class="eyebrow">ONTHULLING</div>
+    <div id="resultTitle" class="title"></div>
+    <div id="resultLine" class="result"></div>
+    <div class="muted">De spion was</div>
+    <div id="spyName" class="spy"></div>
+    <div class="pair">
+      <div><small>GEWOON WOORD</small><b id="normalWord"></b></div>
+      <div><small>SPIONWOORD</small><b id="spyWord"></b></div>
+    </div>
+    <div class="divider"></div>
+    <button id="againBtn" class="primary" type="button">Nieuwe ronde</button>
+    <button id="setupBtn" class="secondary" style="margin-top:9px" type="button">Spelers wijzigen</button>
+  </div>
+</section>
+
+<div class="footer">Undercover • 200 woordparen</div>
+</main>
+</body>
+</html>
