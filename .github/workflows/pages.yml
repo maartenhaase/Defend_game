@@ -44,6 +44,9 @@ jobs:
           test -s _site/jbd_web/v9_9_19/index.html
           test -s _site/jbd_web/v9_9_19/game.js
           node --check _site/jbd_web/v9_9_19/game.js
+          test -s _site/jbd_web/v9_9_20/index.html
+          test -s _site/jbd_web/v9_9_20/game.js
+          node --check _site/jbd_web/v9_9_20/game.js
           node _site/jbd_web/v9_8_2/demo_smoke_test.cjs
           node _site/jbd_web/v9_8_2/symmetry_test.cjs
           echo 'Confirmed V9.8.2 in Pages artifact'
