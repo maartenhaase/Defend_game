@@ -7159,6 +7159,7 @@ window.addEventListener('error',function(e){
       v.hasMG=true;v.passengers=0;v.unloadLeft=0;v.crewOut=true;
       v.fireCd=.5;v.tigerCannonCd=.8;v.weaponProfile={name:'TIGER MG34',damage:2.2,spread:.026,cooldown:.55};
     }
+    if(gameState.tigerDemo){gameState.tigerDemoTank=v;arcadeFlash('TIGER INBOUND · FROM SOUTH',2.8);return v;}
     a.armor.push(v);arcadeFlash('TIGER INBOUND · FROM SOUTH',2.8);return v;
   }  function activateSupportEvent994(forced){
     if(!gameState||gameState.mode!=='playing')return false;
