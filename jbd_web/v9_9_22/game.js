@@ -7544,7 +7544,7 @@ window.addEventListener('error',function(e){
     if(d>4){var speed=34,step=Math.min(d,speed*dt),nx=v.x+dx/d*step,ny=v.y+dy/d*step;
       var blocked=false,cover=gameState.map&&gameState.map.cover||[];
       for(var i=0;i<cover.length;i++){var c=cover[i];if(c.destroyed)continue;if(c.kind==='building'&&Math.abs(nx-c.x)<c.w/2+23&&Math.abs(ny-c.y)<c.h/2+29){blocked=true;break;}}
-      if(blocked){v.tigerWaypoint921={x:clamp(v.x+(v.x<wp.x?-68:68),42,W-42),y:clamp(v.y+rand(-22,22),safeTop+140,H-safeBottom-150)};v.tigerPatrolUntil921=gameState.time+.9;v.currentSpeed=-15;v.bodyAngle=Math.atan2(-dy,-dx);}
+      if(blocked){v.tigerWaypoint921={x:clamp(v.x+(v.x<wp.x?-68:68),42,W-42),y:clamp(v.y+rand(-22,22),safeTop+140,H-safeBottom-150)};v.tigerPatrolUntil921=gameState.time+.9;v.currentSpeed=-15;v.bodyAngle=Math.atan2(-dy,-dx);v.x=clamp(v.x+Math.cos(v.bodyAngle)*12*dt,36,W-36);v.y=clamp(v.y+Math.sin(v.bodyAngle)*12*dt,safeTop+130,H-safeBottom-145);}
       else{v.x=nx;v.y=ny;v.currentSpeed=speed;v.bodyAngle=Math.atan2(dy,dx);}
     }else v.currentSpeed=0;
   }
