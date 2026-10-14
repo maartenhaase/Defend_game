@@ -7134,18 +7134,31 @@ window.addEventListener('error',function(e){
       if(old.y>H+62){old.x=tigerEntryLane994();old.routeX=old.x;old.roadLocked988=false;old.y=H+62;old.tigerInbound994=true;}
       arcadeFlash('ELITE TIGER · REPAIRED',1.8);return old;
     }
-    spawnVehicle('halftrack',1,'sdkfz250_3',undefined,0);
-    var v=gameState.vehicles.pop();
-    if(!v){arcadeFlash('TIGER ARRIVAL FAILED',2);return null;}
-    v.allied=true;v.team='allied';v.tiger994=true;v.vehicleName='ELITE TIGER I';
-    v.x=tigerEntryLane994();
-    v.y=H+62;v.routeX=v.x;v.roadLocked988=false;
-    v.bodyAngle=-Math.PI/2;v.turretAngle=-Math.PI/2;v.turretTarget=-Math.PI/2;
-    v.state='alliedApproach';v.tigerInbound994=true;v.tigerArrivalStopY9911=Math.max(safeTop+96,Math.min(H*.64,gameState.bunker.y-142));
-    v.hp=620;v.maxHp=620;v.armorTier=4;v.armorHp=260;v.maxArmorHp=260;
-    v.speed=116;v.accel=118;v.currentSpeed=116;
-    v.hasMG=true;v.passengers=0;v.unloadLeft=0;v.crewOut=true;
-    v.fireCd=.5;v.tigerCannonCd=.8;v.weaponProfile={name:'TIGER MG34',damage:2.2,spread:.026,cooldown:.55};
+    var tigerLane=tigerEntryLane994(),v;
+    if(gameState.tigerDemo){
+      var tigerSpec=VEHICLE_SPECS.sdkfz250_3||VEHICLE_SPECS.sdkfz250_1||VEHICLE_SPECS.blitz_1;
+      var tigerStopY=Math.max(safeTop+96,Math.min(H*.64,gameState.bunker.y-142));
+      v={id:Math.random()*1e9|0,type:'halftrack',vehicleId:tigerSpec.id,vehicleName:'ELITE TIGER I',
+        vehicleClass:4,vehicleFamily:'sdkfz250',vehicleSpec:tigerSpec,x:tigerLane,baseX:tigerLane,routeX:tigerLane,y:H+62,
+        roadLocked988:false,bodyAngle:-Math.PI/2,turretAngle:-Math.PI/2,turretTarget:-Math.PI/2,
+        alive:true,allied:true,team:'allied',tiger994:true,tigerInbound994:false,tigerDemoApproach917:true,
+        tigerArrivalStopY9911:tigerStopY,hp:620,maxHp:620,armorTier:4,armorHp:260,maxArmorHp:260,
+        speed:116,accel:118,currentSpeed:116,hasMG:true,passengers:0,unloadLeft:0,crewOut:true,
+        fireCd:.5,tigerCannonCd:.8,weaponProfile:{name:'TIGER MG34',damage:2.2,spread:.026,cooldown:.55},
+        sideVel:0,hitFlash:0,wheelT:0,smoke:0};
+    }else{
+      spawnVehicle('halftrack',1,'sdkfz250_3',undefined,0);
+      v=gameState.vehicles.pop();
+      if(!v){arcadeFlash('TIGER ARRIVAL FAILED',2);return null;}
+      v.allied=true;v.team='allied';v.tiger994=true;v.vehicleName='ELITE TIGER I';
+      v.x=tigerLane;v.y=H+62;v.routeX=v.x;v.roadLocked988=false;
+      v.bodyAngle=-Math.PI/2;v.turretAngle=-Math.PI/2;v.turretTarget=-Math.PI/2;
+      v.state='alliedApproach';v.tigerInbound994=true;v.tigerArrivalStopY9911=Math.max(safeTop+96,Math.min(H*.64,gameState.bunker.y-142));
+      v.hp=620;v.maxHp=620;v.armorTier=4;v.armorHp=260;v.maxArmorHp=260;
+      v.speed=116;v.accel=118;v.currentSpeed=116;
+      v.hasMG=true;v.passengers=0;v.unloadLeft=0;v.crewOut=true;
+      v.fireCd=.5;v.tigerCannonCd=.8;v.weaponProfile={name:'TIGER MG34',damage:2.2,spread:.026,cooldown:.55};
+    }
     a.armor.push(v);arcadeFlash('TIGER INBOUND · FROM SOUTH',2.8);return v;
   }  function activateSupportEvent994(forced){
     if(!gameState||gameState.mode!=='playing')return false;
@@ -7154,7 +7167,7 @@ window.addEventListener('error',function(e){
     if(id==='napalm')napalmStrike994();
     else if(id==='artillery')artilleryStrike994();
     else if(id==='rambo')spawnRambo994();
-    else if(id==='tiger'){var summonedTiger=spawnTiger994();if(gameState.tigerDemo&&summonedTiger){s.tigerDemoActivated=true;activateBtn.style.display='none';}}
+    else if(id==='tiger'){var summonedTiger=spawnTiger994();if(gameState.tigerDemo&&summonedTiger){gameState.tigerDemoTank=summonedTiger;s.tigerDemoActivated=true;activateBtn.style.display='none';}}
     gameState.screenFlash=Math.max(gameState.screenFlash||0,.12);gameState.shake=Math.max(gameState.shake||0,2);
     return true;
   }
@@ -7326,9 +7339,11 @@ window.addEventListener('error',function(e){
   }
   function drawEventUnits994(){
     var s=ensureSupport994();s.paras.forEach(drawInfantryParachute);
-    if(!gameState.arcade)return;
-    gameState.arcade.armor.forEach(function(v){if(v.alive&&v.tiger994)drawTiger994(v);});
-    gameState.arcade.allies.forEach(function(u){if(u.alive&&u.rambo994)drawRambo994(u);});
+    if(gameState.arcade){
+      gameState.arcade.armor.forEach(function(v){if(v.alive&&v.tiger994&&v!==gameState.tigerDemoTank)drawTiger994(v);});
+      gameState.arcade.allies.forEach(function(u){if(u.alive&&u.rambo994)drawRambo994(u);});
+    }
+    if(gameState.tigerDemoTank&&gameState.tigerDemoTank.alive)drawTiger994(gameState.tigerDemoTank);
   }
 
   var bodyRadius994=vehicleBodyRadius;
@@ -7381,7 +7396,7 @@ window.addEventListener('error',function(e){
   function startTigerDemo994(autoActivate){
     startSelectedMode('demo');
     if(!gameState||!gameState.arcade)return false;
-    gameState.startMode='demo';gameState.tigerDemo=true;gameState.arcadeNoReward=true;
+    gameState.startMode='demo';gameState.tigerDemo=true;gameState.tigerDemoTank=null;gameState.arcadeNoReward=true;
     gameState.demoShowcase=null;gameState.events=[];gameState.eventCursor=0;
     ['infantry','vehicles','air','paras','shots','enemyShots','effects','fireZones','wrecks','blood'].forEach(function(k){
       if(Array.isArray(gameState[k]))gameState[k]=[];
@@ -7398,8 +7413,15 @@ window.addEventListener('error',function(e){
     },900);
     return true;
   }
+  function updateTigerDemoArrival994(dt){
+    var v=gameState&&gameState.tigerDemo&&gameState.tigerDemoTank;
+    if(!v||!v.alive||!v.tigerDemoApproach917)return;
+    var stopY=v.tigerArrivalStopY9911||Math.max(safeTop+96,Math.min(H*.64,gameState.bunker.y-142));
+    v.currentSpeed=116;v.y=Math.max(stopY,v.y-116*dt);
+    if(v.y<=stopY+.5){v.y=stopY;v.currentSpeed=0;v.tigerDemoApproach917=false;arcadeFlash('ELITE TIGER I · ON THE FIELD',2.0);}
+  }
   var update994=update;
-  update=function(dt){update994(dt);updateSupport994(dt);};
+  update=function(dt){update994(dt);updateSupport994(dt);updateTigerDemoArrival994(dt);};
   var render994=render;
   render=function(){render994();if(!gameState)return;ctx.setTransform(DPR,0,0,DPR,0,0);drawEventMarkers994();drawEventUnits994();};
 
