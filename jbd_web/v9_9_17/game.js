@@ -7167,7 +7167,7 @@ window.addEventListener('error',function(e){
     if(id==='napalm')napalmStrike994();
     else if(id==='artillery')artilleryStrike994();
     else if(id==='rambo')spawnRambo994();
-    else if(id==='tiger'){var summonedTiger=spawnTiger994();if(gameState.tigerDemo&&summonedTiger){gameState.tigerDemoTank=summonedTiger;s.tigerDemoActivated=true;activateBtn.style.display='none';}}
+    else if(id==='tiger'){var summonedTiger=spawnTiger994();if(gameState.tigerDemo&&summonedTiger){gameState.tigerDemoTank=summonedTiger;s.tigerDemoActivated=true;activateBtn.style.display='none';reportTigerDemo994('SPAWN');}}
     gameState.screenFlash=Math.max(gameState.screenFlash||0,.12);gameState.shake=Math.max(gameState.shake||0,2);
     return true;
   }
@@ -7316,6 +7316,16 @@ window.addEventListener('error',function(e){
   var tigerHullSprite994=new Image(),tigerTurretSprite994=new Image();
   tigerHullSprite994.src='tiger_hull.svg?v=9917';
   tigerTurretSprite994.src='tiger_turret.svg?v=9917';
+  var tigerDemoTest994=new URLSearchParams(location.search).get('demo')==='tiger-test';
+  var tigerDemoDiagAt994=0;
+  function reportTigerDemo994(stage){
+    if(!tigerDemoTest994)return;
+    var v=gameState&&gameState.tigerDemoTank,a=gameState&&gameState.arcade;
+    var inList=!!(v&&a&&a.armor&&a.armor.indexOf(v)>=0);
+    document.title='JBD TIGER TEST '+stage+' '+(v?('x'+Math.round(v.x)+' y'+Math.round(v.y)+' alive'+(v.alive?1:0)+' move'+(v.tigerDemoApproach917?1:0)+' list'+(inList?1:0)):'NO TANK')+
+      ' svg'+tigerHullSprite994.naturalWidth+'x'+tigerTurretSprite994.naturalWidth;
+  }
+  if(tigerDemoTest994)window.addEventListener('error',function(ev){document.title='JBD TIGER ERROR '+String(ev.message||ev.error||'unknown').slice(0,100);});
   drawTiger994=function(v){
     if(!tigerHullSprite994.complete||!tigerHullSprite994.naturalWidth||
        !tigerTurretSprite994.complete||!tigerTurretSprite994.naturalWidth){
@@ -7344,6 +7354,7 @@ window.addEventListener('error',function(e){
       gameState.arcade.allies.forEach(function(u){if(u.alive&&u.rambo994)drawRambo994(u);});
     }
     if(gameState.tigerDemoTank&&gameState.tigerDemoTank.alive)drawTiger994(gameState.tigerDemoTank);
+    reportTigerDemo994('DRAW');
   }
 
   var bodyRadius994=vehicleBodyRadius;
@@ -7407,7 +7418,7 @@ window.addEventListener('error',function(e){
     var s=ensureSupport994();
     s.queue=['tiger'];s.markers=[];s.paras=[];s.lastAward='tiger';s.nextKill=9999;
     s.demo=false;s.campaignTigerSpawned=true;s.tigerDemoActivated=false;
-    gameState.message='TIGER BONUS READY · TAP ACTIVEREN';gameState.messageT=3;
+    gameState.message='TIGER BONUS READY · TAP ACTIVEREN';gameState.messageT=3;reportTigerDemo994('READY');
     if(autoActivate)window.setTimeout(function(){
       if(gameState&&gameState.tigerDemo&&gameState.mode==='playing'&&gameState.support994&&gameState.support994.queue[0]==='tiger')activateSupportEvent994('tiger');
     },900);
@@ -7419,6 +7430,7 @@ window.addEventListener('error',function(e){
     var stopY=v.tigerArrivalStopY9911||Math.max(safeTop+96,Math.min(H*.64,gameState.bunker.y-142));
     v.currentSpeed=116;v.y=Math.max(stopY,v.y-116*dt);
     if(v.y<=stopY+.5){v.y=stopY;v.currentSpeed=0;v.tigerDemoApproach917=false;arcadeFlash('ELITE TIGER I · ON THE FIELD',2.0);}
+    if(performance.now()-tigerDemoDiagAt994>700){tigerDemoDiagAt994=performance.now();reportTigerDemo994('MOVE');}
   }
   var update994=update;
   update=function(dt){update994(dt);updateSupport994(dt);updateTigerDemoArrival994(dt);};
