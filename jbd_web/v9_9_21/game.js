@@ -7143,7 +7143,7 @@ window.addEventListener('error',function(e){
         tigerLane994:tigerLane,roadLocked988:false,bodyAngle:-Math.PI/2,turretAngle:-Math.PI/2,turretTarget:-Math.PI/2,
         alive:true,allied:true,team:'allied',tiger994:true,tigerInbound994:false,tigerDemoApproach917:true,
         tigerArrivalStopY9911:tigerStopY,hp:150,maxHp:150,armorTier:1,armorHp:55,maxArmorHp:55,
-        speed:138,accel:138,currentSpeed:138,hasMG:true,passengers:0,unloadLeft:0,crewOut:true,
+        speed:48,accel:48,currentSpeed:48,hasMG:true,passengers:0,unloadLeft:0,crewOut:true,
         fireCd:.35,tigerRounds994:0,turretRecoil:0,sideVel:0,hitFlash:0,wheelT:0,smoke:0};
     }else{
       spawnVehicle('halftrack',1,'sdkfz250_3',undefined,0);
@@ -7495,6 +7495,111 @@ window.addEventListener('error',function(e){
   var tigerDemoQuery994=new URLSearchParams(location.search).get('demo');
   if(tigerDemoQuery994==='tiger')startTigerDemo994(false);
   else if(tigerDemoQuery994==='tiger-test')startTigerDemo994(true);
+/* V9.9.21: slower, roaming Tiger, alternating weapons, armor response, contained truck blast. */
+(function(){
+  var oldDamageVehicle921=damageVehicle;
+  damageVehicle=function(v,dmg,kind){
+    if(v&&v.tiger994){
+      if(kind==='mg'&&Math.random()<.78){
+        emitRicochet(v.x+rand(-8,8),v.y+rand(-9,9),rand(0,TAU),.8);
+        AudioSys.impact('armor',.55,{pan:clamp((v.x-W*.5)/(W*.55),-.8,.8)});
+        return false;
+      }
+      return oldDamageVehicle921(v,dmg*(kind==='mg'?.38:kind==='he'?.72:.65),kind);
+    }
+    return oldDamageVehicle921(v,dmg,kind);
+  };
+  var oldAlliedIncoming921=alliedIncomingFire;
+  alliedIncomingFire=function(b){
+    var v=gameState&&gameState.tigerDemo&&gameState.tigerDemoTank;
+    if(v&&v.alive&&b.life>0&&pointSegDist(v.x,v.y,b.px,b.py,b.x,b.y)<25){
+      damageVehicle(v,(b.kind==='rocket'||b.kind==='shell')?Math.max(18,(b.dmg||5)*3.4):Math.max(9,(b.dmg||5)*5),b.kind==='rocket'||b.kind==='shell'?'he':'mg');b.life=0;return;
+    }
+    oldAlliedIncoming921(b);
+  };
+  var oldBlastTruck921=blastNearbyFromVehicle;
+  blastNearbyFromVehicle=function(x,y,r,damage,source){
+    var family=source&&(source.vehicleSpec&&source.vehicleSpec.family||source.vehicleFamily)||'';
+    var truck=source&&(source.type==='trooptruck'||source.type==='truck'||source.type==='lighttruck'||family==='truck'||family==='trooptruck');
+    return oldBlastTruck921(x,y,truck?r*.70:r,truck?damage*.76:damage,source);
+  };
+  function tigerPatrol921(v,dt,demo){
+    if(v.tigerDemoApproach917||v.tigerInbound994){
+      var stopY=v.tigerArrivalStopY9911||Math.max(safeTop+100,Math.min(H*.53,gameState.bunker.y-175));
+      v.bodyAngle=-Math.PI/2;v.currentSpeed=demo?48:52;v.y=Math.max(stopY,v.y-v.currentSpeed*dt);
+      if(v.y<=stopY+.5){v.y=stopY;v.currentSpeed=0;v.tigerDemoApproach917=false;v.tigerInbound994=false;v.tigerPatrolUntil921=gameState.time+1;}
+      return;
+    }
+    v.tigerPatrolUntil921=v.tigerPatrolUntil921||0;
+    if(gameState.time>=v.tigerPatrolUntil921){
+      var found=false;
+      for(var n=0;n<8&&!found;n++){
+        var nx=clamp(v.x+rand(-75,75),42,W-42),ny=clamp(v.y+rand(-42,42),safeTop+145,H-safeBottom-155);
+        if(freeLanding(nx,ny,26,[])){v.tigerWaypoint921={x:nx,y:ny};found=true;}
+      }
+      if(!found)v.tigerWaypoint921={x:clamp(v.x+(Math.random()<.5?-1:1)*70,42,W-42),y:v.y};
+      v.tigerPatrolUntil921=gameState.time+rand(1.7,3.2);
+    }
+    var wp=v.tigerWaypoint921||{x:v.x,y:v.y},dx=wp.x-v.x,dy=wp.y-v.y,d=Math.hypot(dx,dy);
+    if(d>4){var speed=34,step=Math.min(d,speed*dt),nx=v.x+dx/d*step,ny=v.y+dy/d*step;
+      var blocked=false,cover=gameState.map&&gameState.map.cover||[];
+      for(var i=0;i<cover.length;i++){var c=cover[i];if(c.destroyed)continue;if(c.kind==='building'&&Math.abs(nx-c.x)<c.w/2+23&&Math.abs(ny-c.y)<c.h/2+29){blocked=true;break;}}
+      if(blocked){v.tigerWaypoint921={x:clamp(v.x+(v.x<wp.x?-68:68),42,W-42),y:clamp(v.y+rand(-22,22),safeTop+140,H-safeBottom-150)};v.tigerPatrolUntil921=gameState.time+.9;v.currentSpeed=-15;v.bodyAngle=Math.atan2(-dy,-dx);}
+      else{v.x=nx;v.y=ny;v.currentSpeed=speed;v.bodyAngle=Math.atan2(dy,dx);}
+    }else v.currentSpeed=0;
+  }
+  function tigerImpact921(x,y,kind){
+    var radius=kind==='he'?43:12;
+    if(kind==='he')explode(x,y,25,true);else emitGroundImpact(x,y,.65,'metal');
+    gameState.infantry.forEach(function(e){if(!e.alive)return;var d=dist(x,y,e.x,e.y);if(d<radius)damageInfantry(e,(kind==='he'?48:10)*(1-d/radius*.45),kind==='he'?'he':'mg');});
+    gameState.vehicles.forEach(function(e){if(!e.alive||e.allied)return;var d=dist(x,y,e.x,e.y);if(d<radius+10)damageVehicle(e,kind==='he'?58*(1-d/(radius+10)*.55):8,'he');});
+  }
+  function tickTiger921(v,dt,demo){
+    if(!v||!v.alive)return;
+    tigerPatrol921(v,dt,demo);
+    v.tigerFireCd921=Math.max(0,(v.tigerFireCd921||0)-dt);v.tigerBurstLeft921=v.tigerBurstLeft921||0;
+    var target=null,best=430;
+    gameState.infantry.forEach(function(e){if(!e.alive)return;var d=dist(v.x,v.y,e.x,e.y);if(d<best){best=d;target=e;}});
+    gameState.vehicles.forEach(function(e){if(!e.alive||e.allied)return;var d=dist(v.x,v.y,e.x,e.y);if(d<best){best=d;target=e;}});
+    if(target){var ang=Math.atan2(target.y-v.y,target.x-v.x);v.turretAngle=approachAngle(v.turretAngle,ang,dt*2.0);
+      if(v.tigerFireCd921<=0&&Math.abs(angleDelta(v.turretAngle,ang))<.42){
+        var mode=v.tigerNextWeapon921||'mg';
+        if(mode==='mg'){
+          v.tigerBurstLeft921=3;v.tigerFireCd921=.105;v.tigerNextWeapon921='he';
+        }else{
+          var a=ang+rand(-.018,.018),sx=v.x+Math.cos(a)*27,sy=v.y+Math.sin(a)*27,speed=260;
+          gameState.tigerHeShells921=gameState.tigerHeShells921||[];
+          gameState.tigerHeShells921.push({x:sx,y:sy,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:1.8,targetDist:Math.min(best+20,460),traveled:0});
+          v.tigerFireCd921=3.5;v.tigerNextWeapon921='mg';v.turretRecoil=3;
+          emitMuzzle(sx,sy,a,true);AudioSys.weapon('75MM CANNON','cannon',.78,{pan:clamp((v.x-W*.5)/(W*.55),-.8,.8)});
+        }
+      }
+      if(v.tigerBurstLeft921>0&&v.tigerFireCd921<=0){var a2=ang+rand(-.035,.035),mx=v.x+Math.cos(a2)*18,my=v.y+Math.sin(a2)*18,sp=460;
+        gameState.shots.push({kind:'mg',x:mx,y:my,px:mx,py:my,vx:Math.cos(a2)*sp,vy:Math.sin(a2)*sp,penetration:0,penetrationMax:0,piercedIds:{},damage:1.6,range:Math.min(470,best+50),targetDist:Math.min(470,best+50),traveled:0,active:true,radius:0,burnDuration:0,burnDps:0,blastDamage:0,specialEffect:null,visual:1,projectile:null,primarySplash:0,homing:0,suppressed:{},suppressionPower:.55,tigerDemoShot994:true});
+        emitMuzzle(mx,my,a2,false);AudioSys.weapon('MG34','lmg',.34,{pan:clamp((v.x-W*.5)/(W*.55),-.8,.8)});v.tigerBurstLeft921--;v.tigerFireCd921=.105;v.turretRecoil=1.4;
+      }
+    }
+    var enemies=gameState.infantry.filter(function(e){return e.alive;});
+    v.tigerEnemyFireCd921=Math.max(0,(v.tigerEnemyFireCd921||.6)-dt);
+    if(enemies.length&&v.tigerEnemyFireCd921<=0){var shooter=null,sd=390;enemies.forEach(function(e){var d=dist(e.x,e.y,v.x,v.y);if(d<sd){sd=d;shooter=e;}});
+      if(shooter){var ea=Math.atan2(v.y-shooter.y,v.x-shooter.x)+rand(-.10,.10),es=305;gameState.enemyShots.push({x:shooter.x,y:shooter.y,px:shooter.x,py:shooter.y,vx:Math.cos(ea)*es,vy:Math.sin(ea)*es,kind:shooter.role==='lmg'?'lmg':'rifle',dmg:2.1,life:1.6,weapon:shooter.weaponName});shooter.muzzle=.08;emitMuzzle(shooter.x,shooter.y,ea,false);v.tigerEnemyFireCd921=rand(1.35,2.0);}
+    }
+  }
+  var oldDemoTigerTick921=updateTigerDemoArrival994;
+  updateTigerDemoArrival994=function(dt){var v=gameState&&gameState.tigerDemo&&gameState.tigerDemoTank;if(!v)return oldDemoTigerTick921(dt);tickTiger921(v,dt,true);};
+  var oldCampaignTigerTick921=updateTigerCannon994;
+  updateTigerCannon994=function(dt){if(gameState&&gameState.arcade){gameState.arcade.armor.forEach(function(v){if(v.alive&&v.tiger994)tickTiger921(v,dt,false);});}else oldCampaignTigerTick921(dt);};
+  var oldUpdateTigerWeapons921=update;
+  update=function(dt){oldUpdateTigerWeapons921(dt);if(!gameState||!gameState.tigerHeShells921)return;
+    for(var i=0;i<gameState.tigerHeShells921.length;i++){var b=gameState.tigerHeShells921[i],px=b.x,py=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;b.traveled+=Math.hypot(b.x-px,b.y-py);
+      var hit=null;gameState.infantry.concat(gameState.vehicles.filter(function(e){return !e.allied;})).forEach(function(e){if(e.alive&&dist(e.x,e.y,b.x,b.y)<18)hit=e;});
+      if(hit||b.life<=0||b.traveled>=b.targetDist||b.x<8||b.x>W-8||b.y<safeTop||b.y>H-safeBottom){var ix=hit?hit.x:b.x,iy=hit?hit.y:b.y;tigerImpact921(ix,iy,'he');b.life=0;}
+    }
+    gameState.tigerHeShells921=gameState.tigerHeShells921.filter(function(b){return b.life>0;});
+  };
+  var oldRenderTigerShell921=render;
+  render=function(){oldRenderTigerShell921();if(!gameState||!gameState.tigerHeShells921)return;ctx.save();gameState.tigerHeShells921.forEach(function(b){ctx.fillStyle='#ffd889';ctx.strokeStyle='#4a3320';ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(b.x,b.y,3.5,0,TAU);ctx.fill();ctx.stroke();});ctx.restore();};
+})();
 })();
 
 
@@ -7951,110 +8056,4 @@ igniteInfantry=function(e,duration,power){
 /* V9.9.16: infantry takes 12% less damage across all damage types. */
 var damageInfantryBase915=damageInfantry;
 damageInfantry=function(e,dmg,kind){return damageInfantryBase915(e,dmg*.88,kind);};
-
-/* V9.9.21: slower, roaming Tiger, alternating weapons, armor response, contained truck blast. */
-(function(){
-  var oldDamageVehicle921=damageVehicle;
-  damageVehicle=function(v,dmg,kind){
-    if(v&&v.tiger994){
-      if(kind==='mg'&&Math.random()<.78){
-        emitRicochet(v.x+rand(-8,8),v.y+rand(-9,9),rand(0,TAU),.8);
-        AudioSys.impact('armor',.55,{pan:clamp((v.x-W*.5)/(W*.55),-.8,.8)});
-        return false;
-      }
-      return oldDamageVehicle921(v,dmg*(kind==='mg'?.38:kind==='he'?.72:.65),kind);
-    }
-    return oldDamageVehicle921(v,dmg,kind);
-  };
-  var oldAlliedIncoming921=alliedIncomingFire;
-  alliedIncomingFire=function(b){
-    var v=gameState&&gameState.tigerDemo&&gameState.tigerDemoTank;
-    if(v&&v.alive&&b.life>0&&pointSegDist(v.x,v.y,b.px,b.py,b.x,b.y)<25){
-      damageVehicle(v,(b.kind==='rocket'||b.kind==='shell')?Math.max(18,(b.dmg||5)*3.4):Math.max(9,(b.dmg||5)*5),b.kind==='rocket'||b.kind==='shell'?'he':'mg');b.life=0;return;
-    }
-    oldAlliedIncoming921(b);
-  };
-  var oldBlastTruck921=blastNearbyFromVehicle;
-  blastNearbyFromVehicle=function(x,y,r,damage,source){
-    var family=source&&(source.vehicleSpec&&source.vehicleSpec.family||source.vehicleFamily)||'';
-    var truck=source&&(source.type==='trooptruck'||source.type==='truck'||source.type==='lighttruck'||family==='truck'||family==='trooptruck');
-    return oldBlastTruck921(x,y,truck?r*.70:r,truck?damage*.76:damage,source);
-  };
-  function tigerPatrol921(v,dt,demo){
-    if(v.tigerDemoApproach917||v.tigerInbound994){
-      var stopY=v.tigerArrivalStopY9911||Math.max(safeTop+100,Math.min(H*.53,gameState.bunker.y-175));
-      v.bodyAngle=-Math.PI/2;v.currentSpeed=demo?48:52;v.y=Math.max(stopY,v.y-v.currentSpeed*dt);
-      if(v.y<=stopY+.5){v.y=stopY;v.currentSpeed=0;v.tigerDemoApproach917=false;v.tigerInbound994=false;v.tigerPatrolUntil921=gameState.time+1;}
-      return;
-    }
-    v.tigerPatrolUntil921=v.tigerPatrolUntil921||0;
-    if(gameState.time>=v.tigerPatrolUntil921){
-      var found=false;
-      for(var n=0;n<8&&!found;n++){
-        var nx=clamp(v.x+rand(-75,75),42,W-42),ny=clamp(v.y+rand(-42,42),safeTop+145,H-safeBottom-155);
-        if(freeLanding(nx,ny,26,[])){v.tigerWaypoint921={x:nx,y:ny};found=true;}
-      }
-      if(!found)v.tigerWaypoint921={x:clamp(v.x+(Math.random()<.5?-1:1)*70,42,W-42),y:v.y};
-      v.tigerPatrolUntil921=gameState.time+rand(1.7,3.2);
-    }
-    var wp=v.tigerWaypoint921||{x:v.x,y:v.y},dx=wp.x-v.x,dy=wp.y-v.y,d=Math.hypot(dx,dy);
-    if(d>4){var speed=34,step=Math.min(d,speed*dt),nx=v.x+dx/d*step,ny=v.y+dy/d*step;
-      var blocked=false,cover=gameState.map&&gameState.map.cover||[];
-      for(var i=0;i<cover.length;i++){var c=cover[i];if(c.destroyed)continue;if(c.kind==='building'&&Math.abs(nx-c.x)<c.w/2+23&&Math.abs(ny-c.y)<c.h/2+29){blocked=true;break;}}
-      if(blocked){v.tigerWaypoint921={x:clamp(v.x+(v.x<wp.x?-68:68),42,W-42),y:clamp(v.y+rand(-22,22),safeTop+140,H-safeBottom-150)};v.tigerPatrolUntil921=gameState.time+.9;v.currentSpeed=-15;v.bodyAngle=Math.atan2(-dy,-dx);}
-      else{v.x=nx;v.y=ny;v.currentSpeed=speed;v.bodyAngle=Math.atan2(dy,dx);}
-    }else v.currentSpeed=0;
-  }
-  function tigerImpact921(x,y,kind){
-    var radius=kind==='he'?43:12;
-    if(kind==='he')explode(x,y,25,true);else emitGroundImpact(x,y,.65,'metal');
-    gameState.infantry.forEach(function(e){if(!e.alive)return;var d=dist(x,y,e.x,e.y);if(d<radius)damageInfantry(e,(kind==='he'?48:10)*(1-d/radius*.45),kind==='he'?'he':'mg');});
-    gameState.vehicles.forEach(function(e){if(!e.alive||e.allied)return;var d=dist(x,y,e.x,e.y);if(d<radius+10)damageVehicle(e,kind==='he'?58*(1-d/(radius+10)*.55):8,'he');});
-  }
-  function tickTiger921(v,dt,demo){
-    if(!v||!v.alive)return;
-    tigerPatrol921(v,dt,demo);
-    v.tigerFireCd921=Math.max(0,(v.tigerFireCd921||0)-dt);v.tigerBurstLeft921=v.tigerBurstLeft921||0;
-    var target=null,best=430;
-    gameState.infantry.forEach(function(e){if(!e.alive)return;var d=dist(v.x,v.y,e.x,e.y);if(d<best){best=d;target=e;}});
-    gameState.vehicles.forEach(function(e){if(!e.alive||e.allied)return;var d=dist(v.x,v.y,e.x,e.y);if(d<best){best=d;target=e;}});
-    if(target){var ang=Math.atan2(target.y-v.y,target.x-v.x);v.turretAngle=approachAngle(v.turretAngle,ang,dt*2.0);
-      if(v.tigerFireCd921<=0&&Math.abs(angleDelta(v.turretAngle,ang))<.42){
-        var mode=v.tigerNextWeapon921||'mg';
-        if(mode==='mg'){
-          v.tigerBurstLeft921=3;v.tigerFireCd921=.105;v.tigerNextWeapon921='he';
-        }else{
-          var a=ang+rand(-.018,.018),sx=v.x+Math.cos(a)*27,sy=v.y+Math.sin(a)*27,speed=260;
-          gameState.tigerHeShells921=gameState.tigerHeShells921||[];
-          gameState.tigerHeShells921.push({x:sx,y:sy,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:1.8,targetDist:Math.min(best+20,460),traveled:0});
-          v.tigerFireCd921=3.5;v.tigerNextWeapon921='mg';v.turretRecoil=3;
-          emitMuzzle(sx,sy,a,true);AudioSys.weapon('75MM CANNON','cannon',.78,{pan:clamp((v.x-W*.5)/(W*.55),-.8,.8)});
-        }
-      }
-      if(v.tigerBurstLeft921>0&&v.tigerFireCd921<=0){var a2=ang+rand(-.035,.035),mx=v.x+Math.cos(a2)*18,my=v.y+Math.sin(a2)*18,sp=460;
-        gameState.shots.push({kind:'mg',x:mx,y:my,px:mx,py:my,vx:Math.cos(a2)*sp,vy:Math.sin(a2)*sp,penetration:0,penetrationMax:0,piercedIds:{},damage:1.6,range:Math.min(470,best+50),targetDist:Math.min(470,best+50),traveled:0,active:true,radius:0,burnDuration:0,burnDps:0,blastDamage:0,specialEffect:null,visual:1,projectile:null,primarySplash:0,homing:0,suppressed:{},suppressionPower:.55,tigerDemoShot994:true});
-        emitMuzzle(mx,my,a2,false);AudioSys.weapon('MG34','lmg',.34,{pan:clamp((v.x-W*.5)/(W*.55),-.8,.8)});v.tigerBurstLeft921--;v.tigerFireCd921=.105;v.turretRecoil=1.4;
-      }
-    }
-    var enemies=gameState.infantry.filter(function(e){return e.alive;});
-    v.tigerEnemyFireCd921=Math.max(0,(v.tigerEnemyFireCd921||.6)-dt);
-    if(enemies.length&&v.tigerEnemyFireCd921<=0){var shooter=null,sd=390;enemies.forEach(function(e){var d=dist(e.x,e.y,v.x,v.y);if(d<sd){sd=d;shooter=e;}});
-      if(shooter){var ea=Math.atan2(v.y-shooter.y,v.x-shooter.x)+rand(-.10,.10),es=305;gameState.enemyShots.push({x:shooter.x,y:shooter.y,px:shooter.x,py:shooter.y,vx:Math.cos(ea)*es,vy:Math.sin(ea)*es,kind:shooter.role==='lmg'?'lmg':'rifle',dmg:2.1,life:1.6,weapon:shooter.weaponName});shooter.muzzle=.08;emitMuzzle(shooter.x,shooter.y,ea,false);v.tigerEnemyFireCd921=rand(1.35,2.0);}
-    }
-  }
-  var oldDemoTigerTick921=updateTigerDemoArrival994;
-  updateTigerDemoArrival994=function(dt){var v=gameState&&gameState.tigerDemo&&gameState.tigerDemoTank;if(!v)return oldDemoTigerTick921(dt);tickTiger921(v,dt,true);};
-  var oldCampaignTigerTick921=updateTigerCannon994;
-  updateTigerCannon994=function(dt){if(gameState&&gameState.arcade){gameState.arcade.armor.forEach(function(v){if(v.alive&&v.tiger994)tickTiger921(v,dt,false);});}else oldCampaignTigerTick921(dt);};
-  var oldUpdateTigerWeapons921=update;
-  update=function(dt){oldUpdateTigerWeapons921(dt);if(!gameState||!gameState.tigerHeShells921)return;
-    for(var i=0;i<gameState.tigerHeShells921.length;i++){var b=gameState.tigerHeShells921[i],px=b.x,py=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;b.traveled+=Math.hypot(b.x-px,b.y-py);
-      var hit=null;gameState.infantry.concat(gameState.vehicles.filter(function(e){return !e.allied;})).forEach(function(e){if(e.alive&&dist(e.x,e.y,b.x,b.y)<18)hit=e;});
-      if(hit||b.life<=0||b.traveled>=b.targetDist||b.x<8||b.x>W-8||b.y<safeTop||b.y>H-safeBottom){var ix=hit?hit.x:b.x,iy=hit?hit.y:b.y;tigerImpact921(ix,iy,'he');b.life=0;}
-    }
-    gameState.tigerHeShells921=gameState.tigerHeShells921.filter(function(b){return b.life>0;});
-  };
-  var oldRenderTigerShell921=render;
-  render=function(){oldRenderTigerShell921();if(!gameState||!gameState.tigerHeShells921)return;ctx.save();gameState.tigerHeShells921.forEach(function(b){ctx.fillStyle='#ffd889';ctx.strokeStyle='#4a3320';ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(b.x,b.y,3.5,0,TAU);ctx.fill();ctx.stroke();});ctx.restore();};
-})();
 })();
