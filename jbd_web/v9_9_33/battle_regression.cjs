@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 7090)
-Total output lines: 362
-
 'use strict';
 const fs=require('node:fs');
 const path=require('node:path');
@@ -184,7 +181,13 @@ const defender=crossfire.t.createAlly(125,320,'rifle');xs.arcade.allies.push(def
 xs.map.cover.push({id:919,kind:'building',x:195,y:510,w:90,h:65,r:45,integrity:5,hitProgress:0,destroyed:false});
 assert.ok(crossfire.t.wall(shooter.x,shooter.y,xs.bunker.x,xs.bunker.y),'bunker is behind a house');
 assert.ok(crossfire.t.enemyFire(shooter),'enemy engages visible allied soldier while bunker is obscured');
-assert.equal(xs.enemyShots.at(-1).aimedAllied9930,true,'shot belongs to a real infantry…90 tokens truncated…of Object.entries(p))assert.ok(Number.isFinite(value),mode+' map '+level+' finite '+name);
+assert.equal(xs.enemyShots.at(-1).aimedAllied9930,true,'shot belongs to a real infantry engagement');
+assert.ok(Math.hypot(xs.enemyShots.at(-1).vx,xs.enemyShots.at(-1).vy)>500,'small-arms projectiles have coherent speeds');
+for(const mode of ['easy','hard']){
+  const audit=loadGame(dir);audit.t.start(mode);
+  for(let level=0;level<40;level++){
+    audit.t.state.levelIndex=level;const p=audit.t.enemyProfile(level);
+    for(const [name,value] of Object.entries(p))assert.ok(Number.isFinite(value),mode+' map '+level+' finite '+name);
     assert.ok(p.infantryHp>.3&&p.infantryHp<5,'bounded infantry HP across campaign');
     assert.ok(p.infantrySpeed>.4&&p.infantrySpeed<2.5,'bounded movement across campaign');
     assert.ok(p.cooldown>=.3&&p.cooldown<=1.6,'bounded firing cadence across campaign');
