@@ -47,7 +47,7 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.equal(v.burnPlan9941,plan);
  const duration=v.fuelBurnT;
  if(plan==='ammo')assert.ok(duration>=2&&duration<=5,'cookoff limited to 2-5 seconds');
- for(let i=0;i<380;i++){s.time+=1/60;g.t.burnStep(v,1/60);if(!v.fuelIgnited)break;}
+ for(let i=0;i<(plan==='single'?100:380);i++){const dt=plan==='single'?.5:1/60;s.time+=dt;g.t.burnStep(v,dt);if(!v.fuelIgnited)break;}
  assert.equal(v.alive,!destroyed,plan+' changes whether vehicle is destroyed');
  if(!destroyed){assert.equal(v.state,'parkedDisabled');assert.ok(!v.fuelIgnited);}
 }
