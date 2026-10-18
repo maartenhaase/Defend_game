@@ -1742,11 +1742,11 @@ function hardEncounterPlan9910(){
  }
  var families=idx<5?['kubel']:idx<10?['kubel','blitz']:idx<16?['kubel','blitz','spah']:idx<24?['blitz','spah','sdkfz250']:['blitz','spah','sdkfz250','horch'];
  for(var i=0;i<vehicleTotal;i++){
-   var family=families[(i+Math.floor(idx/3))%families.length],spec=vehicleSpecFor(family,idx);
+   var family=families[(i+Math.floor(idx/3))%families.length],spec=idx<10?(VEHICLE_SPECS[family+'_1']||vehicleSpecFor(family,idx)):vehicleSpecFor(family,idx);
    var crew=spec.transport?Math.min(4+Math.floor(idx/9),spec.capacity||4):0;
    var t=3.5+i*(idx<10?11:8.0)+Math.floor(i/2)*2.4;
    var waveForVehicle=Math.min(stages,1+Math.floor(i*stages/Math.max(1,vehicleTotal)));
-   addEncounter(events,t,spec.baseType,1,waveForVehicle,stages,spec.name,{vehicleId:spec.id,motorCap:Math.max(1,Math.ceil(vehicleTotal/2)),passengersOverride:crew,direction:dna.direction});
+   addEncounter(events,t,spec.baseType,1,0,stages,spec.name,{vehicleId:spec.id,motorCap:Math.max(1,Math.ceil(vehicleTotal/2)),passengersOverride:crew,direction:dna.direction});
  }
  events.sort(function(a,b){return a.t-b.t;});
  return events;
@@ -2351,6 +2351,7 @@ function spawnPlannedFoot(n,mix,tactic,rocketCount,direction){
     else{if(dna.weaponClass>=4&&rr<.15)role='marksman';else if(dna.weaponClass>=2&&rr<.34)role='lmg';else role='rifle';}
     if(!rocketSlots[i]&&role==='rifle'&&i===0&&n>=4&&Math.random()<.45)role='radio';
     else if(!rocketSlots[i]&&role==='rifle'&&Math.random()<.24)role='medic';
+    if(gameState.startMode==='hard'&&idx<5)role='rifle';
     var off=formationOffset(i,n,formation),px=clamp(pt.x+off.x*.35,16,W-16),py=clamp(pt.y+off.y*.35,safeTop+28,H*.68);
     var member={id:sq.id,tactic:sq.tactic,size:n,originX:origin,phase:sq.phase,slot:i,leader:i===0,formation:formation,flankX:clamp(px+off.x,20,W-20),faction:groupFaction};
     var northEntry=pt.y<=safeTop+120&&pt.x>36&&pt.x<W-36;
