@@ -10514,7 +10514,16 @@ if(testEntry9947){
 var processEventsBefore9947=processEvents;
 processEvents=function(){if(gameState&&gameState.demoSandbox9947)return;return processEventsBefore9947.apply(this,arguments);};
 var directorBefore9947=updateBattleDirector;
-updateBattleDirector=function(dt){if(gameState&&gameState.demoSandbox9947)return;return directorBefore9947.apply(this,arguments);};
+updateBattleDirector=function(dt){
+  if(gameState&&gameState.demoSandbox9947){
+    // Test map skips artillery/waves, but smoke must still animate and fade.
+    var keepArtillery=gameState.artillery,keepAmbient=gameState.ambientBattleT;
+    gameState.artillery=[];gameState.ambientBattleT=100000;
+    try{return directorBefore9947.apply(this,arguments);}
+    finally{gameState.artillery=keepArtillery;gameState.ambientBattleT=keepAmbient;}
+  }
+  return directorBefore9947.apply(this,arguments);
+};
 var stallBefore9947=updateBattleStall995;
 updateBattleStall995=function(dt){if(gameState&&gameState.demoSandbox9947)return false;return stallBefore9947.apply(this,arguments);};
 var effectsTestBefore9947=updateEffects;
