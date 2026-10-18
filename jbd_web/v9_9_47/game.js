@@ -10671,6 +10671,18 @@ drawVehicle=function(v,wreck){
  ctx.restore();
 };
 
+/* HARD encounter override must be installed after the historical V9.9.12–V9.9.40
+   campaign decorators. Those older decorators otherwise re-introduce big opening armies. */
+var planBeforeProgressive9910=buildEncounterPlan;
+buildEncounterPlan=function(){
+ if(gameState&&gameState.startMode==='hard'){
+   var plan=hardEncounterPlan9910(),L=level();
+   gameState.encounterName=L&&L.title?'SECTOR '+(gameState.levelIndex+1)+' · '+L.title:gameState.encounterName;
+   return plan;
+ }
+ return planBeforeProgressive9910.apply(this,arguments);
+};
+
 })();
 
 
