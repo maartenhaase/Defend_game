@@ -63,6 +63,29 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.ok(exiting.length>=2,'normal unload creates running troops');
  assert.ok(exiting.some(e=>e.truckRun9947.x<v.x)&&exiting.some(e=>e.truckRun9947.x>v.x),'left and right split');
 }
+// Unloading smoke must be a visibly animated particle cloud, not an opaque ellipse.
+{
+ const {g,s}=harness(),v=makeVehicle(g,s,'trooptruck','blitz_1');
+ v.passengers=6;v.unloadLeft=6;v.state='unload';v.unloadCd=0;
+ g.t.vehicleStep(.15);
+ assert.ok(s.smokeZones.some(z=>z.white9947),'truck dismount emits white smoke zones');
+ const firstParticles=s.whiteSmokeParticles9948||[];
+ assert.ok(firstParticles.length>=5,'first white puffs appear immediately without waiting for timer');
+ const puff=firstParticles[0],firstY=puff.y,firstR=puff.r;
+ for(let i=0;i<30;i++)g.t.directorStep(1/60);
+ assert.ok(s.whiteSmokeParticles9948.length>=firstParticles.length,'white zones continually emit particles');
+ assert.ok(puff.y<firstY,'particles rise over time');
+ assert.ok(puff.r>firstR,'particle puffs expand over time');
+ assert.ok(s.whiteSmokeParticles9948.every(p=>p.life>1&&p.t>=0),'cloud particles have finite smooth fade lifetimes');
+ g.t.drawSmoke();
+ for(const z of s.smokeZones)z.t=.01;
+ g.t.directorStep(.05);
+ assert.equal(s.smokeZones.filter(z=>z.white9947).length,0,'smoke emission stops at expiry');
+ assert.ok(s.whiteSmokeParticles9948.length>0,'existing particles linger after smoke grenade expires');
+ for(let i=0;i<250;i++)g.t.directorStep(1/60);
+ assert.equal(s.whiteSmokeParticles9948.length,0,'cloud completely fades without a hard cut');
+ g.t.drawSmoke();
+}
 // Infantry under armed grenades react by running away immediately.
 {
  const {g,s}=harness(),e=g.t.spawnEnemy(g.t.size.w*.5,g.t.size.h*.38,'rifle',null,'vehicle');
