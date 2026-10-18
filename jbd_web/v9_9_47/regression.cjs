@@ -116,4 +116,46 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.equal(radio.radioCalled9945,true,'radio has completed its call');
  assert.ok(s.infantry.length>=4,'reinforcement patrol arrived');
 }
+// HARD rebalance: more useful grenades, sturdier bunker, faster fuel ignition and no AP shop.
+{
+ const {g,s}=harness(),frag=g.t.grenadeStats(0);
+ assert.ok(frag.impact>=28&&frag.blast>=21&&frag.radius>=16,'base grenades hit harder and reach farther');
+ assert.ok(s.profile.maxHp>100,'starting HARD bunker is stronger than the old 90 HP base');
+ const before=s.effects.length;
+ g.t.grenadeImpact(195,300,{kind:'he',radius:frag.radius,damage:frag.impact,blastDamage:frag.blast,specialEffect:'blast',visual:0});
+ const blast=s.effects.slice(before).find(e=>e.type==='explosion');
+ assert.ok(blast&&blast.r>=24,'grenade explosion actually looks bigger');
+ assert.ok(s.shake>=3.2,'grenade gives stronger blast kick');
+}
+{
+ const {g,s}=harness(),v=makeVehicle(g,s,'trooptruck','blitz_1');
+ g.setRandom(.99);
+ for(let i=0;i<3;i++)g.t.gunFuel(v,1);
+ assert.ok(v.fuelLeak,'trooptruck starts leaking within three fuel hits');
+ assert.ok(!v.fuelIgnited,'initial MG tap cannot instantly ignite fuel');
+ s.time+=.55;v.oilRadius=4.45;
+ g.t.gunFuel(v,1);
+ assert.equal(v.fuelIgnited,false,'first later ignition spark still leaves room to react');
+ g.t.gunFuel(v,1);
+ assert.equal(v.fuelIgnited,true,'second later spark now sets leaking truck ablaze');
+ assert.equal(v.alive,true,'fire does not imply an automatic mobility kill or instant destruction');
+}
+{
+ const {g,s}=harness(),grid=g.ids.get('shopGrid'),supply=g.ids.get('supply'),next=g.ids.get('deploy');
+ s.mode='shop';s.save.arsenalPoints=0;
+ g.t.shop();
+ const buttons=grid.children.slice(-4);
+ assert.equal(buttons.length,4,'four upgrade choices');
+ assert.ok(buttons.every(b=>!b.disabled),'all upgrades free even with zero points');
+ assert.equal(next.disabled,true,'next map requires one chosen upgrade');
+ assert.ok(!/PUNT|AP|KOST|POINT/i.test(supply.textContent),'no point currency displayed');
+ buttons[2].listeners.click[0]();
+ assert.equal(s.save.upgrades.special,4,'chosen upgrade advances by four levels');
+ assert.equal(s.shopBought9947,true,'one free choice used');
+ assert.equal(next.disabled,false,'next map available after upgrade');
+ buttons[0].listeners.click[0]();
+ assert.equal(s.save.upgrades.range,0,'a second purchase is blocked');
+ g.t.reset();
+ assert.equal(s.shopBought9947,false,'next map gets a fresh free upgrade');
+}
 console.log('PASS V9.9.47: ten penetrations, vehicle MG intact, all 3 fire outcomes, grenade slots/fuse/panic, truck smoke/flanking and radio reinforcements');
