@@ -1,0 +1,83 @@
+name: Deploy JBD to GitHub Pages
+# Retry after GitHub Pages source was enabled
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "jbd_rebuild_v1/dist/**"
+      - "jbd_web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          cp -a jbd_rebuild_v1/dist/. _site/
+          cp -a jbd_web _site/jbd_web
+          touch _site/.nojekyll
+          test -s _site/jbd_web/v9_9_26/index.html
+          test -s _site/jbd_web/v9_9_26/game.js
+          node --check _site/jbd_web/v9_9_26/game.js
+          test -s _site/jbd_web/v9_9_19/index.html
+          test -s _site/jbd_web/v9_9_19/game.js
+          node --check _site/jbd_web/v9_9_19/game.js
+          test -s _site/jbd_web/v9_9_26/index.html
+          test -s _site/jbd_web/v9_9_26/game.js
+          node --check _site/jbd_web/v9_9_26/game.js
+          node _site/jbd_web/v9_8_2/demo_smoke_test.cjs
+          node _site/jbd_web/v9_8_2/symmetry_test.cjs
+          test -s _site/jbd_web/v9_9_41/index.html
+          test -s _site/jbd_web/v9_9_41/game.js
+          node --check _site/jbd_web/v9_9_41/game.js
+          node _site/jbd_web/v9_9_41/battle_regression.cjs
+          node _site/jbd_web/v9_9_41/support_balance.cjs _site/jbd_web/v9_9_41 3 --verify > /tmp/jbd-support-balance.json
+          echo 'Confirmed V9.9.41 in Pages artifact'
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+      - name: Allow Pages artifact indexing
+        run: sleep 22
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify published V9.9.41
+        run: |
+          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_41/index.html'
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -L -s -o /tmp/jbd-page.html -w '%{http_code}' "$URL" || true)
+            echo "HTTP status: $STATUS"
+            if [ "$STATUS" = '200' ] && grep -q 'V9.9.41' /tmp/jbd-page.html; then
+              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_41/game.js' || true)
+              if [ "$JS_STATUS" = '200' ]; then echo 'V9.9.41 HTML and JS verified live'; exit 0; fi
+            fi
+            sleep 5
+          done
+          echo 'Published V9.9.41 URL is not available'
+          exit 1
+
+
+
