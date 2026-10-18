@@ -124,7 +124,7 @@ function randomLevelCode(){
 }
 function applyStartMode(mode){
   mode=(mode==='hard'||mode==='demo'||mode==='random')?mode:'easy';gameState.startMode=mode;
-  gameState.save.adaptiveDifficulty=mode==='hard'?.44:mode==='easy'?-.22:.04;
+  gameState.save.adaptiveDifficulty=mode==='hard'?.10:mode==='easy'?-.22:.04;
   if(mode==='demo'){
     var demoDigits=[6,4,5,5,2,6,5,5,3,4,2,7,6,4,3,3,6,6,7,6,5,5,3,4,2,2,6,5,4,8];
     LEVELS[0].code=demoDigits.join('');LEVELS[0].theme='village';LEVELS[0].type='VILLAGE';
@@ -1316,14 +1316,14 @@ function resetLevel(){
   if(gameState.arcade){gameState.arcade.focusT=0;gameState.arcade.focusCd=0;gameState.arcade.reconT=0;gameState.arcade.lastNearMiss=-99;}
   gameState.zoneRule=currentZoneRule();
   if(gameState.arcade){gameState.arcade.allies=[];gameState.arcade.tracers=[];gameState.arcade.armor=[];gameState.arcade.forts=[];gameState.arcade.salvageAt=(Math.floor((gameState.gunGameKills||0)/15)+1)*15;gameState.arcade.focus=0;gameState.arcade.allyKills=0;gameState.arcade.reinforcements=0;}
-  gameState.riskBase=gameState.startMode==='hard'?.45:gameState.startMode==='easy'?.04:.08;
+  gameState.riskBase=gameState.startMode==='hard'?.16:gameState.startMode==='easy'?.04:.08;
   gameState.riskLevel=gameState.riskBase;gameState.riskPeak=gameState.riskBase;gameState.riskBank=0;
   gameState.riskReserveT=0;gameState.riskReserveQueued=0;gameState.riskThresholds=[false,false,false];
   gameState.profile=playerProfile();gameState.shopBought9947=false;gameState.upgradeChoice9949=null;
   gameState.levelDNA=decodeLevelCode(level().code);
   gameState.levelCode=gameState.levelDNA.code;
   gameState.adaptiveSnapshot=clamp(gameState.save.adaptiveDifficulty||0,-.58,.44);
-  if(gameState.startMode==='hard')gameState.adaptiveSnapshot=Math.max(.38,gameState.adaptiveSnapshot);
+  if(gameState.startMode==='hard')gameState.adaptiveSnapshot=clamp(gameState.adaptiveSnapshot,.06+.008*Math.min(24,gameState.levelIndex),.39);
   else if(gameState.startMode==='easy')gameState.adaptiveSnapshot=clamp(gameState.adaptiveSnapshot,-.30,-.10);
   else gameState.adaptiveSnapshot=clamp(gameState.adaptiveSnapshot,-.04,.12);
   gameState.damageTarget=levelDamageBand(gameState.levelIndex,gameState.profile.maxHp);
@@ -1386,14 +1386,14 @@ function adaptiveValue(){
     var hp=clamp(gameState.bunker.hp/gameState.bunker.maxHp,0,1);
     if(hp<.48)base-=clamp((.48-hp)*1.28,0,.48);
   }
-  return clamp(base,gameState&&gameState.startMode==='hard'?.28:-.58,.44);
+  return clamp(base,gameState&&gameState.startMode==='hard'?.03:-.58,.44);
 }
 function enemyProgression(idx){
   var a=adaptiveValue(),dna=levelDNAForIndex(idx),skill=dna.infantrySkill,diff=dna.difficulty;
   var hard=gameState&&gameState.startMode==='hard',easy=gameState&&gameState.startMode==='easy';
-  var hardRamp=clamp(idx/24,0,1);
-  var hpM=hard?1.08+.40*hardRamp:easy?.78:1.06,dmgM=hard?1.12+.53*hardRamp:easy?.60:1.08,spdM=hard?1.00+.08*hardRamp:easy?.82:1.00;
-  var coolM=hard?.88-.27*hardRamp:easy?1.34:.94,aimM=hard?.84-.22*hardRamp:easy?1.32:.94;
+  var hardRamp=clamp(idx/32,0,1);
+  var hpM=hard?1.00+.29*hardRamp:easy?.78:1.06,dmgM=hard?.89+.44*hardRamp:easy?.60:1.08,spdM=hard?.94+.13*hardRamp:easy?.82:1.00;
+  var coolM=hard?1.08-.33*hardRamp:easy?1.34:.94,aimM=hard?1.06-.35*hardRamp:easy?1.32:.94;
   var difficultyScale=.88+diff*.043,skillHp=.96+skill*.026,skillMove=.97+skill*.013;
   return {adaptive:a,infantryHp:Math.min(5.4,(1+idx*.007)*difficultyScale*skillHp*(1+a*.60)*hpM*1.55),
     infantrySpeed:(1+idx*.0020)*skillMove*(1+a*.27)*spdM,infantryDamage:(.92+diff*.040+skill*.011)*(1+a)*dmgM,
@@ -1721,8 +1721,39 @@ var SHORT_BATTLES_987=[
 ['rockets','ROCKET SECTION',58],
 ['breakthrough','ARMORED BREAKTHROUGH',65]
 ];
+/* Progressive HARD campaign: map 1 begins with 4 rifles, then ramps one small step per map. */
+function hardEncounterPlan9910(){
+ var idx=gameState.levelIndex,dna=levelDNA(),mapNo=idx+1,events=[];
+ var footTotal=Math.min(42,4+Math.floor(idx*.93));
+ var vehicleTotal=idx<2?0:idx<5?1:idx<10?1:idx<16?2:idx<23?3:idx<31?4:5;
+ var stages=idx<5?2:idx<14?3:idx<28?4:5;
+ var duration=38+idx*.85+vehicleTotal*3;
+ gameState.shortBattle={kind:'gradual9910',label:'GRADUAL ASSAULT · '+mapNo,maxDuration:duration};
+ gameState.shortBattleWithdrawn=false;gameState.encounterName='SECTOR '+mapNo+' · GRADUAL ASSAULT';
+ gameState.waveTotal=stages;gameState.mgTeamsPlanned=0;
+ var used=0,departAt=1.3;
+ for(var wave=1;wave<=stages;wave++){
+   var remain=footTotal-used,slots=stages-wave+1,amount=wave===stages?remain:Math.max(2,Math.round(remain/slots));
+   used+=amount;
+   var mix=idx<4?'rifle':idx<9?(wave===stages?'lmg':'rifle'):idx<17?(wave%2?'rifle':'lmg'):(wave%3===0?'marksman':wave%2?'lmg':'rifle');
+   var tactic=idx<4?'line':idx<10?'split':wave%2?'flankLeft':'flankRight';
+   addEncounter(events,departAt,'foot',amount,wave,stages,'INFANTRY '+wave+'/'+stages,{roleMix:mix,tactic:tactic,direction:wave%2?0:dna.direction,rocketCount:0});
+   departAt+=idx<6?7.5:idx<18?6.7:5.8;
+ }
+ var families=idx<5?['kubel']:idx<10?['kubel','blitz']:idx<16?['kubel','blitz','spah']:idx<24?['blitz','spah','sdkfz250']:['blitz','spah','sdkfz250','horch'];
+ for(var i=0;i<vehicleTotal;i++){
+   var family=families[(i+Math.floor(idx/3))%families.length],spec=vehicleSpecFor(family,idx);
+   var crew=spec.transport?Math.min(4+Math.floor(idx/9),spec.capacity||4):0;
+   var t=3.5+i*(idx<10?11:8.0)+Math.floor(i/2)*2.4;
+   var waveForVehicle=Math.min(stages,1+Math.floor(i*stages/Math.max(1,vehicleTotal)));
+   addEncounter(events,t,spec.baseType,1,waveForVehicle,stages,spec.name,{vehicleId:spec.id,motorCap:Math.max(1,Math.ceil(vehicleTotal/2)),passengersOverride:crew,direction:dna.direction});
+ }
+ events.sort(function(a,b){return a.t-b.t;});
+ return events;
+}
 function buildEncounterPlan(){
  if(gameState.startMode==='demo'){gameState.shortBattle=null;return buildLegacyEncounterPlan();}
+ if(gameState.startMode==='hard')return hardEncounterPlan9910();
  var idx=gameState.levelIndex,dna=levelDNA(),pick=SHORT_BATTLES_987[(idx+(gameState.startMode==='random'?(dna.hash>>>9)%SHORT_BATTLES_987.length:0))%SHORT_BATTLES_987.length],kind=pick[0],events=[],t=.25;
  gameState.shortBattle={kind:kind,label:pick[1],maxDuration:pick[2]+(idx>=25?4:0)};
  gameState.shortBattleWithdrawn=false;gameState.encounterName=pick[1];gameState.waveTotal=1;gameState.mgTeamsPlanned=0;
@@ -1769,8 +1800,8 @@ function battlePressure(){
   return p;
 }
 function shouldHoldEncounter(e){
-  if(gameState.shortBattle)return false;
-  var pressure=battlePressure(),budget=dangerBudget();
+  if(gameState.shortBattle&&gameState.startMode!=='hard')return false;
+  var pressure=battlePressure(),budget=gameState.startMode==='hard'?3.8+gameState.levelIndex*.26:dangerBudget();
   if((gameState.battleLockT||0)>0)return true;
   if((gameState.waveIntroT||0)>0)return true;
   if((gameState.recoveryT||0)>0&&pressure>budget*.62)return true;
@@ -3702,6 +3733,31 @@ function enemyAimTarget9930(e){
   }
   return target;
 }
+/* Enemy ammunition now has the same ballistic constraints as the player's: speed,
+   effective range, material resistance, penetration level and ricochet. */
+function enemyBulletProperties9910(kind,idx,speed){
+ var level=Math.min(18,Math.floor(idx*.44));
+ var role=kind==='marksman'?'marksman':kind==='lmg'||kind==='vehicleMG'?'mg':'rifle';
+ return {level:level,baseChance:role==='marksman'?.16:role==='mg'?.095:.065,
+   energy:role==='marksman'?1.05:role==='mg'?.82:.70,
+   speed:speed,range:role==='marksman'?560:role==='mg'?410:350,
+   bunkerMaterial:'reinforced-concrete'};
+}
+function bunkerBulletDamage9910(b){
+ var kind=b.kind||'rifle';
+ if(kind==='rocket'||kind==='shell'||kind==='grenade')return b.dmg;
+ var prop=b.ballistics9910||enemyBulletProperties9910(kind,gameState.levelIndex,Math.hypot(b.vx||0,b.vy||0));
+ var originX=b.sourceX9910==null?b.x:b.sourceX9910,originY=b.sourceY9910==null?b.y:b.sourceY9910;
+ var meters=Math.hypot(b.x-originX,b.y-originY),reach=clamp(1-meters/Math.max(1,prop.range)*.58,.24,1);
+ var impactEnergy=prop.energy*reach,armor=gameState.profile.armorLevel||0;
+ var chance=clamp((prop.baseChance+prop.level*.006)*impactEnergy-armor*.006,.015,.30);
+ if(Math.random()>=chance){
+   emitRicochet(b.x,b.y,Math.atan2(b.vy||0,b.vx||1),.38);
+   return .055; // Blunt impact on the embrasure, no full HP loss on a ricochet.
+ }
+ pushEffect({type:'impactFlash',x:b.x,y:b.y,r:3.2,t:0,life:.09});
+ return Math.min(1.55,(b.dmg||1)*(.22+.25*impactEnergy)*(1+prop.level*.012));
+}
 function enemyFire(e){
   var fireTarget=e.rocketUnit||e.centerRoute9935?gameState.bunker:enemyAimTarget9930(e);
   if(!e.centerRoute9935&&(lineBlockedByWreck(e.x,e.y,fireTarget.x,fireTarget.y)||lineOfSightBlockedByWalls(e.x,e.y,fireTarget.x,fireTarget.y)))return false;
@@ -3719,7 +3775,7 @@ function enemyFire(e){
   var smokePenalty=smokeInterferenceLine(e.x,e.y,fireTarget.x,fireTarget.y),moralePenalty=1+(1-clamp(e.morale==null?1:e.morale,0,1))*.75;
   var spread=(wp.spread||roleSpread)*prog.accuracy*(1+smokePenalty*1.65)*moralePenalty,a=baseAngle+rand(-spread,spread);
   e.angle=baseAngle;e.fireAngle9930=baseAngle;
-  gameState.enemyShots.push({arcadeDirected:true,aimedAllied9930:fireTarget!==gameState.bunker,x:mx,y:my,px:mx,py:my,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,kind:kind,dmg:dmg,life:e.centerRoute9935?d/speed+.35:kind==='grenade'?2.4:1.5,weapon:e.weaponName});
+  gameState.enemyShots.push({arcadeDirected:true,aimedAllied9930:fireTarget!==gameState.bunker,x:mx,y:my,px:mx,py:my,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,kind:kind,dmg:dmg,sourceX9910:mx,sourceY9910:my,ballistics9910:enemyBulletProperties9910(kind,idx,speed),life:e.centerRoute9935?d/speed+.35:kind==='grenade'?2.4:1.5,weapon:e.weaponName});
   e.muzzle=.09;e.recoil=1;emitMuzzle(mx,my,e.angle,false);
   if(kind!=='grenade'&&Math.random()<(kind==='lmg'?.85:.42))emitCasingFx(e.x,e.y-2,e.angle,kind==='lmg');
   AudioSys.weapon(e.weaponName||wp.name,e.role,.50,{pan:clamp((e.x-W*.5)/(W*.55),-.8,.8)});return true;
@@ -4079,7 +4135,7 @@ function vehicleMG(v,ts){
   var m=vehicleMuzzle(v),spread=(wp.spread||.045)*prog.accuracy,a=v.turretAngle+rand(-spread,spread),speed=350*(1+gameState.levelIndex*.0015);
   var vd=v.type==='halftrack'?1.65:v.type==='scoutcar'?1.48:v.type==='truck'?1.35:v.type==='lighttruck'?1.25:1.08;
   var damage=vd*DEVICE.enemyDamage*prog.vehicleDamage*(wp.damage||1);
-  gameState.enemyShots.push({x:m.x,y:m.y,px:m.x,py:m.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,kind:'vehicleMG',dmg:damage,life:1.7,weapon:wp.name});
+  gameState.enemyShots.push({x:m.x,y:m.y,px:m.x,py:m.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,kind:'vehicleMG',dmg:damage,sourceX9910:m.x,sourceY9910:m.y,ballistics9910:enemyBulletProperties9910('vehicleMG',gameState.levelIndex,speed),life:1.7,weapon:wp.name});
   v.turretRecoil=1;emitMuzzle(m.x,m.y,v.turretAngle,false);
   pushEffect({type:'casing',x:m.x,y:m.y,vx:Math.cos(v.turretAngle+Math.PI/2)*rand(28,48),vy:Math.sin(v.turretAngle+Math.PI/2)*rand(28,48),rot:rand(0,TAU),vr:rand(-13,13),t:0,life:rand(.28,.50)});
   if(Math.random()<.55)pushEffect({type:'gunSpark',x:m.x,y:m.y,vx:Math.cos(a)*rand(55,95),vy:Math.sin(a)*rand(55,95),t:0,life:.12});
@@ -5154,7 +5210,7 @@ function updateEnemyShots(dt){
       if(b.trailCd<=0){b.trailCd=.045;pushEffect({type:'smoke',x:b.x,y:b.y,vx:rand(-6,6),vy:rand(-9,3),r:rand(1.8,3.2),t:0,life:rand(.26,.46),shade:.28});if(Math.random()<.48)pushEffect({type:'ember',x:b.x,y:b.y,vx:-b.vx*.05+rand(-6,6),vy:-b.vy*.05+rand(-6,6),t:0,life:rand(.10,.22)});}
     }
     if(dist(b.x,b.y,gameState.bunker.x,gameState.bunker.y)<28){
-      damageBunker(b.dmg);if(b.kind==='grenade'||b.kind==='shell'||b.kind==='rocket')explode(b.x,b.y,b.kind==='rocket'?30:b.kind==='shell'?32:24,true);b.life=0;
+      damageBunker(bunkerBulletDamage9910(b));if(b.kind==='grenade'||b.kind==='shell'||b.kind==='rocket')explode(b.x,b.y,b.kind==='rocket'?30:b.kind==='shell'?32:24,true);b.life=0;
     }
   }
   gameState.enemyShots=gameState.enemyShots.filter(function(b){return b.life>0&&b.x>-50&&b.x<W+50&&b.y>-50&&b.y<H+50;});
