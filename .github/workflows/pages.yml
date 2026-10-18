@@ -49,12 +49,12 @@ jobs:
           node --check _site/jbd_web/v9_9_26/game.js
           node _site/jbd_web/v9_8_2/demo_smoke_test.cjs
           node _site/jbd_web/v9_8_2/symmetry_test.cjs
-          test -s _site/jbd_web/v9_9_41/index.html
-          test -s _site/jbd_web/v9_9_41/game.js
-          node --check _site/jbd_web/v9_9_41/game.js
-          node _site/jbd_web/v9_9_41/battle_regression.cjs
-          node _site/jbd_web/v9_9_41/support_balance.cjs _site/jbd_web/v9_9_41 3 --verify > /tmp/jbd-support-balance.json
-          echo 'Confirmed V9.9.41 in Pages artifact'
+          test -s _site/jbd_web/v9_9_42/index.html
+          test -s _site/jbd_web/v9_9_42/game.js
+          node --check _site/jbd_web/v9_9_42/game.js
+          node _site/jbd_web/v9_9_42/battle_regression.cjs
+          node _site/jbd_web/v9_9_42/support_balance.cjs _site/jbd_web/v9_9_42 3 --verify > /tmp/jbd-support-balance.json
+          echo 'Confirmed V9.9.42 in Pages artifact'
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
@@ -64,19 +64,19 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published V9.9.41
+      - name: Verify published V9.9.42
         run: |
-          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_41/index.html'
+          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_42/index.html'
           for i in 1 2 3 4 5; do
             STATUS=$(curl -L -s -o /tmp/jbd-page.html -w '%{http_code}' "$URL" || true)
             echo "HTTP status: $STATUS"
-            if [ "$STATUS" = '200' ] && grep -q 'V9.9.41' /tmp/jbd-page.html; then
-              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_41/game.js' || true)
-              if [ "$JS_STATUS" = '200' ]; then echo 'V9.9.41 HTML and JS verified live'; exit 0; fi
+            if [ "$STATUS" = '200' ] && grep -q 'V9.9.42' /tmp/jbd-page.html; then
+              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_42/game.js' || true)
+              if [ "$JS_STATUS" = '200' ]; then echo 'V9.9.42 HTML and JS verified live'; exit 0; fi
             fi
             sleep 5
           done
-          echo 'Published V9.9.41 URL is not available'
+          echo 'Published V9.9.42 URL is not available'
           exit 1
 
 
