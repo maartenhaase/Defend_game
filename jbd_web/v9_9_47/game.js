@@ -5531,22 +5531,43 @@ function drawTree(t,p){
 }
 function drawRock(r,p){drawEnvSprite(r.kind==='mountain'?'rockCliff986':'boulder'+(1+(r.variant%3)),r.x,r.y,r.kind==='mountain'?.43+r.r*.044:.50+r.r*.060,r.variant*.34,1);}
 function drawDecor(d,p){drawEnvSprite(d.type,d.x,d.y,d.s,d.rot,.96);}
+/* Each destructible ground-floor building uses the same geometry and hitboxes,
+   but receives one of six material palettes, independent of the sprite model. */
+function buildingPaint9910(c,p){
+ var theme=gameState&&gameState.map&&(gameState.map.zoneTheme||level().theme)||'forest';
+ var sets={
+  forest:['#9d937d','#9b8675','#7e8b7e','#a59a86','#887b70','#a89c82'],
+  desert:['#c7ab80','#d4c097','#ad9172','#e1c89f','#bba47e','#c1ae99'],
+  snow:['#c0c2ba','#d8d5ca','#a6b1af','#e0dbd1','#aaada4','#c9c7c1'],
+  urban:['#a19c92','#b3a493','#939d98','#8c8e88','#a9a89b','#ab9181']
+ };
+ var key=biomePalette9910(theme),group=sets[key]||sets.urban;
+ var model=((Math.abs(c.variant||0)*5+Math.abs(c.id||0))%group.length);
+ var floor=c.material==='wood'?mixHex(group[model],'#826947',.24):group[model];
+ return {floor:floor,edge:tone(floor,-.50),floorLine:tone(floor,-.18),
+   furniture:tone(floor,-.42),wall:tone(floor,-.43),wallDamaged:tone(floor,-.29),
+   trim:tone(floor,.26),rubble:mixHex(p.rock,floor,.46),scheme:model};
+}
 function drawBattleBuilding(c,p){
   // TOP-DOWN CUTAWAY: NEVER a roof. The player always sees the GROUND FLOOR.
-  var x=c.x,y=c.y,w=c.w,h=c.h,wood=c.material==='wood',walls=buildingWalls(c);
+  var x=c.x,y=c.y,w=c.w,h=c.h,wood=c.material==='wood',walls=buildingWalls(c),paint=buildingPaint9910(c,p);
   ctx.save();ctx.translate(x,y);
   ctx.fillStyle='rgba(11,14,11,.14)';ctx.fillRect(-w*.5+3,-h*.5+4,w,h);
-  ctx.fillStyle=wood?'#82765d':c.sprite==='factory'?'#646660':c.sprite==='desertPost'?'#bca982':'#999387';
-  ctx.globalAlpha=.90;ctx.fillRect(-w*.5+3,-h*.5+3,w-6,h-6);ctx.globalAlpha=1;ctx.strokeStyle='#29271f';ctx.lineWidth=2.2;ctx.strokeRect(-w*.5+3,-h*.5+3,w-6,h-6);
+  ctx.fillStyle=paint.floor;
+  ctx.globalAlpha=.90;ctx.fillRect(-w*.5+3,-h*.5+3,w-6,h-6);ctx.globalAlpha=1;ctx.strokeStyle=paint.edge;ctx.lineWidth=2.2;ctx.strokeRect(-w*.5+3,-h*.5+3,w-6,h-6);
   var rng=seeded((c.id*991+c.variant*19)>>>0);
   // Tile/wood floor strips, and small indoor furniture: always visible from overhead.
-  ctx.strokeStyle=wood?'#554c37':'#79756b';ctx.lineWidth=.65;ctx.globalAlpha=.5;
+  ctx.strokeStyle=paint.floorLine;ctx.lineWidth=.65;ctx.globalAlpha=.5;
   for(var fl=1;fl<5;fl++){
     var fy=-h*.5+fl*h/5;ctx.beginPath();ctx.moveTo(-w*.5+4,fy);ctx.lineTo(w*.5-4,fy);ctx.stroke();
   }
   if(!wood)for(fl=1;fl<4;fl++){var fx=-w*.5+fl*w/4;ctx.beginPath();ctx.moveTo(fx,-h*.5+3);ctx.lineTo(fx,h*.5-3);ctx.stroke();}
   ctx.globalAlpha=1;
-  ctx.fillStyle=wood?'#4b3929':'#655c4b';
+  // Different paint chips/tile variants from the same geometry, inside cutaway floor only.
+  ctx.globalAlpha=.22;ctx.fillStyle=paint.trim;
+  for(var tint=0;tint<3;tint++){var bx=-w*.34+tint*w*.29,by=-h*.35+((paint.scheme+tint)%3)*h*.22;ctx.fillRect(bx,by,Math.max(3,w*.09),Math.max(2,h*.04));}
+  ctx.globalAlpha=1;
+  ctx.fillStyle=paint.furniture;
   ctx.fillRect(-w*.25,-h*.28,w*.25,h*.14);
   ctx.fillRect(w*.12,h*.12,w*.17,h*.18);
   for(var j=0;j<walls.length;j++){
@@ -5556,7 +5577,7 @@ function drawBattleBuilding(c,p){
       var debrisCount=seg.hp<=0?11:seg.stage===1?8:seg.stage===2?5:2;
       for(var k=0;k<debrisCount;k++){
         var along=rng(),rx=a+(d-a)*along+(rng()-.5)*7,ry=b+(e-b)*along+(rng()-.5)*7;
-        ctx.fillStyle=wood?'#594635':p.rock;ctx.globalAlpha=seg.hp<=0?.86:.68;
+        ctx.fillStyle=paint.rubble;ctx.globalAlpha=seg.hp<=0?.86:.68;
         ctx.fillRect(rx,ry,2+rng()*4,1+rng()*3);
       }
       ctx.globalAlpha=1;
@@ -5565,10 +5586,10 @@ function drawBattleBuilding(c,p){
     // Four visible stages: solid wall, chipped masonry, breached masonry, hanging fragment.
     var thickness=seg.stage===4?5.5:seg.stage===3?4.7:seg.stage===2?3.6:2.5;
     ctx.lineCap='butt';ctx.lineWidth=thickness;
-    ctx.strokeStyle=wood?(seg.stage>2?'#503c2a':'#765d42'):(seg.stage>2?'#514f4c':'#716c63');
+    ctx.strokeStyle=seg.stage>2?paint.wall:paint.wallDamaged;
     ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(d,e);ctx.stroke();
     if(seg.stage>=3){
-      ctx.strokeStyle=wood?'#a58c65':'#c6bdb1';ctx.lineWidth=1.2;
+      ctx.strokeStyle=paint.trim;ctx.lineWidth=1.2;
       ctx.beginPath();ctx.moveTo(a+1,b+1);ctx.lineTo(d+1,e+1);ctx.stroke();
     }
     if(seg.stage<=2){
@@ -5720,7 +5741,7 @@ function drawMap(){
 /* ---------- RENDER: INFANTRY ---------- */
 
 /* ---------- RENDER: DETAILED RUNTIME SPRITE SHEETS ---------- */
-var SPR={atlas:null,frames:{},level:-1,size:1536,x:2,y:2,rowH:0,inf:{w:20,h:24,roles:['rifle','storm','lmg','grenadier','marksman','antitank','officer','medic','radio','engineer','support'],factions:['wehrmacht','british'],dirs:['down','left','right','up'],poses:['idle','idle2','walk1','walk2','walk3','walk4','standFire','crouch','crouchFire','prone','proneFire','dead1','dead2'],skins:2}};
+var SPR={atlas:null,frames:{},level:-1,size:2048,x:2,y:2,rowH:0,inf:{w:20,h:24,roles:['rifle','storm','lmg','grenadier','marksman','antitank','officer','medic','radio','engineer','support'],factions:['wehrmacht','british'],dirs:['down','left','right','up'],poses:['idle','idle2','walk1','walk2','walk3','walk4','standFire','crouch','crouchFire','prone','proneFire','dead1','dead2'],skins:3}};
 function atlasAdd(name,w,h,draw){var pad=2;if(SPR.x+w+pad>SPR.size){SPR.x=2;SPR.y+=SPR.rowH+pad;SPR.rowH=0;}if(SPR.y+h+pad>SPR.size)throw new Error('sprite atlas full');var f={x:SPR.x,y:SPR.y,w:w,h:h};SPR.frames[name]=f;draw(SPR.atlas.getContext('2d'),f.x,f.y,w,h);SPR.x+=w+pad;SPR.rowH=Math.max(SPR.rowH,h);}
 function P(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
 function infCols(role,skin,faction){
@@ -5743,7 +5764,17 @@ function infCols(role,skin,faction){
 function infPixel(g,ox,oy,role,dir,pose,skin,faction){
   var c=infCols(role,skin,faction),brit=faction==='british',fire=pose.indexOf('Fire')>=0,prone=pose.indexOf('prone')===0,crouch=pose.indexOf('crouch')===0,dead=pose.indexOf('dead')===0;
   var wf=pose==='walk1'?0:pose==='walk2'?1:pose==='walk3'?2:pose==='walk4'?3:-1;
-  function Q(x,y,w,h,col){P(g,ox+x,oy+y,w,h,col);}
+  function Q(x,y,w,h,col){
+  P(g,ox+x,oy+y,w,h,col);
+  // Small, stable irregular camo flecks ONLY on cloth and helmets, never on face or rifle.
+  if(w>1&&h>1&&(col===c.cloth||col===c.cloth2||col===c.helm)){
+    var dark=tone(col,-.20),bright=tone(col,.13);
+    for(var py=0;py<h;py+=2)for(var px=0;px<w;px+=3){
+      var v=(x*11+y*23+px*7+py*17+skin*31+role.length*9+dir.length*13)&15;
+      if(v<4)P(g,ox+x+px,oy+y+py,Math.min(2,w-px),Math.min(2,h-py),v<2?dark:bright);
+    }
+  }
+}
   function face(cx,cy){Q(cx-2,cy+2,4,2,'#b98b6b');}
   function helmet(cx,cy){
     // Same detailed silhouette standard for both factions; only historical helmet shape differs.
@@ -10436,19 +10467,33 @@ roleTick9945=function(dt){
 };
 // Dynamic uniforms and vehicle paint: the atlas is regenerated per map.
 var infColorsBefore9947=infCols;
+var UNIFORM_THEMES_9910={
+ forest:[['#3b543f','#68805a','#344733'],['#5c6346','#898663','#46503b'],['#405a50','#738479','#34483f']],
+ jungle:[['#314c35','#577746','#2b412e'],['#4c5b34','#829354','#3a4b30'],['#335a4b','#699180','#2e4c3f']],
+ desert:[['#a18b61','#c9b386','#8b7959'],['#b9a178','#e0ca9f','#9a835e'],['#917e66','#b8a78a','#7c715d']],
+ snow:[['#becac2','#e2e7dd','#adbab2'],['#d7d8c9','#f1f0e6','#b8b8b1'],['#a7b0ac','#d3d9d5','#929f9d']],
+ urban:[['#5d665f','#89938b','#4c5853'],['#77736c','#a49b8d','#5f625c'],['#5a656b','#929da1','#4d5d65']],
+ coastal:[['#6e7966','#9aa590','#5e6c5b'],['#7e8579','#b4b9ac','#636e65'],['#6f7f85','#9caeb1','#576970']]
+};
+function biomePalette9910(theme){
+ if(theme==='forest'||theme==='mountain')return 'forest';
+ if(theme==='jungle')return 'jungle';
+ if(theme==='desert')return 'desert';
+ if(theme==='snow')return 'snow';
+ if(theme==='coast')return 'coastal';
+ return 'urban';
+}
 infCols=function(role,skin,faction){
- var c=infColorsBefore9947.apply(this,arguments),theme=gameState&&gameState.map&&(gameState.map.zoneTheme||level().theme)||'';
- if(theme==='snow'){
-  c.cloth=skin?'#cbd0c4':'#b7c0b7';c.cloth2=skin?'#e6e8df':'#cdd4cb';
-  c.helm=skin?'#e0e1d5':'#a7b1ab';c.leather='#777b68';
- }else if(theme==='desert'){
-  c.cloth=skin?'#c9b583':'#aa996e';c.cloth2=skin?'#e1cb9f':'#c4ae7d';
-  c.helm='#927f60';c.leather='#876b4e';
- }else if(theme==='jungle'||theme==='forest'){
-  c.cloth=skin?'#4e6244':'#374b3a';c.cloth2=skin?'#677850':'#56664a';c.helm='#343f33';
- }else if(theme==='ruins'||theme==='metropolis'||theme==='industrial'){
-  c.cloth=skin?'#76786f':'#65695f';c.cloth2=skin?'#989b91':'#777b72';c.helm='#535852';
+ var c=infColorsBefore9947.apply(this,arguments);
+ var theme=gameState&&gameState.map&&(gameState.map.zoneTheme||level().theme)||'forest';
+ var shade=UNIFORM_THEMES_9910[biomePalette9910(theme)][Math.abs(skin|0)%3];
+ // Reuse identical pose / role pixel geometry with a different 3-color military dye recipe.
+ c.cloth=shade[0];c.cloth2=shade[1];c.helm=shade[2];
+ if(faction==='british'){
+  c.cloth=mixHex(c.cloth,theme==='snow'?'#d8d7c8':'#a8956b',.17);
+  c.cloth2=mixHex(c.cloth2,theme==='snow'?'#f1ede0':'#baaa81',.13);
  }
+ c.leather=tone(c.cloth,-.20);
  return c;
 };
 var vehiclePaletteBefore9947=vehiclePalette;
@@ -10602,6 +10647,27 @@ updateEffects=function(dt){
  effectsTestBefore9947.apply(this,arguments);
  // Keep test map fully player-controlled with no background waves or demo ticks.
  if(gameState&&gameState.demoSandbox9947)gameState.bunker.hp=gameState.bunker.maxHp;
+};
+
+/* Low-cost unique camouflage painting on top of the theme-swapped vehicle atlas.
+   Paint is deterministic per vehicle, so animation does not shimmer. */
+var drawVehicleBeforeCamo9910=drawVehicle;
+drawVehicle=function(v,wreck){
+ drawVehicleBeforeCamo9910.apply(this,arguments);
+ if(!v||wreck||!v.alive||v.allied)return;
+ var theme=gameState&&gameState.map&&(gameState.map.zoneTheme||level().theme)||'forest';
+ var group=UNIFORM_THEMES_9910[biomePalette9910(theme)]||UNIFORM_THEMES_9910.forest;
+ var color=group[Math.abs((v.id||0)+(v.variant||0))%3],seed=Math.abs(v.id||1)%997;
+ ctx.save();ctx.translate(v.x,v.y);ctx.rotate((v.bodyAngle==null?Math.PI/2:v.bodyAngle)-Math.PI/2);
+ ctx.globalAlpha=.70;
+ for(var n=0;n<9;n++){
+  var rx=((seed*(n+3)*17)%19)-9,ry=((seed*(n+7)*13)%28)-14;
+  // Narrow panels / bonnet and edges only; avoid cockpit center.
+  if(Math.abs(rx)<3&&Math.abs(ry)<7)continue;
+  ctx.fillStyle=color[(n+seed)%3];
+  ctx.fillRect(rx*.64,ry*.82,1.3+(n%3)*.45,1.2+(n%2)*.6);
+ }
+ ctx.restore();
 };
 
 })();
