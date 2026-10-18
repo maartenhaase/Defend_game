@@ -56,6 +56,12 @@ jobs:
           node _site/jbd_web/v9_9_43/field_regression.cjs
           node _site/jbd_web/v9_9_43/support_balance.cjs _site/jbd_web/v9_9_43 3 --verify > /tmp/jbd-support-balance.json
           echo 'Confirmed V9.9.43 in Pages artifact'
+          test -s _site/jbd_web/v9_9_44/index.html
+          test -s _site/jbd_web/v9_9_44/game.js
+          node --check _site/jbd_web/v9_9_44/game.js
+          node _site/jbd_web/v9_9_44/battle_regression.cjs _site/jbd_web/v9_9_44
+          node _site/jbd_web/v9_9_44/field_regression.cjs _site/jbd_web/v9_9_44
+          echo 'Confirmed V9.9.44 in Pages artifact'
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
@@ -65,19 +71,19 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published V9.9.43
+      - name: Verify published V9.9.44
         run: |
-          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_43/index.html'
+          URL='https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_44/index.html'
           for i in 1 2 3 4 5; do
             STATUS=$(curl -L -s -o /tmp/jbd-page.html -w '%{http_code}' "$URL" || true)
             echo "HTTP status: $STATUS"
-            if [ "$STATUS" = '200' ] && grep -q 'V9.9.43' /tmp/jbd-page.html; then
-              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_43/game.js' || true)
-              if [ "$JS_STATUS" = '200' ]; then echo 'V9.9.43 HTML and JS verified live'; exit 0; fi
+            if [ "$STATUS" = '200' ] && grep -q 'V9.9.44' /tmp/jbd-page.html; then
+              JS_STATUS=$(curl -L -s -o /tmp/jbd-game.js -w '%{http_code}' 'https://maartenhaase.github.io/Defend_game/jbd_web/v9_9_44/game.js' || true)
+              if [ "$JS_STATUS" = '200' ]; then echo 'V9.9.44 HTML and JS verified live'; exit 0; fi
             fi
             sleep 5
           done
-          echo 'Published V9.9.43 URL is not available'
+          echo 'Published V9.9.44 URL is not available'
           exit 1
 
 
