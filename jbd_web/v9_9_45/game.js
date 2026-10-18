@@ -294,7 +294,7 @@ function restoreCampaignMaps(){
   // Random/demo modes must never contaminate a subsequent Easy or Hard campaign.
   for(var i=0;i<CAMPAIGN_BLUEPRINT.length;i++)LEVELS[i]=Object.assign({},CAMPAIGN_BLUEPRINT[i]);
 }
-var UPGRADES={range:{label:'SPEED + PENETRATION'},rate:{label:'FIRE CONTROL + AIM'},special:{label:'GRENADE POWER'},armor:{label:'BASE ARMOR'}};
+var UPGRADES={range:{label:'BALLISTIEK + PENETRATIE'},rate:{label:'VUURTEMPO + RICHTEN'},special:{label:'GRANATEN · KRACHT / RELOAD'},armor:{label:'BUNKERPANTSER + HP'}};
 // One weapon for the full campaign; no random gun unlocks.
 var PRIMARY_DB=[{id:'field_mg',name:'FIELD MACHINE GUN',era:1944,cls:'light machine gun',ammo:'.30 CAL',mag:40,reload:2.50,cycle:(60/900),damage:6.4,range:.60,speed:760,spread:1.95,mode:'auto',burst:1,pellets:1,heatScale:.84,projectile:'bullet',group:4,variant:0}];
 var WEAPON_CLASS_NAMES=['light machine gun'];
@@ -3866,7 +3866,7 @@ function updateInfantry(dt){
       e.detourT=1.25;e.noProgressT=0;e.stuckT=0;
     }
 
-    if(e.morale<.18&&!e.wounded&&e.state!=='panic'){e.state='panic';e.stateT=0;e.panicT=rand(1.8,3.8);e.cover=null;e.fireCd=999;}
+    if(e.morale<.18&&!e.wounded&&e.state!=='panic'&&!e.moraleWave9945){e.state='panic';e.stateT=0;e.panicT=rand(1.8,3.8);e.cover=null;e.fireCd=999;}
     if(e.suppression>.70&&e.state!=='suppressed'&&e.state!=='crawl'&&e.state!=='panic'&&e.state!=='prone'){e.state='suppressed';e.stateT=0;e.cover=nearestCover(e)||nextForwardCover(e);}
     if(e.stuckT>1.55){e.state='advance';e.cover=null;e.detourSide=-(e.detourSide||1);e.detourT=1.20;e.forceDirectT=.65;e.stuckT=0;}
 
@@ -5228,7 +5228,7 @@ function weaponPreview(kind,lvl){
 function skillPreview(key,lvl){
   var n=Math.min(SKILL_MAX,lvl+1),u=gameState.save.upgrades,next=Object.assign({},u);next[key]=n;
   var a=primaryStatsForLevels9935(u),b=primaryStatsForLevels9935(next);
-  if(key==='range')return 'SNELHEID '+a.speed+' → '+b.speed+' px/s · PEN '+Math.round(a.penetrationChance*100)+' → '+Math.round(b.penetrationChance*100)+'% (MAX 85%) · PER MUUR/DOEL · MATERIAAL + RESTENERGIE';
+  if(key==='range')return 'SNELHEID '+a.speed+' → '+b.speed+' px/s · PEN '+Math.round(a.penetrationChance*100)+' → '+Math.round(b.penetrationChance*100)+'% (MAX 82%) · PER MUUR/DOEL · MATERIAAL + RESTENERGIE';
   if(key==='rate')return 'VUUR '+Math.round(60/a.cycle)+' → '+Math.round(60/b.cycle)+'/min · MAG '+a.mag+' → '+b.mag+' · RELOAD '+a.reload.toFixed(2)+' → '+b.reload.toFixed(2)+'s · STABILITY +'+Math.round(a.aimLevel*2.5)+' → '+Math.round(b.aimLevel*2.5)+'% · HANDMATIG RICHTEN';
   if(key==='special'){var g=specialStats(lvl),h=specialStats(n);return 'SCHADE '+Math.round(g.impact)+'→'+Math.round(h.impact)+' · BLAST '+Math.round(g.blast)+'→'+Math.round(h.blast)+' · RADIUS '+Math.round(g.radius)+'→'+Math.round(h.radius)+' · RELOAD '+g.recharge.toFixed(1)+'→'+h.recharge.toFixed(1)+'s · 3 GRANATEN';}
   return 'BASE HP '+(90+lvl*23)+' → '+(90+n*23)+' · BESCHERMING '+Math.round((1-Math.max(.36,1-lvl*.032))*100)+' → '+Math.round((1-Math.max(.36,1-n*.032))*100)+'%';
@@ -9857,7 +9857,7 @@ damageBunker=function(dmg){
 function startPanic9945(){
  var units=gameState.infantry.filter(function(u){return u.alive&&!u.allied&&!u.wounded&&u.burnT<=0&&u.state!=='parachuting';});
  if(!units.length)return;
- var n=Math.ceil(units.length*(.50+Math.random()*.40)),start=(Math.random()*units.length)|0;
+ var n=Math.min(units.length,Math.max(1,Math.min(Math.floor(units.length*.90),Math.ceil(units.length*(.50+Math.random()*.40))))),start=(Math.random()*units.length)|0;
  for(var i=0;i<n;i++){
   var u=units[(start+i)%units.length];
   if(u.role==='medic'&&u.vehiclePatient9941)continue;
