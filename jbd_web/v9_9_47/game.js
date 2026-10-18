@@ -5543,7 +5543,7 @@ function buildingPaint9910(c,p){
   urban:['#a19c92','#b3a493','#939d98','#8c8e88','#a9a89b','#ab9181']
  };
  var key=biomePalette9910(theme),group=sets[key]||sets.urban;
- var model=((Math.abs(c.variant||0)*5+Math.abs(c.id||0))%group.length);
+ var model=((Math.abs(c.variant||0)*13+Math.abs(c.id||0)*7)%group.length);
  var floor=c.material==='wood'?mixHex(group[model],'#826947',.24):group[model];
  return {floor:floor,edge:tone(floor,-.50),floorLine:tone(floor,-.18),
    furniture:tone(floor,-.42),wall:tone(floor,-.43),wallDamaged:tone(floor,-.29),
