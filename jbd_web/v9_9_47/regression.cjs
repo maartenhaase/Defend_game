@@ -158,4 +158,56 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  g.t.reset();
  assert.equal(s.shopBought9947,false,'next map gets a fresh free upgrade');
 }
+// HARD V9.9.47 progressive update: first wave is small and armor is introduced slowly.
+{
+ const {g,s}=harness();
+ function planAt(idx){
+  s.levelIndex=idx;s.levelDNA=null;
+  const events=g.t.plan();
+  return {events,foot:events.filter(e=>e.type==='foot').reduce((n,e)=>n+e.count,0),
+    vehicles:events.filter(e=>!!e.vehicleId)};
+ }
+ const one=planAt(0),three=planAt(2),six=planAt(5),twelve=planAt(11),twenty=planAt(19),forty=planAt(39);
+ assert.equal(one.foot,4,'map 1 has exactly four foot soldiers');
+ assert.equal(one.vehicles.length,0,'map 1 starts without armed motor vehicles');
+ assert.equal(three.vehicles.length,1,'map 3 introduces only one light vehicle');
+ assert.ok(three.vehicles[0].vehicleId.endsWith('_1'),'first vehicle uses light class 1');
+ assert.ok(one.foot<three.foot&&three.foot<six.foot&&six.foot<twelve.foot&&twelve.foot<twenty.foot&&twenty.foot<forty.foot,'infantry grows continuously');
+ assert.ok(six.vehicles.length<=1&&twelve.vehicles.length<=2&&twenty.vehicles.length<=3&&forty.vehicles.length<=5,'armored pressure ramps slowly');
+ assert.ok(one.events.every(e=>e.type==='foot'),'no early helicopter/rocket/tank ambush');
+ assert.ok(forty.events.every(e=>e.type==='foot'||!!e.vehicleId),'endgame unit roster remains grounded');
+}
+{
+ const {g,s}=harness();
+ const hardHp=s.bunker.hp,base={kind:'rifle',dmg:12,x:s.bunker.x,y:s.bunker.y,vx:0,vy:600,
+   sourceX9910:s.bunker.x,sourceY9910:s.bunker.y-200,
+   ballistics9910:g.t.enemyBulletProperties('rifle',0,600)};
+ g.setRandom(.99);
+ const ricochet=g.t.bunkerBulletDamage(base);
+ assert.ok(ricochet<=.06,'ordinary enemy bullets ricochet against concrete instead of full damage');
+ g.t.damageBunker(ricochet);
+ assert.ok(hardHp-s.bunker.hp<.1,'ricochet does negligible bunker damage');
+ g.setRandom(0);
+ const penetrated=g.t.bunkerBulletDamage(base);
+ assert.ok(penetrated>ricochet&&penetrated<=1.55,'penetration is limited by armor and impact energy');
+ const far={...base,sourceY9910:s.bunker.y-700};
+ const distant=g.t.bunkerBulletDamage(far);
+ assert.ok(distant<=penetrated,'distance-based energy reduces bullet penetration damage');
+ const shell=g.t.bunkerBulletDamage({...base,kind:'rocket'});
+ assert.equal(shell,12,'actual explosive anti-armor rounds still hurt the bunker');
+}
+{
+ const {g,s}=harness();
+ const cloth=[0,1,2].map(skin=>g.t.uniformPalette('rifle',skin,'wehrmacht').cloth);
+ assert.equal(new Set(cloth).size,3,'three separate uniform cloth colors from one sprite model');
+ s.map.zoneTheme='snow';
+ const winter=g.t.uniformPalette('rifle',1,'wehrmacht');
+ assert.notEqual(winter.cloth,cloth[1],'winter clothing uses a new material palette');
+ const building=(id,variant)=>g.t.buildingPalette({id,variant,material:'stone'},s.map.palette);
+ assert.notEqual(building(1,0).floor,building(2,1).floor,'separate buildings have different floor paint');
+ assert.notEqual(building(1,0).trim,building(3,2).trim,'trim colors change with building variant');
+ assert.equal(g.t.atlas.inf.skins,3,'three atlas uniform variants exist');
+ g.t.render();
+ assert.ok(g.t.atlas.frames['inf:wehrmacht:rifle:2:down:idle'],'third camouflage sprite actually rendered in atlas');
+}
 console.log('PASS V9.9.47: ten penetrations, vehicle MG intact, all 3 fire outcomes, grenade slots/fuse/panic, truck smoke/flanking and radio reinforcements');
