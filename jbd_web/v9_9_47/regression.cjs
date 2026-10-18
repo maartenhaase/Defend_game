@@ -86,6 +86,19 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.equal(s.whiteSmokeParticles9948.length,0,'cloud completely fades without a hard cut');
  g.t.drawSmoke();
 }
+// Test map also advances smoke; older sandbox suppressed the smoke update completely.
+{
+ const {g,s}=harness(),v=makeVehicle(g,s,'trooptruck','blitz_1');
+ s.demoSandbox9947=true;v.passengers=6;v.unloadLeft=6;v.state='unload';v.unloadCd=0;
+ g.t.vehicleStep(.15);
+ const plume=s.smokeZones.find(z=>z.white9947);
+ assert.ok(plume,'test map dismount starts smoke');
+ const puff=s.whiteSmokeParticles9948[0],beforeY=puff.y,beforeT=plume.t;
+ for(let i=0;i<12;i++)g.t.step(1/60);
+ assert.ok(plume.t<beforeT,'test map advances smoke zone lifetime');
+ assert.ok(puff.y<beforeY,'test map lets smoke rise');
+ g.t.drawSmoke();
+}
 // Infantry under armed grenades react by running away immediately.
 {
  const {g,s}=harness(),e=g.t.spawnEnemy(g.t.size.w*.5,g.t.size.h*.38,'rifle',null,'vehicle');
