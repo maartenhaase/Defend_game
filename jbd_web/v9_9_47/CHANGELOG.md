@@ -20,3 +20,13 @@ Tests: new v9_9_47/regression.cjs covers mobility, gunner, three burn scenarios,
 - Full vehicle immobilization/destroyed distinctions, independent fire scenarios, and grenade slot upgrades remain intact.
 - One free upgrade is now mandatory after each completed map; the old arsenal point currency is not used for purchases or displayed.
 - Added automated regression tests for grenade power, starting bunker HP, vehicle ignition timing, and free upgrade enforcement.
+
+## HARD rework: bullet penetration, campaign ramp and camouflage · 18 October 2026
+
+- Enemy rifle, marksman, light-machine-gun and vehicle machine-gun rounds now carry muzzle speed, penetration level, material resistance, energy loss with range, and a possible ricochet on fortified concrete. Nonpenetrating ordinary bullets cause only 0.055 pre-armor HP damage, rather than full attack damage. Successful penetrations have an individual 1.55 pre-armor HP damage cap; grenades, shells and rockets remain dangerous.
+- Reduced the initially forced HARD adaptive pressure and softened initial enemy health, accuracy and fire cadence; these rise progressively over later maps rather than being severe on map 1.
+- Introduced deterministic 40-map HARD unit budgets. Map 1 starts with only four rifle infantry and no enemy vehicles; first light-class scout on map 3, first transports later, gradually rising through five vehicles by map 40. Groups are staggered in time and active unit pressure can postpone the next wave.
+- Prevented legacy encounter decorators from overriding the new HARD budgets or inserting early reinforcements. Early HARD foot squads do not spawn medics or radiomen; the original behavior resumes later.
+- Infantry gets three separately painted camouflage palettes per biome (forest/jungle, desert, snow, urban, coastal), applied to the existing pose/role geometry; pixel camouflage speckles remain confined to clothing and helmets. The sprite atlas is 2048 px to fit the additional uniform skins.
+- Existing vehicle models retain their biome palettes and receive deterministic three-color paint spots per vehicle. Reusable ground-floor building models now have six per-biome floor, wall, furniture and trim palettes, with variation independent of damage geometry and collision.
+- Added regression tests for HARD growth across map 1/3/6/12/20/40, concrete ricochet/penetration at near and long range, and palette/atlas generation.
