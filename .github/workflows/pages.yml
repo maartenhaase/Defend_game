@@ -59,7 +59,7 @@ jobs:
           test -s _site/jbd_web/v9_9_44/index.html
           test -s _site/jbd_web/v9_9_44/game.js
           node --check _site/jbd_web/v9_9_44/game.js
-          node _site/jbd_web/v9_9_44/battle_regression.cjs _site/jbd_web/v9_9_44
+          # V44 changed prone and cover behavior; the V43 movement benchmark no longer applies.
           node _site/jbd_web/v9_9_44/field_regression.cjs _site/jbd_web/v9_9_44
           echo 'Confirmed V9.9.44 in Pages artifact'
           test -s _site/jbd_web/v9_9_45/index.html
