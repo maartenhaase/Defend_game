@@ -1308,7 +1308,7 @@ function freshState(){
     stats:{shots:0,hits:0,kills:0,vehicleKills:0,airKills:0,misses:0,damageTaken:0,buildingsDestroyed:0},
     infantry:[],vehicles:[],air:[],paras:[],shots:[],enemyShots:[],effects:[],craters:[],wrecks:[],blood:[],fireZones:[],
     events:[],eventCursor:0,burstQueue:[],map:null,primaryAmmo:0,primaryCooldown:0,primaryReloadT:0,primaryReloadShell:false,
-    artillery:[],smokeZones:[],ambientBattleT:0,concussion:0,battleBeat:0,battleLockT:0,battleDirectorError:false
+    artillery:[],smokeZones:[],whiteSmokeParticles9948:[],ambientBattleT:0,concussion:0,battleBeat:0,battleLockT:0,battleDirectorError:false
   };
 }
 function resetLevel(){
@@ -1335,7 +1335,7 @@ function resetLevel(){
   gameState.primaryAmmo=gameState.profile.primaryMag;gameState.primaryCooldown=0;gameState.primaryReloadT=0;gameState.primaryReloadShell=false;resetGrenadeSlots();gameState.lastStandUsed=false;
   gameState.heat=0;gameState.overheat=false;gameState.eff=.75;gameState.hitMarker=0;gameState.hitPulse=0;gameState.streak=0;gameState.streakT=0;gameState.message='';gameState.messageT=0;gameState.shake=0;gameState.screenFlash=0;gameState.hitStop=0;gameState.wave=0;
   gameState.stats={shots:0,hits:0,kills:0,vehicleKills:0,airKills:0,misses:0,damageTaken:0,buildingsDestroyed:0};
-  gameState.infantry=[];gameState.vehicles=[];gameState.air=[];gameState.paras=[];gameState.shots=[];gameState.enemyShots=[];gameState.effects=[];gameState.craters=[];gameState.wrecks=[];gameState.blood=[];gameState.fireZones=[];gameState.killZones=[];gameState.burstQueue=[];gameState.artillery=[];gameState.smokeZones=[];gameState.ambientBattleT=.8;gameState.concussion=0;gameState.battleBeat=0;gameState.battleLockT=0;gameState.battleDirectorError=false;gameState.pointer.down=false;gameState.pointer.heFired=false;
+  gameState.infantry=[];gameState.vehicles=[];gameState.air=[];gameState.paras=[];gameState.shots=[];gameState.enemyShots=[];gameState.effects=[];gameState.craters=[];gameState.wrecks=[];gameState.blood=[];gameState.fireZones=[];gameState.killZones=[];gameState.burstQueue=[];gameState.artillery=[];gameState.smokeZones=[];gameState.whiteSmokeParticles9948=[];gameState.ambientBattleT=.8;gameState.concussion=0;gameState.battleBeat=0;gameState.battleLockT=0;gameState.battleDirectorError=false;gameState.pointer.down=false;gameState.pointer.heFired=false;
   buildMap();
   gameState.events=buildEncounterPlan();
   // Graceful start: the first real enemy wave waits for player orientation.
@@ -1849,6 +1849,30 @@ function artilleryImpact(a){
   for(i=0;i<gameState.vehicles.length;i++){var v=gameState.vehicles[i];if(!v.alive)continue;d=dist(a.x,a.y,v.x,v.y);if(d<r*1.25)damageVehicle(v,dmg*.48*(1-d/(r*1.25)),'he');}
   if(Math.random()<.58)addSmokeZone(a.x+rand(-5,5),a.y+rand(-5,5),rand(26,38),rand(4.5,7.5));
 }
+
+/* V9.9.47 smoke hotfix: visual smoke is a particle cloud, independent of the gameplay cover zone. */
+function emitWhiteSmokeParticle9948(zone,initial){
+  var particles=gameState.whiteSmokeParticles9948||(gameState.whiteSmokeParticles9948=[]);
+  var cap=IS_IPHONE?105:185;
+  if(particles.length>=cap)return;
+  var spread=initial?zone.r*.42:zone.r*.85;
+  var angle=rand(0,TAU),distance=Math.sqrt(Math.random())*spread;
+  var wx=(zone.driftX||0)*1.3;
+  particles.push({
+    x:zone.x+Math.cos(angle)*distance,
+    y:zone.y+Math.sin(angle)*distance*.55,
+    vx:wx+rand(-9,9),
+    vy:rand(-17,-5),
+    windX:wx+rand(-5,5),
+    t:initial?rand(0,.27):0,
+    life:rand(1.8,3.25),
+    r:rand(5.5,9.5),
+    growth:rand(6.2,10.3),
+    density:rand(.78,1.22),
+    stretch:rand(.74,1.05),
+    seed:rand(0,TAU)
+  });
+}
 function updateBattleDirector(dt){
   gameState.concussion=Math.max(0,(gameState.concussion||0)-dt*1.6);
   gameState.battleLockT=Math.max(0,(gameState.battleLockT||0)-dt);
@@ -1859,9 +1883,28 @@ function updateBattleDirector(dt){
   }
   gameState.artillery=gameState.artillery.filter(function(a){return !a.done;});
   for(i=0;i<gameState.smokeZones.length;i++){
-    var z=gameState.smokeZones[i];z.t-=dt;z.x+=z.driftX*dt;z.y+=z.driftY*dt;z.fx-=dt;
-    if(z.fx<=0){z.fx=z.white9947?.18:.10;for(var k=0;k<(IS_IPHONE?1:2);k++)if(!z.white9947)pushEffect({type:'smoke',x:z.x+rand(-z.r*.55,z.r*.55),y:z.y+rand(-z.r*.35,z.r*.35),vx:z.driftX+rand(-5,5),vy:-rand(3,10),r:rand(7,13),t:0,life:rand(.8,1.4),shade:rand(.35,.82)});}
+    var z=gameState.smokeZones[i];
+    z.t-=dt;z.x+=(z.driftX||0)*dt;z.y+=(z.driftY||0)*dt;z.fx-=dt;
+    if(z.t>0&&z.fx<=0){
+      if(z.white9947){
+        z.fx=IS_IPHONE?.095:.075;
+        for(var k=0;k<(IS_IPHONE?1:2);k++)emitWhiteSmokeParticle9948(z,false);
+      }else{
+        z.fx=.10;
+        for(var k=0;k<(IS_IPHONE?1:2);k++)pushEffect({type:'smoke',x:z.x+rand(-z.r*.55,z.r*.55),y:z.y+rand(-z.r*.35,z.r*.35),vx:z.driftX+rand(-5,5),vy:-rand(3,10),r:rand(7,13),t:0,life:rand(.8,1.4),shade:rand(.35,.82)});
+      }
+    }
   }
+  var whiteClouds=gameState.whiteSmokeParticles9948||(gameState.whiteSmokeParticles9948=[]);
+  for(i=0;i<whiteClouds.length;i++){
+    var p=whiteClouds[i];
+    p.t+=dt;
+    p.vx+=(p.windX-p.vx)*Math.min(1,dt*.66);
+    p.x+=(p.vx+Math.sin(p.seed+p.t*1.1)*1.6)*dt;
+    p.y+=p.vy*dt;p.vy-=2.3*dt;
+    p.r+=p.growth*dt;
+  }
+  gameState.whiteSmokeParticles9948=whiteClouds.filter(function(p){return p.t<p.life;});
   gameState.smokeZones=gameState.smokeZones.filter(function(z){return z.t>0;});
   gameState.ambientBattleT-=dt;
   if(gameState.ambientBattleT<=0){
@@ -1875,7 +1918,39 @@ function updateBattleDirector(dt){
 }
 function drawSmokeZones(){
   ctx.save();
-  for(var i=0;i<gameState.smokeZones.length;i++){var z=gameState.smokeZones[i],q=clamp(z.t/Math.max(.01,z.maxT),0,1),alpha=z.white9947?Math.min(.72,.20+q*.54):Math.min(.32,.10+q*.18);ctx.globalAlpha=alpha;ctx.fillStyle=z.white9947?'#f0f2e9':'#4b524d';ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.72,0,0,TAU);ctx.fill();if(z.white9947){ctx.globalAlpha=alpha*.55;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.ellipse(z.x-8,z.y-5,z.r*.62,z.r*.52,0,0,TAU);ctx.fill();}}
+  // Gameplay smoke remains a cover zone; its visual is translucent and soft, never a solid disc.
+  for(var i=0;i<gameState.smokeZones.length;i++){
+    var z=gameState.smokeZones[i],q=clamp(z.t/Math.max(.01,z.maxT),0,1);
+    if(z.white9947){
+      var halo=ctx.createRadialGradient(z.x,z.y,0,z.x,z.y,z.r*1.6);
+      var a=Math.min(.16,q*.18);
+      halo.addColorStop(0,'rgba(247,249,243,'+a+')');
+      halo.addColorStop(.65,'rgba(241,244,240,'+(a*.48)+')');
+      halo.addColorStop(1,'rgba(237,240,236,0)');
+      ctx.fillStyle=halo;ctx.beginPath();ctx.arc(z.x,z.y,z.r*1.6,0,TAU);ctx.fill();
+    }else{
+      ctx.globalAlpha=Math.min(.20,.05+q*.15);ctx.fillStyle='#515853';
+      ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.72,0,0,TAU);ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+  var particles=gameState.whiteSmokeParticles9948||[];
+  for(i=0;i<particles.length;i++){
+    var p=particles[i],progress=clamp(p.t/p.life,0,1);
+    // Puff grows as it rises; birth, opacity and death are all eased.
+    var fadeIn=Math.min(1,.46+p.t*3.5);
+    var fadeOut=Math.pow(1-progress,1.35);
+    var opacity=clamp(fadeIn*fadeOut*p.density*.67,0,.78);
+    if(opacity<.012)continue;
+    var radius=p.r;
+    var cloud=ctx.createRadialGradient(p.x-radius*.19,p.y-radius*.22,radius*.035,p.x,p.y,radius);
+    cloud.addColorStop(0,'rgba(255,255,252,'+(opacity*.96)+')');
+    cloud.addColorStop(.33,'rgba(246,249,246,'+(opacity*.82)+')');
+    cloud.addColorStop(.72,'rgba(228,235,233,'+(opacity*.35)+')');
+    cloud.addColorStop(1,'rgba(224,231,229,0)');
+    ctx.fillStyle=cloud;ctx.beginPath();
+    ctx.ellipse(p.x,p.y,radius,radius*p.stretch,0,0,TAU);ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -10190,12 +10265,15 @@ function unloadSmoke9947(v){
  for(var i=0;i<n;i++){
   var ang=Math.PI*.24+i*Math.PI*(1.15/Math.max(1,n)),r=12+i*4,t=rand(5,10);
   var x=clamp(v.x+Math.cos(ang)*r,20,W-20),y=clamp(v.y-8+Math.sin(ang)*r,safeTop+12,H-safeBottom-30);
-  gameState.smokeZones.push({x:x,y:y,r:rand(18,25),t:t,maxT:t,driftX:rand(-2.8,2.8),driftY:rand(-1.6,.6),fx:.03,white9947:true,sourceVehicle9947:v});
+  var zone9948={x:x,y:y,r:rand(18,25),t:t,maxT:t,driftX:rand(-2.8,2.8),driftY:rand(-1.6,.6),fx:.03,white9947:true,sourceVehicle9947:v};
+  gameState.smokeZones.push(zone9948);
+  for(var initialPuff9948=0;initialPuff9948<(IS_IPHONE?5:7);initialPuff9948++)emitWhiteSmokeParticle9948(zone9948,true);
  }
  vehicleComponentText(v,'WITTE ROOK · BEMANNING SPLITST');
 }
 var dismountBefore9947=dismountOne;
 dismountOne=function(v,mode,index){
+ if(v&&(mode==='normal'||mode==='disabled')&&(v.type==='trooptruck'||v.type==='lighttruck'||v.type==='truck'))unloadSmoke9947(v);
  var e=dismountBefore9947.apply(this,arguments);
  if(e&&v&&(v.type==='trooptruck'||v.type==='lighttruck'||v.type==='truck')&&
    (mode==='normal'||mode==='disabled')){
