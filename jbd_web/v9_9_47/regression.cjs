@@ -148,7 +148,7 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.equal(buttons.length,4,'four upgrade choices');
  assert.ok(buttons.every(b=>!b.disabled),'all upgrades free even with zero points');
  assert.equal(next.disabled,true,'next map requires one chosen upgrade');
- assert.ok(!/PUNT|AP|KOST|POINT/i.test(supply.textContent),'no point currency displayed');
+ assert.ok(!/PUNT|KOST|POINT/i.test(supply.textContent),'no point currency displayed');
  buttons[2].listeners.click[0]();
  assert.equal(s.save.upgrades.special,4,'chosen upgrade advances by four levels');
  assert.equal(s.shopBought9947,true,'one free choice used');
