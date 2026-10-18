@@ -338,7 +338,7 @@ function primaryStats(index){return primaryStatsForLevels9935((gameState&&gameSt
 function grenadeCapacity9935(lvl){return lvl<8?1:lvl<16?2:3;}
 function specialStats(lvl){
   lvl=clamp(lvl|0,0,SKILL_MAX);
-  return {name:'FRAG GRENADE',impact:22+lvl*6.2,blast:14+lvl*7.5,radius:12+lvl*2.15,
+  return {name:'FRAG GRENADE',impact:28+lvl*6.2,blast:21+lvl*7.5,radius:16+lvl*2.15,
     duration:0,dps:0,speed:315+lvl*5,rangeFactor:battlefieldRangeFactor9935(),chargeScale:1,heatScale:.65,
     plasma:false,effect:'blast',visual:Math.min(7,Math.floor(lvl/3)),arcHeight:38,recharge:6-lvl*.2,capacity:grenadeCapacity9935(lvl)};
 }
@@ -452,7 +452,7 @@ function playerProfile(){
   var armorSkill=Math.max(.70,1-armorLvl*.045);
   var doc=currentDoctrine(),zr=currentZoneRule();stability*=doc.spread*zr.playerSpread;reloadMult*=doc.reload*zr.reload;
   return {
-    maxHp:(90+armorLvl*23)*(IS_IPHONE?1.10:1)*doc.hp*(easy?1.35:1),
+    maxHp:(115+armorLvl*23)*(IS_IPHONE?1.10:1)*doc.hp*(easy?1.35:1),
     armorScale:Math.max(.36,1-armorLvl*.032)*(easy?.85:1),
     primaryId:p.id,primaryDamage:p.damage,primarySpeed:p.speed,primaryRangeFactor:p.rangeFactor,primaryPenetration:p.penetration,primaryPenetrationChance:p.penetrationChance,primaryPenetrationLevel:p.penetrationLevel,primaryVisual:p.visual,primaryMag:Math.max(3,Math.round(p.mag*(doc.mag||1))),
     primaryReload:p.reload*reloadMult*(easy?.80:1),primaryBaseReload:p.reload,primaryCycle:p.cycle,primaryBurstPause:p.burstPause,primaryProjectile:p.projectile,
@@ -1319,7 +1319,7 @@ function resetLevel(){
   gameState.riskBase=gameState.startMode==='hard'?.45:gameState.startMode==='easy'?.04:.08;
   gameState.riskLevel=gameState.riskBase;gameState.riskPeak=gameState.riskBase;gameState.riskBank=0;
   gameState.riskReserveT=0;gameState.riskReserveQueued=0;gameState.riskThresholds=[false,false,false];
-  gameState.profile=playerProfile();gameState.shopBought9947=false;
+  gameState.profile=playerProfile();gameState.shopBought9947=false;gameState.upgradeChoice9949=null;
   gameState.levelDNA=decodeLevelCode(level().code);
   gameState.levelCode=gameState.levelDNA.code;
   gameState.adaptiveSnapshot=clamp(gameState.save.adaptiveDifficulty||0,-.58,.44);
@@ -3384,16 +3384,16 @@ function igniteFuel(obj,delay){
 }
 function gunFuelProgress9937(obj,power){
   if(!obj||obj.exploded||obj.carcass||obj.fuelIgnited)return;
-  var threshold=vehicleFuelThreshold(obj.type),leakAt=Math.max(3,Math.ceil(threshold*.35));
+  var threshold=vehicleFuelThreshold(obj.type),leakAt=Math.max(2,Math.ceil(threshold*.28));
   obj.gunFuelHits9937=(obj.gunFuelHits9937||0)+clamp(power||1,.25,1.5);
   obj.ballisticHits=(obj.ballisticHits||0)+clamp(power||1,.25,1.5);
   if(!obj.fuelLeak&&obj.gunFuelHits9937>=leakAt)beginFuelLeak(obj);
   if(!obj.fuelLeak)return;
   var age=Math.max(0,gameState.time-(obj.fuelLeakAt9937==null?gameState.time:obj.fuelLeakAt9937));
   // The leak must visibly spread before bullets can ignite it; a single burst never skips this stage.
-  if(age<1.0||(obj.oilRadius||0)<4.5||obj.gunFuelHits9937<leakAt+2)return;
+  if(age<.38||(obj.oilRadius||0)<4.13||obj.gunFuelHits9937<leakAt+1)return;
   obj.fuelSparkHits9937=(obj.fuelSparkHits9937||0)+1;
-  if(obj.fuelSparkHits9937>=4||Math.random()<Math.min(.65,.14+obj.fuelSparkHits9937*.07))igniteFuel(obj);
+  if(obj.fuelSparkHits9937>=2||Math.random()<Math.min(.85,.32+obj.fuelSparkHits9937*.13))igniteFuel(obj);
 }
 function updateLiveVehicleFuel9937(v,dt){
   v.leakFxCd=(v.leakFxCd||0)-dt;
@@ -3408,14 +3408,14 @@ function fuelHitProgress(obj,bulletPower,isHeavy){
   if(isHeavy===false){gunFuelProgress9937(obj,bulletPower);return;}
   if(!obj||obj.exploded)return;
   obj.ballisticHits=(obj.ballisticHits||0)+Math.max(1,bulletPower||1);
-  var min=vehicleFuelThreshold(obj.type),leakStart=Math.max(4,min-2);
+  var min=Math.max(3,vehicleFuelThreshold(obj.type)-2),leakStart=Math.max(2,min-2);
   if(!obj.fuelLeak&&obj.ballisticHits>=leakStart){
     var leakChance=Math.min(.92,.14+(obj.ballisticHits-leakStart)*.13+(isHeavy?.12:0));
     if(obj.ballisticHits>=leakStart+5||Math.random()<leakChance)beginFuelLeak(obj);
   }
   if(obj.fuelLeak&&!obj.fuelIgnited&&obj.ballisticHits>=min){
-    var fireChance=Math.min(.86,.08+(obj.ballisticHits-min)*.095+(isHeavy?.16:0));
-    if(obj.ballisticHits>=min+6||Math.random()<fireChance)igniteFuel(obj,rand(1.55,2.65));
+    var fireChance=Math.min(.95,.30+(obj.ballisticHits-min)*.14+(isHeavy?.20:0));
+    if(obj.ballisticHits>=min+3||Math.random()<fireChance)igniteFuel(obj,rand(1.45,2.35));
   }
 }
 function blastNearbyFromVehicle(x,y,r,damage,source){
@@ -4804,7 +4804,7 @@ function specialImpactAt(x,y,b){
     return;
   }
   if(effect==='blast'){
-    explode(x,y,b.radius,false);addUpgradeCrater(x,y,b.radius,b.visual);fragmentBlastInfantry(x,y,b.radius,b.blastDamage||b.damage*.8,b.visual||0);return;
+    explode(x,y,Math.max(24,b.radius*1.28),false);addUpgradeCrater(x,y,b.radius*1.16,b.visual);fragmentBlastInfantry(x,y,b.radius,b.blastDamage||b.damage*.8,b.visual||0);gameState.shake=Math.max(gameState.shake||0,3.2);return;
   }
   if(effect==='fire'){
     pushEffect({type:'impactFlash',x:x,y:y,r:8,t:0,life:.12});emitFlame(x,y,true);emitSmoke(x,y,false);
@@ -5284,12 +5284,12 @@ function completeLevel(){
   var fastClear=!!gameState.shortBattle&&!gameState.shortBattleWithdrawn&&gameState.levelTime<gameState.shortBattle.maxDuration*.60&&gameState.stats.kills>=2;
   if(fastClear)chainBonus+=Math.round(baseSupply*.12);
   gameState.save.supply+=baseSupply+chainBonus;
-  var points=upgradePointReward9934(mapNo,gameState.eff,fastClear,gameState.objectiveBonusAP||0);gameState.save.arsenalPoints=(gameState.save.arsenalPoints||0)+points;
+  gameState.save.arsenalPoints=0; // Legacy AP stays unused: every completed map grants one free upgrade choice.
   gameState.save.bestLevel=Math.max(gameState.save.bestLevel,Math.min(CAMPAIGN_LENGTH-1,gameState.levelIndex+1));
   var dyn=evaluateAdaptiveDifficulty(false);saveGame();
   overlay.classList.remove('hidden');titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'40 MAPS COMPLETE':gameState.shortBattleWithdrawn?'SECTOR HELD · ENEMY WITHDREW':'MAP CLEARED';
   subEl.textContent=(gameState.shortBattleWithdrawn?'Vastgelopen resterende eenheden na 12 seconden veilig verwijderd. ':'')+(gameState.encounterName||'SECTOR')+' voltooid. Damage target '+dyn.band.min+'-'+dyn.band.max+' HP; resultaat '+Math.round(dyn.damage)+' HP ('+dyn.rating+'). Volgende map enemy '+adaptiveLabel(dyn.value)+'.';
-  summaryEl.style.display='block';summaryEl.textContent=(fastClear?'QUICK CLEAR +12% SUPPLY +1 AP · ':'')+riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · BUILDINGS '+(gameState.stats.buildingsDestroyed||0)+' · +'+points+' AP · SUPPLY '+(baseSupply+chainBonus);
+  summaryEl.style.display='block';summaryEl.textContent=(fastClear?'QUICK CLEAR +12% SUPPLY · ':'')+riskBandFor(gameState.riskPeak).name+' · PEAK RISK '+Math.round((gameState.riskPeak||0)*100)+'% · REWARD x'+riskReward.toFixed(2)+' · EFF '+Math.round(gameState.eff*100)+'% · KILLS '+(gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills)+' · PLAYER '+gameState.stats.kills+' / ALLIES '+(gameState.arcade.allyKills||0)+' · BUILDINGS '+(gameState.stats.buildingsDestroyed||0)+' · SUPPLY '+(baseSupply+chainBonus);
   shopEl.style.display='block';restartBtn.style.display='none';deployBtn.style.display='block';deployBtn.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?'MAP 1 AGAIN':'NEXT MAP';renderShop();
 }
 function weaponPreview(kind,lvl){
@@ -5307,18 +5307,33 @@ function skillPreview(key,lvl){
   if(key==='range')return 'SNELHEID '+a.speed+' → '+b.speed+' px/s · PEN '+Math.round(a.penetrationChance*100)+' → '+Math.round(b.penetrationChance*100)+'% (MAX 82%) · PER MUUR/DOEL · MATERIAAL + RESTENERGIE';
   if(key==='rate')return 'VUUR '+Math.round(60/a.cycle)+' → '+Math.round(60/b.cycle)+'/min · MAG '+a.mag+' → '+b.mag+' · RELOAD '+a.reload.toFixed(2)+' → '+b.reload.toFixed(2)+'s · STABILITY +'+Math.round(a.aimLevel*2.5)+' → '+Math.round(b.aimLevel*2.5)+'% · HANDMATIG RICHTEN';
   if(key==='special'){var g=specialStats(lvl),h=specialStats(n);return 'SCHADE '+Math.round(g.impact)+'→'+Math.round(h.impact)+' · BLAST '+Math.round(g.blast)+'→'+Math.round(h.blast)+' · RADIUS '+Math.round(g.radius)+'→'+Math.round(h.radius)+' · RELOAD '+g.recharge.toFixed(1)+'→'+h.recharge.toFixed(1)+'s · SLOT '+g.capacity+'→'+h.capacity;}
-  return 'BASE HP '+(90+lvl*23)+' → '+(90+n*23)+' · BESCHERMING '+Math.round((1-Math.max(.36,1-lvl*.032))*100)+' → '+Math.round((1-Math.max(.36,1-n*.032))*100)+'%';
+  return 'BASE HP '+(115+lvl*23)+' → '+(115+n*23)+' · BESCHERMING '+Math.round((1-Math.max(.36,1-lvl*.032))*100)+' → '+Math.round((1-Math.max(.36,1-n*.032))*100)+'%';
 }
 function renderShop(){
-  normalizeUpgradeTracks9935(gameState.save);gameState.profile=playerProfile();var up=gameState.save.upgrades;
-  supplyEl.textContent=(gameState.save.arsenalPoints||0)+' PUNTEN · '+(gameState.shopBought9947?'UPGRADE GEKOZEN · VOLGENDE RONDE NIEUWE KEUZE':'MAXIMAAL 1 GROTE UPGRADE PER RONDE');shopGrid.innerHTML='';
+  normalizeUpgradeTracks9935(gameState.save);
+  gameState.profile=playerProfile();
+  var up=gameState.save.upgrades,used=!!gameState.shopBought9947;
+  var available=['range','rate','special','armor'].some(function(key){return (up[key]||0)<SKILL_MAX;});
+  supplyEl.textContent=used?'UPGRADE GEKOZEN · VOLGENDE MAP':'KIES 1 GRATIS UPGRADE · IEDERE MAP +4 NIVEAUS';
+  shopGrid.innerHTML='';
   ['range','rate','special','armor'].forEach(function(key){
-    var lvl=up[key]||0,max=lvl>=SKILL_MAX,cost=upgradePrice9947(lvl),spent=!!gameState.shopBought9947;
-    var b=document.createElement('button');b.type='button';b.className='shopBtn'+(max||spent||gameState.save.arsenalPoints<cost?' disabled':'');b.setAttribute('data-upgrade',key);
-    b.innerHTML='<strong>'+UPGRADES[key].label+' · '+lvl+'/'+SKILL_MAX+'</strong><span>'+skillPreview(key,lvl)+'</span><em>'+(max?'MAX':cost+' UPGRADEPUNT'+(cost>1?'EN':''))+'</em>';
-    b.disabled=max||spent||gameState.save.arsenalPoints<cost;
-    b.addEventListener('click',function(){if(gameState.save.arsenalPoints<cost||max||gameState.shopBought9947)return;gameState.save.arsenalPoints-=cost;up[key]=Math.min(SKILL_MAX,lvl+4);gameState.shopBought9947=true;if(key==='special')syncGrenadeSlots9935();saveGame();gameState.profile=playerProfile();renderShop();});shopGrid.appendChild(b);
+    var lvl=up[key]||0,max=lvl>=SKILL_MAX,spent=!!gameState.shopBought9947;
+    var b=document.createElement('button');
+    b.type='button';b.className='shopBtn'+(max||spent?' disabled':'');b.setAttribute('data-upgrade',key);
+    b.innerHTML='<strong>'+UPGRADES[key].label+' · '+lvl+'/'+SKILL_MAX+'</strong><span>'+skillPreview(key,lvl)+'</span><em>'+(max?'MAX':spent?'1 UPGRADE PER MAP':'GRATIS · KIES +4')+'</em>';
+    b.disabled=max||spent;
+    b.addEventListener('click',function(){
+      if(max||gameState.shopBought9947)return;
+      up[key]=Math.min(SKILL_MAX,(up[key]||0)+4);
+      gameState.shopBought9947=true;
+      gameState.upgradeChoice9949=key;
+      if(key==='special')syncGrenadeSlots9935();
+      saveGame();gameState.profile=playerProfile();renderShop();
+    });
+    shopGrid.appendChild(b);
   });
+  // Choosing is mandatory unless all four upgrade tracks are maxed out.
+  if(gameState.mode==='shop'&&deployBtn)deployBtn.disabled=!used&&available;
 }
 function endGame(reason){
   gameState.mode='gameover';var dyn=evaluateAdaptiveDifficulty(true);
