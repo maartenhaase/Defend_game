@@ -7705,7 +7705,7 @@ window.addEventListener('error',function(e){
       if(z.t<=0)return;
       ctx.globalAlpha=.34;ctx.strokeStyle=z.source==='napalm'?'#ffb14a':'#d88942';ctx.lineWidth=1.3;
       ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(z.x,z.y,z.radius+8,0,TAU);ctx.stroke();ctx.setLineDash([]);
-      if(z.source==='napalm'){ctx.globalAlpha=.72;ctx.fillStyle='#ffe0a2';ctx.fillText('FIRE',z.x,z.y-z.radius-11);}
+      /* Heat and flames show napalm; no floating FIRE text. */
     });
     ctx.restore();
   }
@@ -9011,7 +9011,7 @@ igniteInfantry=function(e,duration,power){
     return result;
   };
   var drawSoldierBase913=drawSoldier;
-  drawSoldier=function(e){drawSoldierBase913(e);drawPriorityMarker913(e);};
+  drawSoldier=function(e){drawSoldierBase913(e);};
   var updateBase913=update;
   update=function(dt){
     var oldMap=gameState&&gameState.map;
@@ -9054,31 +9054,8 @@ igniteInfantry=function(e,duration,power){
     for(i=0;i<(gameState.vehicles||[]).length;i++)consider(gameState.vehicles[i],'vehicle',46);
     return best;
   }
-  var fireWeaponBase914=fireWeapon;
-  fireWeapon=function(kind,x,y){
-    if(kind!=='mg'||!gameState||!gameState.profile)return fireWeaponBase914(kind,x,y);
-    var target=findAimTarget914(x,y,0),oldSpread=gameState.profile.spreadScale,shotStart=gameState.shots.length;
-    if(target)gameState.profile.spreadScale=Math.min(oldSpread==null?1:oldSpread,.28);
-    var fired=false;
-    try{fired=fireWeaponBase914(kind,target?target.x:x,target?target.y:y);}
-    finally{gameState.profile.spreadScale=oldSpread;}
-    if(fired&&target){
-      for(var i=shotStart;i<gameState.shots.length;i++){gameState.shots[i].aimAssist914=true;gameState.shots[i].aimTargetId914=target.unit.id;}
-      gameState.aimAssistTarget914={id:target.unit.id,type:target.type,x:target.x,y:target.y,posture:target.posture,until:gameState.time+.72};
-    }
-    return fired;
-  };
-  var drawSoldierBase914=drawSoldier;
-  drawSoldier=function(e){
-    drawSoldierBase914(e);
-    if(!e||!e.alive||e.x<0||e.x>W||e.y<safeTop||e.y>H-safeBottom)return;
-    var state=posture914(e),x=e.x,y=e.y-15,col=color914(state);
-    ctx.save();ctx.lineWidth=1.1;ctx.strokeStyle='rgba(12,18,14,.92)';ctx.fillStyle=col;
-    if(state==='ATTACK'){ctx.beginPath();ctx.moveTo(x,y-3.6);ctx.lineTo(x+3.7,y+2.8);ctx.lineTo(x-3.7,y+2.8);ctx.closePath();ctx.fill();ctx.stroke();}
-    else if(state==='IN COVER'){ctx.beginPath();ctx.moveTo(x,y-4);ctx.lineTo(x+4,y-2);ctx.lineTo(x+3,y+2);ctx.lineTo(x,y+4);ctx.lineTo(x-3,y+2);ctx.lineTo(x-4,y-2);ctx.closePath();ctx.fill();ctx.stroke();}
-    else{ctx.fillRect(x-4,y-3.2,8,1.5);ctx.fillRect(x-3,y-.4,6,1.5);ctx.fillRect(x-2,y+2.4,4,1.3);}
-    ctx.restore();
-  };
+  // The later FPS fire-control logic uses true pointer coordinates; auto-aim has no place here.
+  // Soldiers show their stance through their sprite pose, never through colored glyphs above the unit.
   var drawHudBase914=drawHud;
   drawHud=function(){drawHudBase914();};
   var drawCrosshairBase914=drawCrosshair;
@@ -10691,6 +10668,145 @@ buildEncounterPlan=function(){
    return plan;
  }
  return planBeforeProgressive9910.apply(this,arguments);
+};
+
+/* =============================================
+   FPS-STYLE SINGLE SHOT -> CLICK CHAIN -> CONTROLLED BURST
+   This lives after legacy input/auto-burst wrappers, so one click never
+   starts the old automatic 3-shot sequence.
+   ============================================= */
+function fpsTuning9950(){
+ var level=clamp(gameState&&gameState.save&&gameState.save.upgrades?Number(gameState.save.upgrades.rate)||0:0,0,SKILL_MAX),
+     improve=level/Math.max(1,SKILL_MAX);
+ return {
+  aimLevel:level,improve:improve,
+  singleReset:1.5-improve*1.0,     // 1.5 s -> 0.5 s after stabilization
+  fullRecover:3.5-improve*2.0,    // 3.5 s -> 1.5 s after repeated volleys
+  maxAngle:.100*(1-improve*.62),  // 5.7 deg -> 2.2 deg max dispersion
+  powerLoss:.105*(1-improve*.62), // keep even hot strings of fire effective
+  speedLoss:.080*(1-improve*.58),
+  penetrationLoss:.29*(1-improve*.68)
+ };
+}
+function fpsState9950(){
+ if(!gameState.fps9950)gameState.fps9950={lastClick:-999,chain:0,recoil:0,recoilAt:0,recoilDuration:1.5,queued:[],shots:0,lastShot:-999};
+ return gameState.fps9950;
+}
+function fpsPressure9950(){
+ if(!gameState||!gameState.fps9950)return 0;
+ var a=gameState.fps9950,elapsed=Math.max(0,gameState.time-(a.recoilAt||0));
+ return clamp(a.recoil*(1-elapsed/Math.max(.05,a.recoilDuration||1.5)),0,1);
+}
+function fpsFireQueue9950(){
+ if(!gameState||gameState.mode!=='playing')return;
+ var state=fpsState9950();
+ if(!state.queued.length)return;
+ if(gameState.primaryReloadT>0||gameState.overheat){state.queued.length=0;return;}
+ if(gameState.primaryAmmo<=0){state.queued.length=0;return;}
+ if(gameState.primaryCooldown>1e-8)return;
+ var job=state.queued[0],cfg=fpsTuning9950(),previous=fpsPressure9950(),
+     pressure=clamp(Math.max(previous,job.recoil),0,1);
+ // The first round at rest is mathematically straight; no random base spread.
+ gameState.fpsShot9950={pressure:pressure,tier:job.tier,serial:job.serial};
+ gameState.primaryCooldown=0;
+ var fired=false;
+ try{fired=fireWeapon('mg',job.x,job.y);}
+ finally{gameState.fpsShot9950=null;}
+ if(!fired)return;
+ state.queued.shift();state.shots++;state.lastShot=gameState.time;
+ state.recoil=clamp(Math.max(previous+.09,pressure+(job.tier>0?.085:.075)),0,1);
+ state.recoilAt=gameState.time;
+ state.recoilDuration=job.tier>0?cfg.fullRecover:cfg.singleReset;
+ // No hidden legacy burst scheduler is permitted to fire another shot.
+ gameState.burst9943=null;
+}
+var fpsFireWeaponOriginal9950=fireWeapon;
+fireWeapon=function(kind,x,y){
+ if(kind!=='mg'||!gameState||!gameState.profile)return fpsFireWeaponOriginal9950.apply(this,arguments);
+ var startShots=gameState.shots.length,result=fpsFireWeaponOriginal9950.apply(this,arguments);
+ if(!result)return result;
+ var state=gameState.fpsShot9950,pressure=state?state.pressure:fpsPressure9950(),cfg=fpsTuning9950();
+ var sx=gameState.bunker.x,sy=gameState.bunker.y-10,aim=Math.atan2(y-sy,x-sx);
+ for(var n=startShots;n<gameState.shots.length;n++){
+  var shot=gameState.shots[n];if(shot.kind!=='mg')continue;
+  // Center fire is straight, even through the old weapon math and aim-assist layers.
+  var offset=pressure<=.0001?0:rand(-1,1)*cfg.maxAngle*pressure;
+  var magnitude=gameState.profile.primarySpeed*(1-cfg.speedLoss*pressure);
+  shot.vx=Math.cos(aim+offset)*magnitude;shot.vy=Math.sin(aim+offset)*magnitude;
+  shot.damage*=1-cfg.powerLoss*pressure;
+  shot.penetrationChance9933=gameState.profile.primaryPenetrationChance*(1-cfg.penetrationLoss*pressure);
+  shot.armorPenLevel9933=gameState.profile.primaryPenetrationLevel;
+  shot.fpsRecoil9950=pressure;shot.fpsDeviation9950=offset;
+  shot.fpsSpeedFactor9950=1-cfg.speedLoss*pressure;
+  shot.fpsPenetration9950=shot.penetrationChance9933;
+  shot.aimAssist914=false;shot.aimTargetId914=null;
+ }
+ gameState.aimAssistTarget914=null;
+ return result;
+};
+queueMG=function(x,y){
+ if(!gameState||gameState.mode!=='playing')return false;
+ if(gameState.primaryReloadT>0){gameState.message='RELOADING';gameState.messageT=.25;return false;}
+ if(gameState.overheat){gameState.message='BARREL HOT';gameState.messageT=.25;return false;}
+ if(gameState.primaryAmmo<=0){beginPrimaryReload();return false;}
+ var state=fpsState9950(),t=gameState.time,cfg=fpsTuning9950(),
+     rapid=t-state.lastClick<cfg.singleReset-.0001&&t>=state.lastClick;
+ var tier=rapid?Math.min(5,state.chain+1):0;
+ // First isolated tap = one round. Every quick repeated tap = a three-round volley.
+ var requested=rapid?3:1,capacity=Math.max(0,gameState.primaryAmmo-state.queued.length);
+ if(capacity<=0)return false;
+ requested=Math.min(requested,capacity);
+ if(state.queued.length+requested>36)return false;
+ state.chain=tier;state.lastClick=t;state.burstCount9950=Math.min(5,tier);
+ for(var i=0;i<requested;i++){
+  var before=rapid?Math.min(1,.10+(tier-1)*.145+i*.061):0;
+  state.queued.push({x:x,y:y,tier:tier,serial:i,recoil:before});
+ }
+ // Fire the first round on pointer release; remaining rounds follow cyclic speed.
+ fpsFireQueue9950();
+ return true;
+};
+var fpsUpdateWeaponsBase9950=updatePlayerWeapons9937;
+updatePlayerWeapons9937=function(dt){
+ fpsUpdateWeaponsBase9950(dt);
+ if(!gameState)return;
+ gameState.burst9943=null; // disable V9.9.43's three-round autocue
+ fpsFireQueue9950();
+};
+var fpsResetBase9950=resetLevel;
+resetLevel=function(){
+ fpsResetBase9950.apply(this,arguments);
+ gameState.burst9943=null;gameState.fps9950=null;gameState.fpsShot9950=null;
+};
+drawCrosshair=function(){
+ if(!gameState||gameState.mode!=='playing')return;
+ var a=gameState.aim||{x:W*.5,y:H*.5},x=a.x,y=a.y,cfg=fpsTuning9950(),
+     pressure=fpsPressure9950(),gun=gameState.fps9950,
+     queued=!!(gun&&gun.queued&&gun.queued.length),firing=queued||gameState.primaryCooldown>0,
+     reach=gameState.bunker?Math.hypot(x-gameState.bunker.x,y-(gameState.bunker.y-10)):180,
+     pixels=Math.tan(cfg.maxAngle*pressure)*reach,
+     gap=3.7+Math.min(26,pixels*.78),len=6+pressure*3.4,
+     pulse=gameState.hitMarker>0,heat=clamp(pressure,0,1);
+ ctx.save();ctx.lineCap='round';
+ ctx.strokeStyle='rgba(12,17,14,.83)';ctx.lineWidth=3.2;
+ ctx.beginPath();
+ ctx.moveTo(x-gap-len,y);ctx.lineTo(x-gap,y);ctx.moveTo(x+gap,y);ctx.lineTo(x+gap+len,y);
+ ctx.moveTo(x,y-gap-len);ctx.lineTo(x,y-gap);ctx.moveTo(x,y+gap);ctx.lineTo(x,y+gap+len);ctx.stroke();
+ ctx.strokeStyle=pulse?'#ffe189':heat>.70?'#efbd7c':'#f1f3e3';ctx.lineWidth=1.35;
+ ctx.beginPath();
+ ctx.moveTo(x-gap-len,y);ctx.lineTo(x-gap,y);ctx.moveTo(x+gap,y);ctx.lineTo(x+gap+len,y);
+ ctx.moveTo(x,y-gap-len);ctx.lineTo(x,y-gap);ctx.moveTo(x,y+gap);ctx.lineTo(x,y+gap+len);ctx.stroke();
+ ctx.fillStyle=pressure>.70?'#efd39f':'#f1f4e6';
+ ctx.beginPath();ctx.arc(x,y,pressure>.35?1.25:1.05,0,TAU);ctx.fill();
+ if(pressure>.03){
+  ctx.strokeStyle='rgba(241,227,195,'+(.15+pressure*.24)+')';ctx.lineWidth=.9;
+  ctx.beginPath();ctx.arc(x,y,gap+3.0,0,TAU);ctx.stroke();
+ }
+ if(firing&&pressure>.2){
+  ctx.globalAlpha=.25+.25*pressure;ctx.strokeStyle='#e2cdb0';ctx.lineWidth=.7;
+  ctx.beginPath();ctx.moveTo(x-2,y+gap+len+2);ctx.lineTo(x+2,y+gap+len+2);ctx.stroke();
+ }
+ ctx.restore();
 };
 
 })();
