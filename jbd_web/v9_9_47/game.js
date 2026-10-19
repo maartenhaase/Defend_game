@@ -5355,7 +5355,7 @@ function skillPreview(key,lvl){
   var n=Math.min(SKILL_MAX,lvl+4),u=gameState.save.upgrades,next=Object.assign({},u);next[key]=n;
   var a=primaryStatsForLevels9935(u),b=primaryStatsForLevels9935(next);
   if(key==='range')return 'SNELHEID '+a.speed+' → '+b.speed+' px/s · PEN '+Math.round(a.penetrationChance*100)+' → '+Math.round(b.penetrationChance*100)+'% (MAX 82%) · PER MUUR/DOEL · MATERIAAL + RESTENERGIE';
-  if(key==='rate')return 'VUUR '+Math.round(60/a.cycle)+' → '+Math.round(60/b.cycle)+'/min · MAG '+a.mag+' → '+b.mag+' · RELOAD '+a.reload.toFixed(2)+' → '+b.reload.toFixed(2)+'s · STABILITY +'+Math.round(a.aimLevel*2.5)+' → '+Math.round(b.aimLevel*2.5)+'% · HANDMATIG RICHTEN';
+  if(key==='rate')return 'VUUR '+Math.round(60/a.cycle)+' → '+Math.round(60/b.cycle)+'/min · MAG '+a.mag+' → '+b.mag+' · RELOAD '+a.reload.toFixed(2)+' → '+b.reload.toFixed(2)+'s · STRAK LOS SCHOT '+(1.5-lvl*.05).toFixed(2)+' → '+(1.5-n*.05).toFixed(2)+'s · VOLLEDIG HERSTEL '+(3.5-lvl*.10).toFixed(2)+' → '+(3.5-n*.10).toFixed(2)+'s · MINDER SPREIDING EN PEN-VERLIES';
   if(key==='special'){var g=specialStats(lvl),h=specialStats(n);return 'SCHADE '+Math.round(g.impact)+'→'+Math.round(h.impact)+' · RADIUS '+Math.round(g.radius)+'→'+Math.round(h.radius)+' · HERLADEN '+g.recharge.toFixed(1)+'→'+h.recharge.toFixed(1)+'s · STEEDS 1 GRANAAT · '+(n>=16?'IMPACTONTSTEKING':'LONT '+Math.max(.45,2.15-n*.125).toFixed(1)+'s');}
   return 'BASE HP '+(115+lvl*23)+' → '+(115+n*23)+' · BESCHERMING '+Math.round((1-Math.max(.36,1-lvl*.032))*100)+' → '+Math.round((1-Math.max(.36,1-n*.032))*100)+'%';
 }
