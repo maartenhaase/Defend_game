@@ -30,3 +30,13 @@ Tests: new v9_9_47/regression.cjs covers mobility, gunner, three burn scenarios,
 - Infantry gets three separately painted camouflage palettes per biome (forest/jungle, desert, snow, urban, coastal), applied to the existing pose/role geometry; pixel camouflage speckles remain confined to clothing and helmets. The sprite atlas is 2048 px to fit the additional uniform skins.
 - Existing vehicle models retain their biome palettes and receive deterministic three-color paint spots per vehicle. Reusable ground-floor building models now have six per-biome floor, wall, furniture and trim palettes, with variation independent of damage geometry and collision.
 - Added regression tests for HARD growth across map 1/3/6/12/20/40, concrete ricochet/penetration at near and long range, and palette/atlas generation.
+
+## Grenade and nonverbal battlefield clarity · 19 October 2026
+
+- Grenades always have **one rechargeable charge**, at every special-upgrade level (0–20); legacy multi-slot arrays are trimmed without resetting the active cooldown.
+- Recharge is deliberately long throughout the campaign: **10.5 seconds at level 0, 8.5 seconds at level 20**; no rapid-fire HE spam.
+- The explosion progression is reduced to a controlled 28→71 direct impact, 21→54 fragmentation/blast, 16→27 radius (previously 28→152 damage and 16→59 radius). Explosion particles and impact shake scale modestly.
+- Fuse progression shortens with level; levels 16–20 ignite immediately upon terrain, vehicle, soldier or target-point impact (fuse 0) rather than creating a ticking grenade. Levels below 16 still detonate after a fuse, retaining grenade panic and AI evasion.
+- Removed all floating enemy infantry role circles, threat reticles, vehicle component damage notices and status/penetration labels; stripped allied vehicle star and engineer overhead progress bar. Smoke, burning metal, broken tires and crew actions remain the visual feedback.
+- Soldier bodies now communicate tactical actions through animated arms/hands: panicked two-hand alarm, flanking leader pointing, radio hand-to-ear, medic reaching, engineer hammering, shooter bracing, and walking arm swing. Faces also show emotions on allied soldiers.
+- The normal top/bottom player HUD remains for your health and the single HE cooldown. Regression tests cover HE limits, single-slot behavior, impact detonation, preserved cooldown during upgrades, and absence of overhead labels.
