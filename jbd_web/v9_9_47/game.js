@@ -335,12 +335,12 @@ function primaryStatsForLevels9935(u){
     projectile:'bullet',splash:0,homing:0,era:w.era,cls:w.cls,ammo:w.ammo,aimLevel:handling,reloadLevel:handling,mode:'auto',pellets:1,group:4,variant:0};
 }
 function primaryStats(index){return primaryStatsForLevels9935((gameState&&gameState.save&&gameState.save.upgrades)||{});}
-function grenadeCapacity9935(lvl){return lvl<8?1:lvl<16?2:3;}
+function grenadeCapacity9935(lvl){return 1;}
 function specialStats(lvl){
   lvl=clamp(lvl|0,0,SKILL_MAX);
-  return {name:'FRAG GRENADE',impact:28+lvl*6.2,blast:21+lvl*7.5,radius:16+lvl*2.15,
+  return {name:'FRAG GRENADE',impact:28+lvl*2.15,blast:21+lvl*1.65,radius:16+lvl*.55,
     duration:0,dps:0,speed:315+lvl*5,rangeFactor:battlefieldRangeFactor9935(),chargeScale:1,heatScale:.65,
-    plasma:false,effect:'blast',visual:Math.min(7,Math.floor(lvl/3)),arcHeight:38,recharge:6-lvl*.2,capacity:grenadeCapacity9935(lvl)};
+    plasma:false,effect:'blast',visual:Math.min(5,Math.floor(lvl/4)),arcHeight:38,recharge:10.5-lvl*.10,capacity:grenadeCapacity9935(lvl)};
 }
 function grenadeSlotCount(){return grenadeCapacity9935(gameState&&gameState.save?(gameState.save.upgrades.special||0):0);}
 function grenadeRechargeTime(){return specialStats(gameState&&gameState.save?(gameState.save.upgrades.special||0):0).recharge;}
@@ -2887,14 +2887,7 @@ function vehicleDamageNotice9941(v,component){
   var labels={tire:v.tireFlat?'BAND LEK · TRAAG':'BAND '+(hits.tire||0)+'/2',radiator:v.radiatorBroken9940?'RADIATOR · STOOM':'RADIATOR '+(hits.radiator||0)+'/3',glass:v.windowBroken?'RAAM KAPOT · SLINGEREN':'GLAS '+(hits.glass||0)+'/2',fuel:v.fuelIgnited?'BRANDSTOF · BRAND':v.fuelLeak?'BRANDSTOFLEK':'BRANDSTOF TREFFER',body:'CARROSSERIE · CREW',frame:'STAAL / CHASSIS'};
   var notices=v.damageNotices9941||(v.damageNotices9941=[]);notices=notices.filter(function(n){return n.kind!==component&&n.until>gameState.time;});notices.push({kind:component,label:labels[component]||component,color:palette[component]||'#e6c889',until:gameState.time+2.4});v.damageNotices9941=notices.slice(-2);v.damageFlashUntil9941=gameState.time+.15;
 }
-function drawVehicleDamage9941(v,wreck){
-  if(!v)return;var notices=(v.damageNotices9941||[]).filter(function(n){return n.until>gameState.time;});
-  if(v.fuelIgnited&&v.burnPhase9941==='smoulder')notices=[{label:'LICHTE BRAND · RED CREW',color:'#ffca75'}];
-  ctx.save();ctx.textAlign='center';ctx.font='900 9px system-ui';
-  for(var i=0;i<notices.length;i++){var n=notices[i],w=Math.min(154,ctx.measureText(n.label).width+14),y=v.y-37-i*15;ctx.globalAlpha=.92;ctx.fillStyle='#14201b';ctx.fillRect(v.x-w/2,y-9,w,13);ctx.strokeStyle=n.color;ctx.lineWidth=1;ctx.strokeRect(v.x-w/2,y-9,w,13);ctx.fillStyle=n.color;ctx.fillText(n.label,v.x,y);}
-  if(!wreck&&v.damageFlashUntil9941>gameState.time&&notices.length){ctx.globalAlpha=.9;ctx.strokeStyle=notices[notices.length-1].color;ctx.lineWidth=2;ctx.strokeRect(v.x-16,v.y-23,32,46);}
-  ctx.restore();
-}
+function drawVehicleDamage9941(v,wreck){ /* Component damage remains visible on the vehicle itself; no text labels. */ }
 
 /* V9.9.46: purposeful cover, independent vehicle components and period support. */
 function enemyCoverPoint9940(e,c){
@@ -3033,7 +3026,7 @@ function infantryEmotion9938(e){
   return 'calm';
 }
 function drawInfantryFace9938(e,pose,dir,x,y,scale){
-  if(e.allied||!e.alive||e.charred)return;
+  if(!e.alive||e.charred)return;
   var hx=0,hy=pose.indexOf('crouch')===0?-6:-9;
   if(pose.indexOf('prone')===0){hx=dir==='left'?-7:dir==='right'?7:0;hy=dir==='up'?-9:dir==='down'?6:-4;}
   var left=Math.round(x+hx*scale-4),top=Math.round(y+hy*scale),pattern=FACE_EMOTIONS9938[infantryEmotion9938(e)];
@@ -4579,7 +4572,7 @@ function fireWeapon(kind,x,y){
   };
   if(kind==='mg'){shot.penetrationMax=shot.penetration;shot.armorPenLevel9933=gameState.profile.primaryPenetrationLevel;shot.passedObstacles9933={};}
   if(kind==='he'){
-    shot.z=0;shot.pz=0;shot.arcStart=0;shot.arcEnd=targetDist;shot.arcHeight=gameState.profile.specialArcHeight+targetDist*.018;shot.fuse9945=1.95-clamp((gameState.save.upgrades.special||0)/SKILL_MAX,0,1)*.50;
+    shot.z=0;shot.pz=0;shot.arcStart=0;shot.arcEnd=targetDist;shot.arcHeight=gameState.profile.specialArcHeight+targetDist*.018;var grenadeLevel9948=clamp(gameState.save.upgrades.special||0,0,SKILL_MAX);shot.fuse9945=grenadeLevel9948>=16?0:Math.max(.45,2.15-grenadeLevel9948*.125);
   }
   if(kind==='mg'&&gameState.profile.primaryClass==='shotgun'){
     var pellets=gameState.profile.primaryPellets||8;
@@ -4861,7 +4854,7 @@ function specialImpactAt(x,y,b){
     return;
   }
   if(effect==='blast'){
-    explode(x,y,Math.max(24,b.radius*1.28),false);addUpgradeCrater(x,y,b.radius*1.16,b.visual);fragmentBlastInfantry(x,y,b.radius,b.blastDamage||b.damage*.8,b.visual||0);gameState.shake=Math.max(gameState.shake||0,3.2);return;
+    explode(x,y,Math.max(22,b.radius*1.20),false);addUpgradeCrater(x,y,b.radius*1.03,b.visual);fragmentBlastInfantry(x,y,b.radius,b.blastDamage||b.damage*.8,b.visual||0);gameState.shake=Math.max(gameState.shake||0,2.8);return;
   }
   if(effect==='fire'){
     pushEffect({type:'impactFlash',x:x,y:y,r:8,t:0,life:.12});emitFlame(x,y,true);emitSmoke(x,y,false);
@@ -5363,7 +5356,7 @@ function skillPreview(key,lvl){
   var a=primaryStatsForLevels9935(u),b=primaryStatsForLevels9935(next);
   if(key==='range')return 'SNELHEID '+a.speed+' → '+b.speed+' px/s · PEN '+Math.round(a.penetrationChance*100)+' → '+Math.round(b.penetrationChance*100)+'% (MAX 82%) · PER MUUR/DOEL · MATERIAAL + RESTENERGIE';
   if(key==='rate')return 'VUUR '+Math.round(60/a.cycle)+' → '+Math.round(60/b.cycle)+'/min · MAG '+a.mag+' → '+b.mag+' · RELOAD '+a.reload.toFixed(2)+' → '+b.reload.toFixed(2)+'s · STABILITY +'+Math.round(a.aimLevel*2.5)+' → '+Math.round(b.aimLevel*2.5)+'% · HANDMATIG RICHTEN';
-  if(key==='special'){var g=specialStats(lvl),h=specialStats(n);return 'SCHADE '+Math.round(g.impact)+'→'+Math.round(h.impact)+' · BLAST '+Math.round(g.blast)+'→'+Math.round(h.blast)+' · RADIUS '+Math.round(g.radius)+'→'+Math.round(h.radius)+' · RELOAD '+g.recharge.toFixed(1)+'→'+h.recharge.toFixed(1)+'s · SLOT '+g.capacity+'→'+h.capacity;}
+  if(key==='special'){var g=specialStats(lvl),h=specialStats(n);return 'SCHADE '+Math.round(g.impact)+'→'+Math.round(h.impact)+' · RADIUS '+Math.round(g.radius)+'→'+Math.round(h.radius)+' · HERLADEN '+g.recharge.toFixed(1)+'→'+h.recharge.toFixed(1)+'s · STEEDS 1 GRANAAT · '+(n>=16?'IMPACTONTSTEKING':'LONT '+Math.max(.45,2.15-n*.125).toFixed(1)+'s');}
   return 'BASE HP '+(115+lvl*23)+' → '+(115+n*23)+' · BESCHERMING '+Math.round((1-Math.max(.36,1-lvl*.032))*100)+' → '+Math.round((1-Math.max(.36,1-n*.032))*100)+'%';
 }
 function renderShop(){
@@ -6268,24 +6261,46 @@ function infantryThreatReady(e){
   if(!e||!e.alive||e.state==='evadeFire9932'||e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='suppressed'||e.state==='burnRun'||e.state==='burnRoll'||e.state==='medicRun'||e.state==='medicTreat')return false;
   return (e.fireCd||0)<(e.role==='marksman'?.34:e.role==='lmg'?.20:.13);
 }
-function drawInfantryThreatTell(e,x,y){
-  if(e.alive&&e.state==='rocketAim'){
-    var pct=1-clamp((e.rocketAimT||0)/Math.max(.1,e.rocketAimTotal||1),0,1);
-    ctx.save();ctx.globalAlpha=.76;ctx.strokeStyle=pct>.65?'#f5b45a':'#ffd27a';ctx.lineWidth=1.8;
-    ctx.beginPath();ctx.arc(x,y-3,10.5,-Math.PI/2,-Math.PI/2+TAU*pct);ctx.stroke();
-    ctx.fillStyle='#efbe72';ctx.beginPath();ctx.moveTo(x-3,y-17);ctx.lineTo(x+3,y-17);ctx.lineTo(x,y-21);ctx.closePath();ctx.fill();
-    ctx.restore();return;
-  }
-  if(!infantryThreatReady(e)||e.rocketUnit)return;
-  var blink=((gameState.time*14)|0)&1;if(!blink&&e.role!=='marksman')return;
-  var a=e.angle||0,mx=x+Math.cos(a)*9,my=y-3+Math.sin(a)*9;
-  ctx.save();ctx.globalAlpha=e.role==='marksman'?.92:.68;ctx.strokeStyle=e.role==='marksman'?'#fff4c2':'#e4b657';ctx.lineWidth=e.role==='marksman'?1.4:1;
-  ctx.beginPath();ctx.moveTo(mx-3,my);ctx.lineTo(mx+3,my);ctx.moveTo(mx,my-3);ctx.lineTo(mx,my+3);ctx.stroke();ctx.restore();
-}
-function drawVehicleThreatTell(v){
-  if(!v||!v.alive||!v.hasMG||(v.fireCd||0)>.18)return;if(!(((gameState.time*16)|0)&1))return;
-  var m=vehicleMuzzle(v);ctx.save();ctx.globalAlpha=.82;ctx.strokeStyle='#f4cf79';ctx.lineWidth=1.2;
-  ctx.beginPath();ctx.moveTo(m.x-3,m.y);ctx.lineTo(m.x+3,m.y);ctx.moveTo(m.x,m.y-3);ctx.lineTo(m.x,m.y+3);ctx.stroke();ctx.restore();
+function drawInfantryThreatTell(e,x,y){ /* All intent is communicated through the soldier's body, not HUD symbols. */ }
+function drawVehicleThreatTell(v){ /* No floating targeting reticles above vehicles. */ }
+
+/* Pixel-sized arm and hand language drawn on the actual figure (no hovering UI).
+   Gesture changes are derived from combat AI state, role, tactics and animation time. */
+function drawInfantryBodyGesture9948(e,x,y,scale){
+ if(!e||!e.alive||e.charred)return;
+ var state=e.state||'',role=e.role||'rifle',tactic=e.tactic||'';
+ var fleeing=state==='grenadeFlee9947'||state==='panic'||state==='evadeFire9932'||state==='burnRun'||(e.suppression||0)>.64;
+ var treating=state==='medicTreat'||!!e.treatmentTarget||!!e.medicTreating;
+ var building=!!e.building||!!e.post9943||!!e.buildTarget9943;
+ var radio=role==='radio'&&(state==='radioCall'||state==='radioCalling'||(e.radioT9945||0)>0);
+ var pointing=(role==='officer'||tactic==='flankLeft'||tactic==='flankRight')&&!fleeing&&!treating;
+ var firing=(e.muzzle||0)>0||state==='fire'||state==='rocketAim';
+ var wounded=!!e.wounded||state==='woundedRun'||state==='woundedCrawl';
+ var marching=state==='advance'||state==='centerPush9935'||state==='dismount'||state==='medicRun';
+ var tick=(gameState.time||0)*12+Math.abs(e.id||0)%8;
+ var swing=Math.sin(tick)*2.4,dir=tactic==='flankLeft'?-1:1;
+ var sx=scale||.88;
+ var c=infCols(role,Math.abs(e.variant||0)%SPR.inf.skins,e.allied?'british':e.faction||'wehrmacht');
+ ctx.save();ctx.translate(x,y);ctx.scale(sx,sx);ctx.lineCap='round';ctx.lineJoin='round';
+ ctx.strokeStyle=tone(c.cloth,-.05);ctx.lineWidth=3;
+ var shoulders=[[-4,-1],[4,-1]];
+ var arms=[[-8,3],[8,3]];
+ if(fleeing){arms=[[-9,-9+swing*.35],[9,-10-swing*.35]];}
+ else if(wounded){arms=[[-6,7],[8,1]];}
+ else if(treating){arms=[[-4,7+swing*.15],[5,7-swing*.15]];}
+ else if(building){arms=[[-5,5],[8,-8+swing*.5]];}
+ else if(radio){arms=[[-6,4],[4,-8]];}
+ else if(pointing){arms=[[-7,2],[dir*13,-7+Math.sin(tick*.4)*.6]];}
+ else if(firing){arms=[[-6,-6],[7,-6]];}
+ else if(marching){arms=[[-8,2+swing],[8,2-swing]];}
+ ctx.beginPath();ctx.moveTo(shoulders[0][0],shoulders[0][1]);ctx.lineTo(arms[0][0],arms[0][1]);
+ ctx.moveTo(shoulders[1][0],shoulders[1][1]);ctx.lineTo(arms[1][0],arms[1][1]);ctx.stroke();
+ ctx.fillStyle='#c79573';
+ for(var i=0;i<2;i++){ctx.beginPath();ctx.arc(arms[i][0],arms[i][1],1.45,0,TAU);ctx.fill();}
+ if(radio){ctx.strokeStyle='#2b332e';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(3,-7);ctx.lineTo(5,-12);ctx.lineTo(8,-12);ctx.stroke();}
+ if(building){ctx.strokeStyle='#84694c';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(arms[1][0],arms[1][1]);ctx.lineTo(arms[1][0]+3,arms[1][1]-4);ctx.stroke();}
+ if(fleeing){ctx.strokeStyle='#a47c60';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(-3,-8);ctx.lineTo(-6,-10);ctx.moveTo(3,-8);ctx.lineTo(6,-10);ctx.stroke();}
+ ctx.restore();
 }
 function drawSoldier(e){
   var pose=spritePose(e),dir=spriteDirection(e),skin=Math.abs(e.variant||0)%SPR.inf.skins,scale=(IS_IPHONE?.91:.88),faction=e.faction||'wehrmacht';
@@ -6311,8 +6326,9 @@ function drawSoldier(e){
   if(burnShade>0)ctx.filter='brightness('+(100-78*burnShade)+'%) saturate('+(100-82*burnShade)+'%) contrast('+(100+24*burnShade)+'%)';
   if(!e.alive&&e.severed9938)drawGoreCorpse9938(e,scale);else
   drawAtlas('inf:'+faction+':'+e.role+':'+skin+':'+dir+':'+pose,0,0,scale,0,e.charred?1:(e.alive?1:clamp(1-e.deadT/7,.34,1)));
+  drawInfantryBodyGesture9948(e,0,0,scale);
   if(e.alive&&e.mgTeamGunner){ctx.strokeStyle='#252a23';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-5,4);ctx.lineTo(7,4);ctx.stroke();ctx.fillStyle='#6f5c3b';ctx.fillRect(-5,5,4,3);}ctx.restore();
-  if(e.alive&&e.rocketUnit){var aa=e.state==='rocketAim'?(e.rocketAimAngle||e.angle):e.angle;ctx.save();ctx.translate(xx,yy-3);ctx.rotate(aa);ctx.strokeStyle='#151a16';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.strokeStyle='#52604a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.fillStyle='#8a7650';ctx.fillRect(-3,-2,3,4);ctx.restore();if(e.state==='rocketAim'){var rq=1-clamp(e.rocketAimT/Math.max(.01,e.rocketAimTotal),0,1);ctx.save();ctx.globalAlpha=.45+.35*Math.sin(gameState.time*16)*rq;ctx.strokeStyle='#e89a45';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(xx,yy-2,8+rq*4,0,TAU);ctx.stroke();ctx.restore();}}
+  if(e.alive&&e.rocketUnit){var aa=e.state==='rocketAim'?(e.rocketAimAngle||e.angle):e.angle;ctx.save();ctx.translate(xx,yy-3);ctx.rotate(aa);ctx.strokeStyle='#151a16';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.strokeStyle='#52604a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(10,0);ctx.stroke();ctx.fillStyle='#8a7650';ctx.fillRect(-3,-2,3,4);ctx.restore();}
   if(e.alive&&pose.indexOf('prone')!==0){ctx.save();ctx.globalAlpha=.42;ctx.fillStyle='#e2e0bd';ctx.beginPath();ctx.arc(xx-1.2,yy-5.2,1.05,0,TAU);ctx.fill();ctx.restore();}
   if(e.alive&&!e.burnT&&!e.charred&&(e.armorHp||0)>0){
     var aq=clamp(e.armorHp/Math.max(1,e.maxArmorHp||e.armorHp),0,1);
@@ -7347,11 +7363,12 @@ function drawAlliedTeam(){
     var dir=Math.abs(Math.cos(u.angle))>Math.abs(Math.sin(u.angle))?(Math.cos(u.angle)<0?'left':'right'):(Math.sin(u.angle)<0?'up':'down');
     if(!u.alive&&u.severed9938){ctx.save();ctx.translate(u.x,u.y);drawGoreCorpse9938(u,.88);ctx.restore();}else
     drawAtlas('inf:british:'+u.role+':'+(Math.abs(u.variant||0)%SPR.inf.skins)+':'+dir+':'+pose,u.x-Math.cos(u.angle)*(u.recoil||0)*.7,u.y-Math.sin(u.angle)*(u.recoil||0)*.7,.88,0,u.alive?1:Math.max(.4,1-u.deadT/5));
+    drawInfantryBodyGesture9948(u,u.x,u.y,.88);drawInfantryFace9938(u,pose,dir,u.x,u.y,.88);
   }
   for(i=0;i<a.armor.length;i++){
     var v=a.armor[i],type=v.type||'jeep';
     if(!v.tiger994)drawVehicle(v,false);
-    if(!v.tiger994){ctx.save();ctx.fillStyle='#e5f0de';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText('★',v.x,v.y+3);ctx.restore();}
+    if(!v.tiger994){ctx.save();ctx.fillStyle='#e5f0de';ctx.font='bold 11px sans-serif';ctx.textAlign='center';/* Allied hull identified by its natural vehicle paint rather than a star icon. */ctx.restore();}
   }
 }
 function drawArcadeOverlay(){
@@ -7741,14 +7758,7 @@ window.addEventListener('error',function(e){
   }
 
   // 9/9: subtle role marks make dangerous infantry readable without replacing sprites.
-  function drawRoleMarks993(){
-    if(!gameState)return;var marks={}; // Equipment replaces floating role marks.
-    ctx.save();ctx.textAlign='center';ctx.font='900 8px system-ui';
-    gameState.infantry.forEach(function(e){var m=marks[e.role];if(!e.alive||!m||e.y<safeTop||e.y>H-safeBottom)return;
-      ctx.globalAlpha=.74;ctx.fillStyle=e.role==='grenadier'?'#e6b45c':e.role==='medic'?'#d9e4c8':'#e8ddad';
-      ctx.beginPath();ctx.arc(e.x,e.y-17,6,0,TAU);ctx.fill();ctx.fillStyle='#25291f';ctx.fillText(m,e.x,e.y-14.2);
-    });ctx.restore();
-  }
+  function drawRoleMarks993(){ /* Never draw role icons over soldiers. */ }
 
   var update993Base=update;
   update=function(dt){clean993.hitT=Math.max(0,clean993.hitT-dt);update993Base(dt);};
@@ -9371,7 +9381,7 @@ drawVehicle=function(v,wreck){
   if(!v||wreck||!v.alive||v.allied)return;
   if(v.state==='driverless9935'||v.penetrationTell9935>0){
     ctx.save();ctx.font='800 8px system-ui';ctx.textAlign='center';ctx.fillStyle=v.state==='driverless9935'?'#f1c16f':'#e9e1bf';
-    var label=v.state==='driverless9935'?(v.fuelIgnited?'BRAND':v.fuelLeak?'OLIELEK':'INTACT'):('PEN '+v.penetrationHits9935+' / '+Math.ceil(v.driverPenetrationNeed9935));ctx.fillText(label,v.x,v.y-27);ctx.restore();
+    var label=v.state==='driverless9935'?(v.fuelIgnited?'BRAND':v.fuelLeak?'OLIELEK':'INTACT'):('PEN '+v.penetrationHits9935+' / '+Math.ceil(v.driverPenetrationNeed9935));/* Vehicle state is shown with fire, parts, tires and movement; no overhead text. */ctx.restore();
   }
 };
 
@@ -9871,7 +9881,7 @@ function drawField9943(){
  });
  humans9943().forEach(function(u){if(!u.alive)return;
   if(u.extinguishTarget9943){ctx.fillStyle='#8c2621';ctx.fillRect(u.x-8,u.y-2,4,8);ctx.fillStyle='#d9dac9';ctx.fillRect(u.x-7,u.y-4,2,3);}
-  if(u.building){var amount=u.post9943?u.post9943.progress/7:(u.buildProgress9943||0)/8;ctx.fillStyle='#1d261d';ctx.fillRect(u.x-11,u.y-20,22,3);ctx.fillStyle='#d6bd78';ctx.fillRect(u.x-11,u.y-20,22*clamp(amount,0,1),3);ctx.strokeStyle='#aea98d';ctx.beginPath();ctx.moveTo(u.x+5,u.y);ctx.lineTo(u.x+10,u.y-9+Math.sin(gameState.time*10)*3);ctx.stroke();}
+  if(u.building){ctx.strokeStyle='#aea98d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(u.x+5,u.y);ctx.lineTo(u.x+10,u.y-9+Math.sin(gameState.time*10)*3);ctx.stroke();}
   if(u.radioDrop9943)drawInfantryParachute(u);
  });
  f.bullets.forEach(function(b){
@@ -9887,7 +9897,7 @@ render=function(){renderBefore9943();if(gameState)drawField9943();};
 var drawVehicleBefore9943=drawVehicle;
 drawVehicle=function(v,wreck){drawVehicleBefore9943(v,wreck);if(v.burntOut9941){ctx.save();ctx.translate(v.x,v.y);ctx.rotate((v.bodyAngle==null?Math.PI/2:v.bodyAngle)-Math.PI/2);ctx.fillStyle='#1c201b';ctx.fillRect(-10,-18,20,36);ctx.strokeStyle='#3d4236';ctx.lineWidth=1;ctx.strokeRect(-8,-16,16,32);ctx.beginPath();ctx.moveTo(-7,-12);ctx.lineTo(7,12);ctx.moveTo(7,-12);ctx.lineTo(-7,12);ctx.stroke();ctx.restore();}if(v.fuelIgnited&&v.burnPlan9941!=='instant'){
  ctx.save();var progress=clamp(1-v.fuelBurnT/Math.max(1,v.fuelBurnDuration9937),0,1);ctx.globalAlpha=progress*.67;ctx.fillStyle='#121612';ctx.save();ctx.translate(v.x,v.y);ctx.rotate((v.bodyAngle==null?Math.PI/2:v.bodyAngle)-Math.PI/2);ctx.fillRect(-10,-18,20,36);ctx.restore();ctx.globalAlpha=1;
- if(v.burnPhase9941==='cookoff'){ctx.fillStyle='#edc577';ctx.font='900 9px system-ui';ctx.textAlign='center';ctx.fillText('MUNITIE · '+Math.ceil(v.fuelBurnT)+'s',v.x,v.y-33);}
+ if(v.burnPhase9941==='cookoff'){ctx.fillStyle='#edc577';ctx.font='900 9px system-ui';ctx.textAlign='center';/* Cooking-off rounds and flames indicate this state without labels. */}
  ctx.restore();}};
 // Test arena controls exercise the real systems without adding free troops to campaign openings.
 var fieldTestButton9943=null,fieldTestMode9943=0;
