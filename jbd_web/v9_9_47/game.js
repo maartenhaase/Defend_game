@@ -3037,7 +3037,7 @@ function drawInfantryFace9938(e,pose,dir,x,y,scale){
   ctx.fillRect(left-1,top+3,1,3);ctx.fillRect(left+9,top+3,1,3);
   ctx.fillStyle='#a0694f';ctx.fillRect(left,top+6,1,2);ctx.fillRect(left+8,top+6,1,2);ctx.fillRect(left+2,top+8,5,1);
   ctx.fillStyle='#ebbe98';ctx.fillRect(left+1,top+4,1,2);ctx.fillRect(left+7,top+4,1,2);
-  ctx.fillStyle=e.faction==='british'?'#555a38':'#484f45';ctx.fillRect(left-1,top-2,11,2);
+  ctx.fillStyle=e.allied||e.faction==='british'?'#555a38':'#484f45';ctx.fillRect(left-1,top-2,11,2);
   ctx.fillStyle='#242d26';ctx.fillRect(left-1,top,11,1);
   for(var row=0;row<9;row++)for(var col=0;col<9;col++){var p=pattern[row][col];if(p==='.'){continue;}ctx.fillStyle=p==='W'?'#f2e5cb':p==='R'?'#81342b':p==='N'?'#edbf98':p==='T'?'#91b9c0':'#211e1a';ctx.fillRect(left+col,top+row,1,1);}
   ctx.restore();
@@ -6247,7 +6247,7 @@ function drawAtlas(name,x,y,scale,angle,alpha){
 }
 function spritePose(e){
   if(e.alive&&e.state==='centerPush9935')return e.muzzle>0?'standFire':['walk1','walk2','walk3','walk4'][((e.anim*3.15)|0)%4];
-  if(e.alive&&e.state==='evadeFire9932')return ['walk1','walk2','walk3','walk4'][((e.anim*3.15)|0)%4];
+  if(e.alive&&(e.state==='evadeFire9932'||e.state==='grenadeFlee9947'||e.state==='panic'||e.state==='fireFlee'))return ['walk1','walk2','walk3','walk4'][((e.anim*4.5)|0)%4];
   if(e.state==='parachuting'||e.state==='heliRappel')return 'idle';
   if(e.state==='burnRun')return 'crouch';
   if(e.state==='medicRun')return ['walk1','walk2','walk3','walk4'][((e.anim*3.15)|0)%4];
@@ -6256,7 +6256,7 @@ function spritePose(e){
   if(e.state==='charred'||e.charred)return 'dead2';
   if(e.state==='woundedCrawl')return 'prone';
   if(e.state==='woundedRun')return 'crouch';if(!e.alive)return e.deadT<.22?'dead1':'dead2';if(e.state==='dismount')return ((e.stateT*12)|0)%2?'walk2':'walk3';if(e.state==='rocketAim')return 'standFire';if(e.state==='crawl'||e.state==='prone')return e.muzzle>0?'proneFire':'prone';if(e.state==='cover'||e.state==='covering'||e.state==='suppressed')return e.muzzle>0?'crouchFire':'crouch';if(e.state==='fire'){if(e.firePose==='prone')return e.muzzle>0?'proneFire':'prone';if(e.firePose==='crouch')return e.muzzle>0?'crouchFire':'crouch';return e.muzzle>0?'standFire':'idle';}if(e.state==='advance')return ['walk1','walk2','walk3','walk4'][((e.anim*3.15)|0)%4];return ((e.anim2*1.3)|0)%2?'idle2':'idle';}
-function spriteDirection(e){if(e.alive&&e.state==='centerPush9935'&&e.muzzle<=0)return Math.abs(e.vx)>Math.abs(e.vy)?(e.vx<0?'left':'right'):(e.vy<0?'up':'down');if(e.alive&&e.state==='evadeFire9932')return Math.abs(e.vx)>Math.abs(e.vy)?(e.vx<0?'left':'right'):(e.vy<0?'up':'down');var dx,dy;if(e.alive&&(e.state==='burnRun'||e.state==='burnRoll')){dx=Math.cos(e.burnDir||0);dy=Math.sin(e.burnDir||0);}else if(e.alive&&(e.state==='advance'||e.state==='crawl'||e.state==='suppressed')){var t=tacticalPoint(e);dx=t.x-e.x;dy=t.y-e.y;}else{dx=gameState.bunker.x-e.x;dy=gameState.bunker.y-e.y;}if(Math.abs(dx)>Math.abs(dy))return dx<0?'left':'right';return dy<0?'up':'down';}
+function spriteDirection(e){if(e.alive&&e.state==='centerPush9935'&&e.muzzle<=0)return Math.abs(e.vx)>Math.abs(e.vy)?(e.vx<0?'left':'right'):(e.vy<0?'up':'down');if(e.alive&&e.state==='evadeFire9932')return Math.abs(e.vx)>Math.abs(e.vy)?(e.vx<0?'left':'right'):(e.vy<0?'up':'down');var dx,dy;if(e.alive&&(e.state==='burnRun'||e.state==='burnRoll')){dx=Math.cos(e.burnDir||0);dy=Math.sin(e.burnDir||0);}else if(e.alive&&(e.state==='grenadeFlee9947'||e.state==='panic'||e.state==='fireFlee')){dx=e.vx||Math.cos(e.angle||0);dy=e.vy||Math.sin(e.angle||0);}else if(e.alive&&(e.state==='advance'||e.state==='crawl'||e.state==='suppressed')){var t=tacticalPoint(e);dx=t.x-e.x;dy=t.y-e.y;}else{dx=gameState.bunker.x-e.x;dy=gameState.bunker.y-e.y;}if(Math.abs(dx)>Math.abs(dy))return dx<0?'left':'right';return dy<0?'up':'down';}
 function infantryThreatReady(e){
   if(!e||!e.alive||e.state==='evadeFire9932'||e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='suppressed'||e.state==='burnRun'||e.state==='burnRoll'||e.state==='medicRun'||e.state==='medicTreat')return false;
   return (e.fireCd||0)<(e.role==='marksman'?.34:e.role==='lmg'?.20:.13);
@@ -6273,7 +6273,7 @@ function drawInfantryBodyGesture9948(e,x,y,scale){
  var treating=state==='medicTreat'||!!e.treatmentTarget||!!e.medicTreating;
  var building=!!e.building||!!e.post9943||!!e.buildTarget9943;
  var radio=role==='radio'&&(state==='radioCall'||state==='radioCalling'||(e.radioT9945||0)>0);
- var pointing=(role==='officer'||tactic==='flankLeft'||tactic==='flankRight')&&!fleeing&&!treating;
+ var pointing=(role==='officer'||tactic==='flankLeft'||tactic==='flankRight')&&!fleeing&&!treating&&(e.muzzle||0)<=0&&state!=='fire';
  var firing=(e.muzzle||0)>0||state==='fire'||state==='rocketAim';
  var wounded=!!e.wounded||state==='woundedRun'||state==='woundedCrawl';
  var marching=state==='advance'||state==='centerPush9935'||state==='dismount'||state==='medicRun';
@@ -6304,7 +6304,7 @@ function drawInfantryBodyGesture9948(e,x,y,scale){
 }
 function drawSoldier(e){
   var pose=spritePose(e),dir=spriteDirection(e),skin=Math.abs(e.variant||0)%SPR.inf.skins,scale=(IS_IPHONE?.91:.88),faction=e.faction||'wehrmacht';
-  var moving=e.alive&&(e.state==='centerPush9935'||e.state==='tacticalCover9940'||e.state==='evadeFire9932'||e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='burnRun'||e.state==='burnRoll'||e.state==='medicRun'),gait=moving?Math.sin(e.anim*3.8):0,bob=moving&&pose.indexOf('prone')!==0?Math.abs(gait)*1.35:0;
+  var moving=e.alive&&(e.state==='centerPush9935'||e.state==='tacticalCover9940'||e.state==='evadeFire9932'||e.state==='grenadeFlee9947'||e.state==='panic'||e.state==='fireFlee'||e.state==='advance'||e.state==='crawl'||e.state==='dismount'||e.state==='burnRun'||e.state==='burnRoll'||e.state==='medicRun'),gait=moving?Math.sin(e.anim*3.8):0,bob=moving&&pose.indexOf('prone')!==0?Math.abs(gait)*1.35:0;
   var hop=e.limp>0?Math.abs(Math.sin(e.anim*2.8))*1.7*e.limp:0;
   if(e.state==='dismount'&&e.dismountDur>0)hop+=Math.sin(Math.PI*clamp(1-e.dismountT/e.dismountDur,0,1))*(e.dismountArc||5.2);
   var recoil=(e.recoil||0)*(e.role==='lmg'?1.7:1.15),rx=-Math.cos(e.angle||0)*recoil,ry=-Math.sin(e.angle||0)*recoil;
