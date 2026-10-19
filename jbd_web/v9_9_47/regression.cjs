@@ -9,19 +9,31 @@ function makeVehicle(g,s,type,id){
  assert.ok(v,'spawned real vehicle');v.y=Math.min(s.map.road?g.t.size.h*.15:100,g.t.size.h*.15);
  return v;
 }
-// Grenade slots are purchased in two later steps; the fuse is longer.
+// Exactly one HE charge at every upgrade; long cooldown and late-stage impact detonation.
 {
  const {g,s}=harness();
- assert.equal(g.t.grenadeStats(0).capacity,1);
- assert.equal(g.t.grenadeStats(4).capacity,1);
- assert.equal(g.t.grenadeStats(8).capacity,2);
- assert.equal(g.t.grenadeStats(16).capacity,3);
- assert.equal(g.t.grenadeStats(20).capacity,3);
+ for(const lvl of [0,4,8,12,16,20])assert.equal(g.t.grenadeStats(lvl).capacity,1,'only one grenade at level '+lvl);
  assert.equal(g.t.grenadeSlots(),1);
- assert.equal(g.t.grenadeStats(0).recharge,6);
+ assert.equal(g.t.grenadeStats(0).recharge,10.5);
+ assert.ok(g.t.grenadeStats(20).recharge>=8.5,'even max grenade reload stays long');
+ const low=g.t.grenadeStats(0),high=g.t.grenadeStats(20);
+ assert.ok(high.impact<74&&high.blast<55&&high.radius<=27,'max grenade blast is tightly capped');
+ assert.ok(high.impact>low.impact,'upgrades still feel useful');
  g.t.fire('he',g.t.size.w*.5,g.t.size.h*.4);
  const b=s.shots.find(x=>x.kind==='he');
- assert.ok(b&&b.fuse9945>=1.45&&b.fuse9945<=2.0,'long grenade fuse');
+ assert.ok(b&&b.fuse9945>=2.1,'low upgrade has long timed fuse');
+ assert.equal(s.grenadeSlots.length,1,'firing still keeps exactly one grenade slot');
+ assert.ok(s.grenadeSlots[0]>=10,'full cooldown starts after firing');
+ for(let n=0;n<10;n++)g.t.grenadeReady();
+ assert.equal(g.t.grenadeReady(),-1,'grenade remains unavailable while reloading');
+ const max=loadGame(dir),m=emptyBattle(max,'hard');m.save.upgrades.special=20;m.profile=max.t.profile();
+ max.t.fire('he',max.t.size.w*.5,max.t.size.h*.30);
+ const strong=m.shots.find(x=>x.kind==='he');
+ assert.equal(strong.fuse9945,0,'max upgrade detonates at impact');
+ for(let frame=0;frame<280&&strong.active;frame++)max.t.shotStep(1/60);
+ assert.equal(strong.active,false,'grenade completes trajectory');
+ assert.ok(!m.pendingGrenades9945||m.pendingGrenades9945.length===0,'impact has no delayed fuse');
+ assert.equal(m.grenadeSlots.length,1,'max upgrade does not add a second slot');
 }
 // Stopping a vehicle leaves the hull ALIVE and the stationary gun usable.
 {
@@ -124,8 +136,8 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  const before=s.effects.length;
  g.t.grenadeImpact(195,300,{kind:'he',radius:frag.radius,damage:frag.impact,blastDamage:frag.blast,specialEffect:'blast',visual:0});
  const blast=s.effects.slice(before).find(e=>e.type==='explosion');
- assert.ok(blast&&blast.r>=24,'grenade explosion actually looks bigger');
- assert.ok(s.shake>=3.2,'grenade gives stronger blast kick');
+ assert.ok(blast&&blast.r>=22,'grenade explosion remains visible without becoming huge');
+ assert.ok(s.shake>=2.8,'grenade gives restrained but clear blast kick');
 }
 {
  const {g,s}=harness(),v=makeVehicle(g,s,'trooptruck','blitz_1');
@@ -209,5 +221,19 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.equal(g.t.atlas.inf.skins,3,'three atlas uniform variants exist');
  g.t.render();
  assert.ok(g.t.atlas.frames['inf:wehrmacht:rifle:2:down:idle'],'third camouflage sprite actually rendered in atlas');
+}
+// Visual HUD clean-up and expressive gesture behavior.
+{
+ const {g,s}=harness(),v=makeVehicle(g,s,'jeep','kubel_1');
+ v.penetrationTell9935=2;v.state='driverless9935';
+ v.damageNotices9941=[{label:'FLOATING DAMAGE LABEL',color:'#ffffff',until:100}];
+ v.fuelBurnT=5;v.burnPhase9941='cookoff';
+ const e=g.t.spawnEnemy(170,260,'radio',null,'vehicle');e.radioT9945=4;
+ const gestures=['radioCall','grenadeFlee9947','medicTreat','fire','advance','suppressed'];
+ for(const state of gestures){e.state=state;g.t.gesture(e,e.x,e.y,.88);}
+ g.t.render();
+ const above=g.drawText.map(q=>q.label);
+ assert.ok(!above.some(t=>/FLOATING DAMAGE LABEL|MUNITIE|PEN [0-9]|BRAND GEWEKEN/.test(t)),'no floating labels above vehicles');
+ assert.ok(!above.some(t=>/★|RADIO CALL|ROCKET AIM/.test(t)),'no role and threat icons');
 }
 console.log('PASS V9.9.47: ten penetrations, vehicle MG intact, all 3 fire outcomes, grenade slots/fuse/panic, truck smoke/flanking and radio reinforcements');
