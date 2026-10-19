@@ -236,4 +236,66 @@ for(const [roll,plan,destroyed] of [[.05,'instant',true],[.35,'single',false],[.
  assert.ok(!above.some(t=>/FLOATING DAMAGE LABEL|MUNITIE|PEN [0-9]|BRAND GEWEKEN/.test(t)),'no floating labels above vehicles');
  assert.ok(!above.some(t=>/★|RADIO CALL|ROCKET AIM/.test(t)),'no role and threat icons');
 }
+
+// FPS click discipline: first round accurate, quickly repeated taps produce three bullets,
+// recoil rises over five chains and penalizes penetration much less than accuracy.
+{
+ const {g,s}=harness();const x=g.t.size.w*.64,y=g.t.size.h*.42;
+ assert.equal(g.t.fpsTuning().singleReset,1.5);
+ assert.equal(g.t.fpsTuning().fullRecover,3.5);
+ g.setRandom(.99);
+ assert.ok(g.t.fpsInput(x,y),'initial tap accepted');
+ assert.equal(s.stats.shots,1,'first click fires one bullet');
+ const first=s.shots[s.shots.length-1];
+ assert.equal(first.fpsDeviation9950,0,'first round is exactly on the crosshair');
+ assert.equal(first.fpsRecoil9950,0,'first round has no accuracy penalty');
+ assert.equal(first.fpsSpeedFactor9950,1,'first round has full muzzle velocity');
+ assert.equal(first.fpsPenetration9950,s.profile.primaryPenetrationChance,'first round has full penetration chance');
+ for(let k=0;k<6;k++){
+   for(let t=0;t<18;t++)g.playerTick(1/60);
+   assert.ok(g.t.fpsInput(x,y),'rapid tap '+(k+2)+' accepted');
+   for(let t=0;t<26;t++)g.playerTick(1/60);
+   assert.equal(s.stats.shots,1+(k+1)*3,'every subsequent fast tap fires exactly 3 bullets');
+ }
+ assert.equal(s.fps9950.chain,5,'chain is capped at five rapid stages, without blocking more fire');
+ const pressure=g.t.fpsPressure();
+ assert.ok(pressure>.60&&pressure<=1,'five chains create high but bounded recoil');
+ for(let i=0;i<80;i++)g.playerTick(1/60);
+ assert.ok(g.t.fpsPressure()>0,'repeated volleys do not fully settle after 1.3 seconds');
+ for(let i=0;i<160;i++)g.playerTick(1/60);
+ assert.equal(g.t.fpsPressure(),0,'after 3.5 seconds repeated volleys settle to zero');
+ assert.ok(g.t.fpsInput(x,y));
+ assert.equal(s.stats.shots,20,'after recovery the next tap is single again');
+ const rested=s.shots[s.shots.length-1];
+ assert.equal(rested.fpsDeviation9950,0,'rested bullet again fires along centerline');
+}
+{
+ const {g,s}=harness(),x=g.t.size.w*.5,y=g.t.size.h*.4;
+ s.save.upgrades.rate=20;s.profile=g.t.profile();g.setRandom(.99);
+ const tuned=g.t.fpsTuning();
+ assert.equal(tuned.singleReset,.5,'fully upgraded aim stability restores single fire after half a second');
+ assert.equal(tuned.fullRecover,1.5,'fully upgraded long recovery takes just 1.5 seconds');
+ g.t.fpsInput(x,y);
+ for(let i=0;i<30;i++)g.playerTick(1/60);
+ g.t.fpsInput(x,y);
+ assert.equal(s.stats.shots,2,'half-second gap at max upgrade yields another exact single shot');
+ assert.equal(s.shots[s.shots.length-1].fpsDeviation9950,0,'upgraded subsequent single remains accurate');
+ for(let i=0;i<10;i++)g.playerTick(1/60);
+ g.t.fpsInput(x,y);
+ for(let i=0;i<25;i++)g.playerTick(1/60);
+ assert.equal(s.stats.shots,5,'upgraded quick tap fires a 3-round volley');
+ const p=g.t.fpsPressure();
+ assert.ok(p>0&&p<=1,'the upgraded burst still generates recoil');
+ for(let i=0;i<90;i++)g.playerTick(1/60);
+ assert.equal(g.t.fpsPressure(),0,'upgraded burst recovers after 1.5 seconds');
+ const weak=loadGame(dir),ws=emptyBattle(weak,'hard');weak.setRandom(.99);
+ weak.t.fpsInput(x,y);
+ for(let i=0;i<9;i++)weak.playerTick(1/60);
+ weak.t.fpsInput(x,y);
+ const standard=ws.shots.filter(b=>b.kind==='mg').slice(-1)[0];
+ assert.ok(standard.fpsRecoil9950>0,'unupgraded quick volley applies actual recoil');
+ assert.ok(standard.fpsPenetration9950<ws.profile.primaryPenetrationChance,'recoil decreases penetration');
+ assert.ok(standard.fpsSpeedFactor9950>.90,'muzzle velocity does not collapse under recoil');
+ assert.ok(standard.damage>=ws.profile.primaryDamage*.87,'bullet base force remains effective');
+}
 console.log('PASS V9.9.47: ten penetrations, vehicle MG intact, all 3 fire outcomes, grenade slots/fuse/panic, truck smoke/flanking and radio reinforcements');
