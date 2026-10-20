@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const s=fs.readFileSync(path.join(__dirname,'game.js'),'utf8');
+new vm.Script(s,{filename:'game.js'});
+const marks=["Math.imul(hash^key.charCodeAt(z),16777619)","var gunner=team[slot]||team[0];","if(!gunner||!gunner.alive)return;","function flakStats9951(level)","rounds:level>=16?5:level>=8?4:3","flak.cooldown=stats.reload","var fs9951=flakStats9951","specialToggle9950.id='jbdFlakFire9951'","function specialStats(lvl)","JBD V9.9.51 ERROR"];
+for(const marker of marks)assert.ok(s.includes(marker),'missing '+marker);
+assert.ok(!s.includes("GRANAAT ⟷ FLAK"));
+assert.ok(!s.includes("fireWeapon('he',pos.x,pos.y)"));
+console.log('V9.9.51 syntax + feature safety checks: PASS');
