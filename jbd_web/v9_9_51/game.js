@@ -7738,17 +7738,28 @@ window.addEventListener('error',function(e){
   function clearHold993(ev){if(clean993.hold&&clean993.hold.id===ev.pointerId)clean993.hold=null;}
   window.addEventListener('pointerup',clearHold993,true);window.addEventListener('pointercancel',clearHold993,true);
   function drawGrenadePreview993(){
-    var h=clean993.hold;if(!h||!gameState||gameState.mode!=='playing')return;
-    var elapsed=(performance.now()-h.start)/1000;if(elapsed<.18)return;
-    var q=clamp(elapsed/HE_HOLD,0,1),bx=gameState.bunker.x,by=gameState.bunker.y-12,tx=h.x,ty=h.y;
-    ctx.save();ctx.strokeStyle=q>=1?'#ffd76a':'rgba(245,232,177,.72)';ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=1.6;ctx.setLineDash([4,4]);
-    ctx.beginPath();
-    for(var i=0;i<=18;i++){var t=i/18,x=lerp(bx,tx,t),y=lerp(by,ty,t)-Math.sin(Math.PI*t)*(25+q*25);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}ctx.stroke();ctx.setLineDash([]);
-    ctx.beginPath();ctx.arc(tx,ty,8+q*8,0,TAU);ctx.stroke();
-    ctx.font='900 9px system-ui';ctx.textAlign='center';ctx.fillText(q>=1?'LOS · GRANAAT':'HOUD '+Math.round(q*100)+'%',tx,ty-18);ctx.restore();
+    // Legacy method name kept for compatibility; player preview is FLAK only.
+    var h=clean993.hold;
+    if(!h||!gameState||gameState.mode!=='playing')return;
+    var elapsed=(performance.now()-h.start)/1000;
+    if(elapsed<.15)return;
+    var charge=clamp(elapsed/.35,0,1),
+        tx=h.x,ty=h.y,levels=gameState.save&&gameState.save.upgrades?
+        gameState.save.upgrades.special||0:0,
+        stats=flakStats9951(levels),radius=stats.radius;
+    ctx.save();
+    ctx.strokeStyle=charge>=1?'rgba(155,215,243,.85)':'rgba(175,208,212,.65)';
+    ctx.lineWidth=1.5;ctx.setLineDash([3,5]);
+    ctx.beginPath();ctx.arc(tx,ty,radius,0,TAU);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(tx-7,ty);ctx.lineTo(tx+7,ty);
+    ctx.moveTo(tx,ty-7);ctx.lineTo(tx,ty+7);ctx.stroke();
+    ctx.font='900 9px system-ui';ctx.textAlign='center';ctx.fillStyle='#c7e8ec';
+    ctx.fillText(charge>=1?'FLAK · GEREED':'FLAK '+Math.round(charge*100)+'%',tx,ty-radius-10);
+    ctx.restore();
   }
 
-  // 8/9: compact hit confirmation, stronger for vehicles and armor.
+    // 8/9: compact hit confirmation, stronger for vehicles and armor.
   var damageInf993Base=damageInfantry;
   damageInfantry=function(e,amount,kind){
     var hostile=gameState&&gameState.infantry&&gameState.infantry.indexOf(e)>=0,alive=e&&e.alive;
