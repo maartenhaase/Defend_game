@@ -7,6 +7,8 @@ on:
     paths:
       - "jbd_rebuild_v1/dist/**"
       - "jbd_web/**"
+      - "handpan-studio/**"
+      - "acid-rhythm-lab/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -37,6 +39,10 @@ jobs:
           mkdir -p _site
           cp -a jbd_rebuild_v1/dist/. _site/
           cp -a jbd_web _site/jbd_web
+          cp -a handpan-studio _site/handpan-studio
+          cp -a acid-rhythm-lab _site/acid-rhythm-lab
+          test -s _site/handpan-studio/index.html
+          test -s _site/acid-rhythm-lab/index.html
           touch _site/.nojekyll
           test -s _site/jbd_web/v9_9_26/index.html
           test -s _site/jbd_web/v9_9_26/game.js
