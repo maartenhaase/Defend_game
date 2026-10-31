@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111e21">
+<title>Handpan Studio — D Kurd vergelijken | Sela & Meinl</title>
+<style>
+:root{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f191c;color:#f2f4ed;color-scheme:dark;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 5%,#263f42 0%,#152629 31%,#0f191c 68%);min-height:100svh}
+button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #eac58a;outline-offset:3px}
+.shell{width:min(1100px,100%);margin:0 auto;padding:clamp(16px,3vw,32px) clamp(14px,3vw,28px) 38px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:15px}
+.brand{display:flex;align-items:center;gap:10px;color:#cdb17c;font-size:11px;font-weight:850;letter-spacing:.24em;text-transform:uppercase}
+.brandmark{width:30px;height:30px;border:2px solid #cdb17c;border-radius:50%;position:relative;background:radial-gradient(circle at 50% 50%,#dbc29a 0 12%,transparent 13%)}
+.brandmark:before,.brandmark:after{content:"";position:absolute;border:1px solid #cdb17c;border-radius:50%;inset:5px}.brandmark:after{inset:11px}
+.quality{font-size:11px;color:#a6bbb6;border:1px solid #3e5554;border-radius:99px;padding:7px 10px;white-space:nowrap}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(29px,5.5vw,49px);letter-spacing:-.04em;font-weight:500;margin:4px 0 5px}
+.intro{color:#aabdb6;font-size:13px;line-height:1.5;margin:0 0 22px}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:26px;align-items:start}
+.instrument-area{min-width:0}.panstage{position:relative;width:min(100%,570px);margin:auto;aspect-ratio:1/1;display:grid;place-items:center;user-select:none;-webkit-user-select:none}
+.pan{width:97%;height:97%;position:relative;border-radius:50%;border:4px solid #1b2425;box-shadow:0 18px 42px #0009,0 8px 3px #050d0f,0 0 0 2px #5b5a4c, inset 0 2px 10px #edf3cd55;overflow:hidden;
+background:radial-gradient(ellipse 65% 66% at 27% 19%,#d4c69a 0%,#baa97f 19%,#857958 42%,#4d594b 67%,#293e3e 87%,#1e2c2f 100%)}
+.pan:before{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;background:repeating-conic-gradient(from 10deg at 50% 50%,#f8efd30a 0deg,#00000013 .35deg,#f8efd305 .8deg,transparent 1.5deg);mix-blend-mode:overlay;z-index:1}
+.pan:after{content:"";position:absolute;inset:5.5%;border-radius:50%;pointer-events:none;box-shadow:inset 0 0 22px #f9e2a116,0 0 0 1px #efe2aa1a;z-index:1}
+.tonal-field{position:absolute;appearance:none;border:none;padding:0;border-radius:48%;color:#e9ede4;touch-action:manipulation;z-index:4;transform:translate(-50%,-50%) rotate(var(--rot,0deg));width:21%;height:24%;box-shadow:inset 2px 4px 10px #e2e0bf33,inset -6px -10px 13px #051414af,0 3px 9px #07101180,0 0 0 1.5px #c9c6a26c;
+background:radial-gradient(ellipse at 42% 34%,#8c9d8a 0%,#657668 15%,#425550 45%,#273e3d 71%,#1b3535 100%);
+transition:filter .09s ease,box-shadow .09s ease;-webkit-tap-highlight-color:transparent}
+.tonal-field:before{content:"";position:absolute;inset:19% 27%;border-radius:48%;background:radial-gradient(ellipse at 42% 36%,#7b8d82,#3d544e 55%,#1b3734);box-shadow:inset 2px 3px 7px #0d242499,0 0 0 1px #b0a68a2d}
+.tonal-field:after{content:"";position:absolute;inset:7%;border-radius:48%;border-top:1px solid #e1d7a64d;pointer-events:none}
+.tonal-field .txt{position:relative;z-index:2;transform:rotate(calc(-1 * var(--rot,0deg)));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-shadow:0 2px 5px #111f20;line-height:1}
+.tonal-field .note{font-weight:750;font-size:clamp(14px,2.7vw,20px);letter-spacing:-.02em}.tonal-field .hotkey{font-size:10px;color:#e2d8b7;opacity:.76;font-weight:700}
+.tonal-field.ding{width:28%;height:28%;border-radius:50%;background:radial-gradient(circle at 36% 31%,#c6c19e 0%,#7f8c76 24%,#405953 53%,#1e3836 80%,#132a2b 100%);box-shadow:inset 2px 5px 16px #fff7d64f,inset -7px -12px 17px #091b1cd4,0 4px 15px #06101185,0 0 0 2px #ccb991a6}
+.tonal-field.ding:before{inset:17%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9caa96,#47645b 50%,#254441);box-shadow:inset 2px 3px 12px #0f2626c9}
+.tonal-field.ding .note{font-size:clamp(16px,3.5vw,26px)}.tonal-field.ding .hotkey{font-size:9px;text-transform:uppercase;letter-spacing:.12em}
+.tonal-field.played,.tonal-field:active{filter:brightness(1.28);box-shadow:inset 0 0 22px #e8dbb199,0 0 0 2px #f7d89d,0 0 35px #edca8575}
+.tonal-field.played:before{background:radial-gradient(ellipse at 40% 30%,#c4d4ba,#4f786d 65%,#1a3935)}
+.pan-label{position:absolute;left:50%;top:93%;transform:translateX(-50%);font-size:12px;font-weight:850;letter-spacing:.36em;color:#f9e9bc99;pointer-events:none}
+.instrument-caption{text-align:center;color:#9eb2ad;font-size:12px;margin:0 auto 12px;line-height:1.6}
+.bottom-area{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px;min-height:42px}
+.bottom-title{font-size:12px;color:#a6b8b4}.bottom-pad{border:1px solid #766e55;background:linear-gradient(135deg,#344846,#192b2c);color:#e7d4a9;border-radius:12px;padding:10px 13px;font-size:13px;font-weight:750;min-width:54px;touch-action:manipulation}.bottom-pad.played{background:#6e8c7b}
+.sidebar{display:flex;flex-direction:column;gap:15px}.panel{border:1px solid #384b48;border-radius:19px;padding:19px;background:linear-gradient(165deg,#1f3031ed,#162526ee);box-shadow:0 8px 28px #07111355}
+.kicker{font-size:10px;text-transform:uppercase;font-weight:850;letter-spacing:.19em;color:#d9bd89;margin-bottom:12px;display:block}
+.control-name{font-size:15px;font-weight:750;color:#fff1d4;display:block;margin-bottom:8px}
+select{appearance:none;-webkit-appearance:none;width:100%;padding:16px 40px 16px 14px;border-radius:12px;border:1px solid #73837a;background:#2a4140;color:#fff7e8;font-weight:750;font-size:16px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e9d3a4' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-position:right 14px center;background-repeat:no-repeat}
+.meta{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0 10px}.meta span{font-size:11px;border:1px solid #53675d;color:#d0dbd1;padding:5px 9px;border-radius:30px}
+.description{color:#d0d9d1;font-size:13px;line-height:1.65;margin:0}.notes-line{margin:12px 0 0;font-size:12px;line-height:1.7;color:#d9c9a2}
+.cta{display:flex;gap:9px;margin:13px 0}.primary,.secondary{border-radius:12px;padding:15px 12px;font-weight:850;font-size:14px;touch-action:manipulation}.primary{flex:1;background:#d6b982;color:#162324;border:1px solid #e7d19f}.secondary{background:#243a39;color:#f2e9d4;border:1px solid #698076}.primary:active,.secondary:active{transform:translateY(1px)}
+.faders{display:grid;gap:15px;margin-top:10px}.fader-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#bccdc2;margin-bottom:6px}.fader-head strong{color:#f2e4c8;font-variant-numeric:tabular-nums}input[type=range]{accent-color:#dbbd88;width:100%;height:28px;margin:0;cursor:pointer}
+.status{color:#a0b6ac;font-size:12px;min-height:17px}.tips{border-left:2px solid #c3a46d;padding:0 0 0 12px;font-size:12px;color:#bacbc0;line-height:1.65;margin:0}
+
+.kurd-compare{margin:0 0 17px;padding:14px 15px;border:1px solid #465c54;border-radius:16px;background:#203330c9}
+.compare-head{display:flex;align-items:baseline;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.compare-head strong{font-size:13px;color:#f5d9a6}.compare-head small{font-size:11px;color:#a8bcb0}
+.quick-buttons{display:flex;flex-wrap:wrap;gap:8px}.quick-buttons button{padding:10px 13px;border:1px solid #627b6e;border-radius:11px;background:#293f3b;color:#e9eee5;font-size:12px;font-weight:750;white-space:nowrap;touch-action:manipulation}
+.quick-buttons button.current{background:#e1c18a;color:#192b29;border-color:#e1c18a;box-shadow:0 0 0 2px #ecd49e30}
+.compare-explain{font-size:12px;color:#c2d1c9;line-height:1.6;margin:10px 0 0}
+.notes-line{overflow-wrap:anywhere}.model-link{display:inline-block;margin-top:9px;color:#e8c88e;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.pan.many .tonal-field:not(.ding){width:17.6%;height:20.5%}
+.pan.very-many .tonal-field:not(.ding){width:16%;height:19.5%}
+.pan.many .tonal-field .note{font-size:clamp(12px,2.1vw,17px)}
+.pan.very-many .tonal-field .hotkey{font-size:8px}
+.footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:18px;padding:16px 2px 0;border-top:1px solid #40524b;color:#94aba2;font-size:11px;line-height:1.7;flex-wrap:wrap}.footer a{color:#ead1a1}
+@media(max-width:820px){.layout{grid-template-columns:1fr;gap:8px}.sidebar{display:grid;grid-template-columns:1fr 1fr;align-items:start}.panel{padding:17px}.panel:first-child{grid-row:span 2}.panstage{width:min(100%,490px)}}
+@media(max-width:600px){.kurd-compare{padding:12px}.quick-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.quick-buttons button{font-size:11px;padding:11px 3px}.shell{padding:15px 13px 30px}.top{margin-bottom:10px}.brand{letter-spacing:.16em;font-size:10px}.quality{font-size:10px}.intro{margin-bottom:8px}.layout{gap:5px}.panstage{width:min(100%,540px)}.pan{width:98%;height:98%;border-width:3px}.tonal-field .note{font-size:clamp(13px,4vw,18px)}.tonal-field.ding .note{font-size:clamp(16px,5.3vw,24px)}.tonal-field .hotkey{font-size:9px}.sidebar{display:flex;align-items:stretch;gap:12px}.panel{padding:16px}.instrument-caption{margin-top:-2px;margin-bottom:9px}.bottom-area{margin-bottom:14px}.footer{margin-top:15px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="top"><div class="brand"><span class="brandmark" aria-hidden="true"></span> HANDPAN STUDIO</div><span class="quality">Live Web Audio · zonder samples</span></header>
+<h1>Ontdek jouw D Kurd.</h1>
+<p class="intro">Test echte D Kurd-indelingen van 9 tot 13 tonen. Speel zelf, vergelijk de extra tonen en hoor de invloed van het staal. Ook andere stemmingen van Sela en Meinl.</p>
+<section class="kurd-compare" aria-label="D Kurd snel vergelijken">
+<div class="compare-head"><strong>Vergelijk D Kurd in één tik</strong><small>De eerste rij is écht D Kurd, geen andere toonladder</small></div>
+<div class="quick-buttons" id="quickButtons">
+<button type="button" data-preset="sela-kurd" class="current">9 tonen</button>
+<button type="button" data-preset="sela-kurd10">10 tonen</button>
+<button type="button" data-preset="sela-kurd93">9 + 3 laag</button>
+<button type="button" data-preset="sela-kurdplus">10 + 3 laag</button>
+<button type="button" data-preset="sela-kurd112">11 + 2 laag</button>
+<button type="button" data-preset="kurd432">432 Hz</button>
+</div><p class="compare-explain" id="compareExplain">9 tonen: midden-D3 met 8 noten eromheen. Dit is de klassieke indeling.</p>
+</section>
+<div class="layout">
+<section class="instrument-area" aria-label="Bespeelbare handpan">
+<div class="panstage"><div id="pan" class="pan" aria-label="Handpan speelvelden">
+<!-- Statische standaardlayout blijft ook zichtbaar als JavaScript niet wordt gestart. -->
+<button class="tonal-field ding" style="left:50%;top:50%" data-index="0" type="button" aria-label="D3, centrale ding"><span class="txt"><span class="note">D3</span><span class="hotkey">DING</span></span></button>
+<button class="tonal-field" style="left:70%;top:78%;--rot:-28deg" data-index="1" type="button"><span class="txt"><span class="note">A3</span><span class="hotkey">1</span></span></button>
+<button class="tonal-field" style="left:30%;top:78%;--rot:28deg" data-index="2" type="button"><span class="txt"><span class="note">Bb3</span><span class="hotkey">2</span></span></button>
+<button class="tonal-field" style="left:80%;top:57%;--rot:62deg" data-index="3" type="button"><span class="txt"><span class="note">C4</span><span class="hotkey">3</span></span></button>
+<button class="tonal-field" style="left:20%;top:57%;--rot:-62deg" data-index="4" type="button"><span class="txt"><span class="note">D4</span><span class="hotkey">4</span></span></button>
+<button class="tonal-field" style="left:78%;top:35%;--rot:-62deg" data-index="5" type="button"><span class="txt"><span class="note">E4</span><span class="hotkey">5</span></span></button>
+<button class="tonal-field" style="left:22%;top:35%;--rot:62deg" data-index="6" type="button"><span class="txt"><span class="note">F4</span><span class="hotkey">6</span></span></button>
+<button class="tonal-field" style="left:64%;top:19%;--rot:32deg" data-index="7" type="button"><span class="txt"><span class="note">G4</span><span class="hotkey">7</span></span></button>
+<button class="tonal-field" style="left:36%;top:19%;--rot:-32deg" data-index="8" type="button"><span class="txt"><span class="note">A4</span><span class="hotkey">8</span></span></button>
+<div class="pan-label" aria-hidden="true">H A N D P A N</div></div></div>
+<p class="instrument-caption">Tik met je vingers op de toonvelden · meerdere tonen tegelijk mogelijk</p>
+<div id="extras" class="bottom-area" hidden><span class="bottom-title">Extra tonen onderzijde:</span></div>
+</section>
+<aside class="sidebar">
+<section class="panel"><span class="kicker">01 / Kies een handpan</span><label class="control-name" for="tuning">Stemming en model</label>
+<select id="tuning">
+<optgroup label="D KURD · Sela / Meinl / variaties">
+<option value="sela-kurd">Sela Harmony SE204 · D Kurd 9 · genitreerd</option>
+<option value="sela-harmony">Sela Harmony SE201 · D Kurd 9 · RVS</option>
+<option value="sela-nomo">Sela Nomo SEHP400 · D Kurd 9 · RVS</option>
+<option value="sela-kurd10">Sela Phoenix SE320 · D Kurd 10</option>
+<option value="meinl-kurd">Meinl Sensory HPSTL90 · D Kurd 9</option>
+<option value="meinl-kurd10">Meinl Sensory HPSTL100 · D Kurd 10</option>
+<option value="sela-kurd93">Sela Harmony SEHP203 · D Kurd 9+3</option>
+<option value="sela-nomo93">Sela Nomo SEHP401 · D Kurd 9+3</option>
+<option value="sela-kurdplus">Sela Harmony SEHP330 · D Kurd 10+3</option>
+<option value="sela-kurd112">Sela Harmony SEHP201 · D Kurd 11+2</option>
+<option value="kurd12">D Kurd 12 · hoge uitbreiding (generiek)</option>
+<option value="kurd432">D Kurd 9 · 432 Hz (vergelijking)</option>
+</optgroup>
+<optgroup label="ANDERE STEMMINGEN">
+<option value="sela-amara">Sela Harmony · D Amara (9)</option>
+<option value="sela-hijaz">Sela Harmony · F# Hijaz (9)</option>
+<option value="sela-pygmy">Sela Harmony · F Low Pygmy (9)</option>
+<option value="sela-sabye">Sela Harmony · D Sabye (9)</option>
+<option value="sela-unity">Sela Unity · C# Kurd (432 Hz)</option>
+<option value="meinl-amara">Meinl Sensory · D Amara (9)</option>
+<option value="meinl-csharp">Meinl Sensory · C# Minor (432 Hz)</option>
+</optgroup>
+</select><div class="meta" id="meta"><span>9 tonen</span><span>440 Hz</span><span>Genitreerd staal</span></div>
+<p id="description" class="description">Warm, donker en melancholisch. De klassieke D mineur-stemming.</p><p id="notes" class="notes-line">D3 • A3 • Bb3 • C4 • D4 • E4 • F4 • G4 • A4</p><a class="model-link" href="https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf" target="_blank" rel="noopener noreferrer" id="modelLink">Bekijk de notenlijst ↗</a></section>
+<section class="panel"><span class="kicker">02 / Luisteren</span><div class="cta"><button class="primary" id="demo" type="button">▶ Speel voorbeeld</button><button class="secondary" id="stop" type="button">■ Stop</button></div><p class="status" id="status" role="status" aria-live="polite">Kies een noot of speel het voorbeeld af.</p></section>
+<section class="panel"><span class="kicker">03 / Klank</span><div class="faders"><label><span class="fader-head"><span>Uittijd / sustain</span><strong id="sustainOut">Natuurlijk</strong></span><input id="sustain" type="range" min="0" max="100" value="55" aria-label="Uitklinktijd"></label><label><span class="fader-head"><span>Ruimte / galm</span><strong id="spaceOut">35%</strong></span><input id="space" type="range" min="0" max="100" value="35" aria-label="Ruimte en nagalm"></label><label><span class="fader-head"><span>Volume</span><strong id="volumeOut">80%</strong></span><input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume"></label></div></section>
+<section class="panel"><span class="kicker">Speeltip</span><p class="tips">Begin met <b>D Kurd 9</b>. Kies dan <b>D Kurd 10</b> om de nieuwe hoge C5 te horen. Kies vervolgens <b>9+3</b> voor de drie extra lage ondertonen. Deze verschijnen als knoppen onder de pan. <b>432 Hz</b> is een iets lagere toonhoogte, geen andere toonladder.</p></section>
+</aside></div>
+<footer class="footer"><span>Digitale, synthetisch gemodelleerde handpan (grondtoon + boventonen). Notenlijsten zijn gebaseerd op modelgegevens; de klank en fysieke plaatsing zijn benaderingen, geen opnames of officiële merkproducten. Bij Sela SEHP201/203 verschilt de opgegeven A-stemming tussen aanbieders (440/442 Hz); deze simulator gebruikt 442 Hz voor die twee modellen.</span><span>Bronnen: <a href="https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf" target="_blank" rel="noreferrer">Sela catalogus</a> · <a href="https://www.meinlshop.de/en/MEINL-Sonic-Energy-Sensory-Handpan-Stainless-Steel-D-Kurd-10-Notes-440-Hz-Vintage-Gold-HPSTL100/HPSTL100" target="_blank" rel="noreferrer">Meinl catalogus</a></span></footer>
+</main>
+<script>
+(()=>{'use strict';
+const presets={
+'sela-kurd':{title:'Sela Harmony D Kurd 9 · nitride',model:'SE 204',material:'Nitrided',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'De klassieke D Kurd. Genitreerd staal geeft in deze simulatie een iets kortere, percussievere klank.',why:'9 tonen = ding D3 + 8 toonvelden. Alle basisnoten; helder en overzichtelijk.',url:'https://www.bax-shop.be/nl/handpans-tongue-drums/sela-se-204-harmony-handpan-d-kurd-staal'},
+'sela-harmony':{title:'Sela Harmony D Kurd 9 · RVS',model:'SE 201',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Dezelfde 9 noten als het nitride-model, maar langer uitklinkend door de benadering van roestvrij staal.',why:'Zelfde toonladder als de SE204: verschil zit vooral in aanslag en sustain, niet in de noten.',url:'https://selapercussion.com/wp-content/uploads/SELA-World-Of-Sounds-Catalog-2024.pdf'},
+'sela-nomo':{title:'Sela Nomo D Kurd 9',model:'SEHP400',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Een actuele Sela Nomo met de klassieke D Kurd-indeling. RVS, warm en ruimtelijk.',why:'Geen andere stemming dan de klassieke D Kurd 9; dit is een ander model met dezelfde toonset.',url:'https://www.thomann.nl/sela_nomo_handpan_d_kurd_sehp400.htm'},
+'sela-amara':{title:'Sela Harmony D Amara',model:'SE 202',material:'Stainless',hz:440,notes:['D3','A3','C4','D4','E4','F4','G4','A4','C5'],mood:'Open, dromerig en zacht. Minder spanning dan Kurd door het ontbreken van de Bb.'},
+'sela-hijaz':{title:'Sela Harmony F# Hijaz',model:'SE 203',material:'Stainless',hz:440,notes:['F#3','C#4','D4','F4','F#4','G#4','A4','C5','C#5'],mood:'Mysterieus, dramatisch en oriëntaals. De halve toonstappen geven veel kleur.'},
+'sela-pygmy':{title:'Sela Harmony F Low Pygmy',model:'SE 211',material:'Stainless',hz:440,notes:['F3','G3','G#3','C4','D#4','F4','G4','G#4','C5'],mood:'Aards, donker en bezwerend. Veel ruimte voor repetitieve ritmische patronen.'},
+'sela-sabye':{title:'Sela Harmony D Sabye',model:'SE 213',material:'Stainless',hz:440,notes:['D3','G3','A3','B3','C#4','D4','E4','F#4','A4'],mood:'Licht, helder en optimistisch. Een prettige stemming voor zonnige, melodische lijnen.'},
+'sela-kurd10':{title:'Sela Phoenix D Kurd 10',model:'SE 320',material:'Phoenix',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'D Kurd 9 plus een hoge C5. Phoenix steel klinkt in deze simulatie tussen nitride en RVS in.',why:'Extra C5 (hoog): meer melodische afronding; de bas blijft dezelfde D3.',url:'https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf'},
+'sela-unity':{title:'Sela Unity C# Kurd',model:'SE 215',material:'Stainless',hz:432,notes:['C#3','G#3','A3','B3','C#4','D#4','E4','F#4','G#4'],mood:'Dromerige C#-mineurstemming, met A4 op 432 Hz in plaats van 440 Hz.'},
+'sela-kurdplus':{title:'Sela Harmony D Kurd 10+3',model:'SEHP330',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],extra:['C3','F3','G3'],mood:'10 tonen bovenop en drie extra onder. De lage C3 klinkt zelfs onder de centrale D3.',why:'Extra hoge C5 + lage C3/F3/G3. Let op de drie onderknoppen.',url:'https://www.thomann.nl/sela_sehp330_harmony_d_kurd_103.htm'},
+'sela-kurd93':{title:'Sela Harmony D Kurd 9+3',model:'SEHP203',material:'Stainless',hz:442,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],extra:['C3','F3','G3'],mood:'De klassieke 9 boven, plus drie lage ondertonen: C3, F3 en G3.',why:'Niet méér hoge noten; wél 3 extra lage velden op de onderzijde.',url:'https://www.thomann.nl/sela_sehp203_harmony_d_kurd_93.htm'},
+'sela-nomo93':{title:'Sela Nomo D Kurd 9+3',model:'SEHP401',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],extra:['C3','F3','G3'],mood:'D Kurd 9 met extra C3/F3/G3 aan de achterkant. Voornamelijk meer lage melodieruimte.',why:'Dezelfde uitbreiding als 9+3 Harmony, met een modelafhankelijke klank.',url:'https://www.adams-music.shop/meditatie-klankinstrumenten/handpan/sela_sehp401'},
+'sela-kurd112':{title:'Sela Harmony D Kurd 11+2',model:'SEHP201',material:'Stainless',hz:442,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5','D5'],extra:['F3','G3'],mood:'13 toonvelden totaal, inclusief C5/D5 boven en F3/G3 onder. Breder melodisch speelbereik.',why:'Twee extra hoge noten C5 en D5; onder zitten F3 en G3. C3 ontbreekt hier.',url:'https://www.thomann.nl/sela_sehp201_harmony_d_kurd13_112.htm'},
+'kurd12':{title:'D Kurd 12 · uitbreiding boven',model:'Referentie',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5','D5','E5'],mood:'Een generieke D Kurd-variant met drie hogere melodienoten in plaats van extra ondernoten.',why:'12 velden op de bovenzijde: C5, D5 en E5 vergroten vooral de hoge melodische ruimte.',url:'https://opsilon.de/pages/tonleiter-datenbank'},
+'kurd432':{title:'D Kurd 9 · 432 Hz experiment',model:'Vergelijking',material:'Stainless',hz:432,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Exact dezelfde D Kurd 9-noten, met een iets lagere A-referentie: 432 in plaats van 440 Hz. Geen bewezen bijzondere helende werking.',why:'Dit laat alleen een kleine toonhoogteverschuiving horen; niet een andere toonladder of automatisch een ander staal.',url:'https://www.noomsound.studio/guides/how-to-choose-your-handpan/'},
+'meinl-kurd':{title:'Meinl Sensory D Kurd 9',model:'HPSTL90',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'De klassieke D Kurd in RVS-uitvoering van Meinl Sonic Energy.',why:'Dezelfde 9 noten als Sela: verschillen tussen instrumenten zitten in bouw en klank, niet in de schaal.',url:'https://meinlpercussion.com/content/percussion/service/downloads/Catalog/PER-CATALOG23.pdf'},
+'meinl-kurd10':{title:'Meinl Sensory D Kurd 10',model:'HPSTL100',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Meinl met de klassieke D Kurd en extra C5; langere RVS-sustain.',why:'Net als Sela Phoenix D Kurd 10 zit hier een hoge C5 bij. De gebruikte klankkleur is een benadering.',url:'https://www.meinlshop.de/en/MEINL-Sonic-Energy-Sensory-Handpan-Stainless-Steel-D-Kurd-10-Notes-440-Hz-Vintage-Gold-HPSTL100/HPSTL100'},
+'meinl-amara':{title:'Meinl Sensory D Amara',model:'HPSTL91',material:'Stainless',hz:440,notes:['D3','A3','C4','D4','E4','F4','G4','A4','C5'],mood:'Mellow en meditatief, met lange resonantie. De heldere kant van D mineur.'},
+'meinl-csharp':{title:'Meinl Sensory C# Minor',model:'HPSTL92',material:'Stainless',hz:432,notes:['C#3','G#3','B3','C#4','D#4','E4','F#4','G#4','B4'],mood:'Diepe C# mineur in 432 Hz. Een donker, ruimtelijk en ontspannen karakter.'}
+};
+const $=s=>document.getElementById(s);
+let activeKey='sela-kurd',ctx=null,dry=null,wet=null,master=null,comp=null,rev=null;
+let demoTimer=null,demoCursor=0,voices=[],seqMark=0;
+const noteBase={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function freq(note,hz){const m=/^([A-G])([#b]?)(-?\d)$/.exec(note);if(!m)return 220;const sem=noteBase[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+(Number(m[3])+1)*12;return hz*Math.pow(2,(sem-69)/12)}
+function preset(){return presets[activeKey]}
+function padHTML(index,note,x,y,rot){const ding=index===0;return `<button type="button" class="tonal-field${ding?' ding':''}" data-index="${index}" style="left:${x}%;top:${y}%;--rot:${rot}deg" aria-label="Speel ${note}${ding?', middennoot':''}"><span class="txt"><span class="note">${note.replace('b','♭')}</span><span class="hotkey">${ding?'DING':index===10?'0':index}</span></span></button>`}
+function render(){const p=preset(),ring=p.notes.slice(1),eight=[[70,78,-28],[30,78,28],[80,57,62],[20,57,-62],[78,35,-62],[22,35,62],[64,19,32],[36,19,-32]];
+let html=padHTML(0,p.notes[0],50,50,0);
+if(ring.length===8)ring.forEach((n,i)=>html+=padHTML(i+1,n,...eight[i]));
+else ring.forEach((n,i)=>{let a=(68 + i*360/ring.length)*Math.PI/180;let x=50+32*Math.cos(a),y=50+32*Math.sin(a);html+=padHTML(i+1,n,x.toFixed(1),y.toFixed(1),Math.round((a*180/Math.PI+90)%180-90));});
+$('pan').innerHTML=html+'<div class="pan-label" aria-hidden="true">H A N D P A N</div>';
+$('pan').classList.toggle('many',ring.length>=9);$('pan').classList.toggle('very-many',ring.length>=11);
+$('meta').innerHTML=`<span>${p.notes.length+(p.extra?.length||0)} tonen${p.extra?' ('+p.notes.length+'+'+p.extra.length+')':''}</span><span>${p.hz} Hz</span><span>${({Nitrided:'Genitreerd staal',Stainless:'RVS · lange sustain',Phoenix:'Phoenix steel'})[p.material]}</span><span>${p.model}</span>`;
+$('description').textContent=p.mood;$('notes').textContent=p.notes.join('  ·  ')+(p.extra?'  / onder: '+p.extra.join(', '):'');
+$('modelLink').href=p.url||'https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf'; $('compareExplain').textContent=p.why||p.mood;document.querySelectorAll('#quickButtons [data-preset]').forEach(b=>{b.classList.toggle('current',b.dataset.preset===activeKey);b.setAttribute('aria-pressed',String(b.dataset.preset===activeKey));});
+const ex=$('extras');ex.hidden=!p.extra;ex.innerHTML=p.extra?'<span class="bottom-title">Extra tonen onderzijde:</span>'+p.extra.map((n,i)=>`<button class="bottom-pad" type="button" data-extra="${i}" aria-label="Onderkant ${n}">${n}</button>`).join(''):'';
+}
+function buildReverb(){const len=Math.round(ctx.sampleRate*2.9),buffer=ctx.createBuffer(2,len,ctx.sampleRate);
+for(let c=0;c<2;c++){let ch=buffer.getChannelData(c),last=0;for(let i=0;i<len;i++){const x=i/len;last=last*.5+(Math.random()*2-1)*.5;ch[i]=last*Math.pow(1-x,2.4)*.19;}}const cv=ctx.createConvolver();cv.buffer=buffer;return cv}
+async function activate(){try{if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();dry=ctx.createGain();wet=ctx.createGain();comp=ctx.createDynamicsCompressor();comp.threshold.value=-16;comp.knee.value=18;comp.ratio.value=3.3;master=ctx.createGain();rev=buildReverb();dry.connect(comp);dry.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(master);master.connect(ctx.destination);updateAudio();}if(ctx.state!=='running')await ctx.resume();return ctx.state==='running';}catch(e){$('status').textContent='Geluid kon niet starten. Open de pagina in Safari/Chrome.';console.error(e);return false}}
+function updateAudio(){if(!ctx)return;dry.gain.value=.95;wet.gain.value=(+$('space').value/100)*.95;master.gain.value=(+$('volume').value/100)*.7}
+function hitNoise(t,vel,pan,material){let sz=Math.round(ctx.sampleRate*.08),b=ctx.createBuffer(1,sz,ctx.sampleRate),a=b.getChannelData(0);for(let i=0;i<sz;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/sz,4);const src=ctx.createBufferSource();src.buffer=b;const hp=ctx.createBiquadFilter();hp.type='bandpass';hp.frequency.value=material==='Nitrided'?1350:900;hp.Q.value=.72;const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vel*(material==='Nitrided'?.075:.048),t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+.065);src.connect(hp);hp.connect(g);g.connect(pan);src.start(t);src.stop(t+.08)}
+function strike(note,idx,velocity=1,options={}){if(!ctx||ctx.state!=='running')return;const p=preset();const t=ctx.currentTime+.007,f=freq(note,p.hz),nitride=p.material==='Nitrided',phoenix=p.material==='Phoenix';const setting=+$('sustain').value/100;
+let dur=(nitride?2.9:phoenix?4.5:6.2)*(.6+setting*.95)*(idx===0?1.22:1),gainFactor=.6+(velocity*.55),x=idx===0?0:Math.sin(idx*2.36)*.33;
+const pan=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();if(pan.pan)pan.pan.setValueAtTime(x,t);pan.connect(dry);
+const modes=[{r:1,a:.32,d:1},{r:2.003,a:.17,d:.69},{r:3.002,a:.095,d:.55},{r:4.16,a:.021,d:.2},{r:5.96,a:.014,d:.17}];if(idx===0)modes.push({r:.5,a:.085,d:.8});
+const nodes=[];for(const [i,m] of modes.entries()){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';const drift=(i>0?0.00009*Math.sin(i*2.1):0);o.frequency.setValueAtTime(f*m.r*(1+drift),t);let amount=m.a*gainFactor*(i>2?(nitride?1.4:.78):1);const attack=i===0?.006:.004;g.gain.setValueAtTime(.00001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,amount),t+attack);g.gain.exponentialRampToValueAtTime(.00002,t+Math.max(.4,dur*m.d));o.connect(g);g.connect(pan);o.start(t);o.stop(t+Math.max(.45,dur*m.d)+.06);nodes.push(o);}
+hitNoise(t,gainFactor,pan,p.material);voices.push({end:t+dur,stop:()=>{nodes.forEach(o=>{try{o.stop()}catch(_){}});}});voices=voices.filter(v=>v.end>ctx.currentTime);
+if(options.element){options.element.classList.remove('played');void options.element.offsetWidth;options.element.classList.add('played');setTimeout(()=>options.element?.classList.remove('played'),210)}$('status').textContent=`♪ ${note} · ${p.title}`;
+}
+async function playIndex(i,el){const p=preset(),n=p.notes[i];if(!n)return;const ok=await activate();if(ok)strike(n,i,.83,{element:el})}
+async function playExtra(i,el){const p=preset(),n=p.extra?.[i];if(!n)return;const ok=await activate();if(ok)strike(n,i+10,.8,{element:el})}
+$('pan').addEventListener('pointerdown',e=>{const el=e.target.closest('button[data-index]');if(!el)return;e.preventDefault();playIndex(Number(el.dataset.index),el)});
+$('extras').addEventListener('pointerdown',e=>{let el=e.target.closest('button[data-extra]');if(!el)return;e.preventDefault();playExtra(Number(el.dataset.extra),el)});
+function switchPreset(key){if(!presets[key])return;activeKey=key;$('tuning').value=key;stopDemo();render();$('status').textContent='Nieuwe stemming: '+preset().title;}
+$('tuning').addEventListener('change',e=>switchPreset(e.target.value));
+$('quickButtons').addEventListener('click',e=>{const b=e.target.closest('[data-preset]');if(b)switchPreset(b.dataset.preset);});
+function stopDemo(){if(demoTimer!==null){clearInterval(demoTimer);demoTimer=null}$('demo').textContent='▶ Speel voorbeeld';demoCursor=0}
+$('stop').addEventListener('click',()=>{stopDemo();if(ctx){for(const v of voices){if(v.end>ctx.currentTime){try{v.stop()}catch(_){}}}voices=[];}$('status').textContent='Gestopt. Tik op een toonveld om te spelen.'});
+function examplePattern(){const p=preset();let seq=[0,1,3,5,3,1,2,4,0,1,5,7,6,3,2,1,0,3,4,6,8,7,5,3];if(p.notes.length>9)seq.splice(15,0,9,7,9);if(p.notes.length>10)seq.splice(24,0,10,9,10);if(p.notes.length>11)seq.splice(27,0,11,10);if(p.extra?.length)seq.push('b0',0,1,'b1',4,5,...(p.extra.length>2?['b2',0]:[]));return seq;}
+async function demo(){if(demoTimer!==null){stopDemo();$('status').textContent='Voorbeeld gepauzeerd';return}if(!await activate())return;
+$('demo').textContent='Ⅱ Pauzeer voorbeeld';demoCursor=0;const seq=examplePattern();
+function playStep(){const p=preset(),idx=seq[demoCursor%seq.length];if(typeof idx==='string'){const i=Number(idx.slice(1)),el=$('extras').querySelector(`[data-extra="${i}"]`);if(p.extra?.[i])strike(p.extra[i],i+10,.73,{element:el});}
+else {const el=$('pan').querySelector(`[data-index="${idx}"]`);if(el)strike(p.notes[idx],idx,.73,{element:el});}demoCursor++;}
+playStep();demoTimer=setInterval(playStep,310);
+}
+$('demo').addEventListener('click',demo);
+$('sustain').addEventListener('input',()=>{$('sustainOut').textContent=(+$('sustain').value<30?'Kort':+$('sustain').value>75?'Lang':'Natuurlijk')});
+for(const id of ['space','volume'])$(id).addEventListener('input',()=>{$(id+'Out').textContent=$(id).value+'%';updateAudio()});
+window.addEventListener('keydown',e=>{if(e.repeat||e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLButtonElement)return;const key=e.code==='Space'?'0':e.key==='0'?'9':Number(e.key);if(key===0||Number.isInteger(key)&&key>=1&&key<=9){e.preventDefault();let el=$('pan').querySelector(`[data-index="${key}"]`);if(el)playIndex(key,el)}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopDemo()});
+render();
+})();
+</script>
+</body>
+</html>
