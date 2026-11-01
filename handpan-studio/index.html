@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111e21">
-<title>Handpan Studio 2.0 — D Kurd 10 & 11 met prijzen, staal en klank</title>
+<title>Handpan Studio 3.0 — D Kurd handpans tot €1500</title>
 <style>
 :root{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f191c;color:#f2f4ed;color-scheme:dark;font-synthesis:none}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 5%,#263f42 0%,#152629 31%,#0f191c 68%);min-height:100svh}
@@ -67,38 +67,48 @@ select{appearance:none;-webkit-appearance:none;width:100%;padding:16px 40px 16px
 
 .shop-section{margin:-3px 0 18px;padding:15px;border:1px solid #486258;border-radius:17px;background:#1b302ed9}.shop-scroll{display:flex;overflow-x:auto;gap:9px;scroll-snap-type:x mandatory;padding:2px 1px 10px;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.shop-card{flex:0 0 175px;scroll-snap-align:start;text-align:left;border:1px solid #4f7167;border-radius:12px;background:#243b38;color:#f7e6c7;padding:13px;display:flex;flex-direction:column;gap:8px;min-height:145px;touch-action:manipulation}.shop-card span{font-size:10px;color:#b2c8bb;text-transform:uppercase;letter-spacing:.08em}.shop-card b{font-size:12px;min-height:30px}.shop-card strong{font-size:19px;color:#f6d398}.shop-card small{font-size:10px;color:#a7bbb0}.shop-card.current{border-color:#e9d09a;background:#344d42;box-shadow:inset 0 0 0 1px #f0d99d}.pricing-foot{font-size:11px;color:#9bb2a9;line-height:1.6;margin:5px 0 0}.shop-info{margin:0 0 11px;border-bottom:1px solid #496158;padding-bottom:12px}.shop-info strong{display:block;color:#efcf90;font-size:22px;margin-bottom:4px}.shop-info small{color:#a2bbb0;font-size:11px}.shop-info a{font-size:12px;color:#f3d49d;margin-left:6px}.steel-info{font-size:11px;color:#bfd0bf;line-height:1.6;margin:9px 0 12px}
 @media(max-width:600px){.shop-section{padding:12px;margin-bottom:12px}.shop-card{flex-basis:156px}.shop-card strong{font-size:17px}}
+.layout-alert{background:#203833;border:1px solid #496c61;border-radius:12px;padding:10px 13px;color:#d7e3d8;font-size:12px;line-height:1.55;margin:0 0 13px;text-align:center}
+.shop-card[href]{text-decoration:none}
+.shop-card[href] strong{color:#c9bda2}
+@media(max-width:600px){.layout-alert{font-size:11px}}
 </style>
 </head>
 <body>
 <main class="shell">
-<header class="top"><div class="brand"><span class="brandmark" aria-hidden="true"></span> HANDPAN STUDIO</div><span class="quality">Live Web Audio · zonder samples</span></header>
+<header class="top"><div class="brand"><span class="brandmark" aria-hidden="true"></span> HANDPAN STUDIO</div><span class="quality">Modal Steel Engine 3.0</span></header>
 <h1>Ontdek jouw D Kurd.</h1>
-<p class="intro">Vergelijk échte D Kurd 10-, 11- en 11+2-handpannen van Bax, Thomann en Handpanshop. Tik, luister, voel het verschil tussen staalsoorten en bekijk de gevonden winkelprijzen.</p>
+<p class="intro">Speel echte D Kurd-notensets van 9, 10, 11 en 11+2 tonen. Vergelijk goedkope en professionele modellen van circa €180 tot maximaal €1.500.</p>
 <section class="kurd-compare" aria-label="D Kurd snel vergelijken">
-<div class="compare-head"><strong>Vergelijk D Kurd in één tik</strong><small>Échte modellen · kies je favoriete bereik</small></div>
+<div class="compare-head"><strong>Vergelijk D Kurd in één tik</strong><small>€ 180–€ 1.500 · vergelijk de tonen</small></div>
 <div class="quick-buttons" id="quickButtons">
+<button type="button" data-preset="vevor10">VEVOR €180</button>
+<button type="button" data-preset="sarospan10">Amazon €260</button>
+<button type="button" data-preset="hluru10">HLURU €589</button>
+<button type="button" data-preset="sela-nomo">Sela 9</button>
 <button type="button" data-preset="ukiyo10">Ukiyo 10</button>
-<button type="button" data-preset="vivre10">Vivre 10</button>
-<button type="button" data-preset="vivre10n">10 genitreerd</button>
-<button type="button" data-preset="patera11" class="current">Patera 11</button>
+<button type="button" data-preset="patera11">Patera 11</button>
 <button type="button" data-preset="sela-kurd112">Sela 11+2</button>
-<button type="button" data-preset="ayasa112">Ayasa 11+2</button>
 </div><p class="compare-explain" id="compareExplain">11 tonen boven: de klassieke Kurd-reeks met C5 én D5 als extra hoge melodienoten.</p>
 </section>
 <section class="shop-section" aria-label="Winkelprijzen handpannen">
-<div class="compare-head"><strong>Winkelmodellen & actuele prijsindicatie</strong><small>Gecontroleerd 31 oktober 2026 · prijzen kunnen wijzigen</small></div>
+<div class="compare-head"><strong>Winkelmodellen & actuele prijsindicatie</strong><small>Gecontroleerd 1 november 2026 · maximum € 1.500</small></div>
 <div class="shop-scroll" id="shopCards">
-<button class="shop-card" data-preset="ukiyo10"><span>Handpanshop</span><b>Ukiyo D Kurd 10</b><strong>€ 1.188,75</strong><small>10 · High Chrome Titanium</small></button>
-<button class="shop-card" data-preset="patera11"><span>Thomann</span><b>Patera HPDM-11</b><strong>€ 1.298</strong><small>11 · RVS</small></button>
-<button class="shop-card" data-preset="sela-kurd112"><span>Bax / Thomann</span><b>Sela Harmony 11+2</b><strong>€ 1.350</strong><small>13 totaal · RVS</small></button>
-<button class="shop-card" data-preset="vivre10"><span>Handpanshop</span><b>Vivre Kurd 10 · RVS</b><strong>€ 1.485</strong><small>10 · RVS</small></button>
-<button class="shop-card" data-preset="vivre10n"><span>Handpanshop</span><b>Vivre Kurd 10 · nitride</b><strong>€ 1.485</strong><small>10 · genitreerd staal</small></button>
-<button class="shop-card" data-preset="sela-kurdplus"><span>Thomann</span><b>Sela Harmony 10+3</b><strong>€ 1.498</strong><small>13 totaal · RVS</small></button>
-<button class="shop-card" data-preset="convex10"><span>Handpanshop</span><b>Convex Kurd 10 · Ember</b><strong>€ 2.300</strong><small>10 · Ember steel</small></button>
-<button class="shop-card" data-preset="ayasa112"><span>Handpanshop</span><b>Ayasa Kurd 11+2</b><strong>€ 3.200</strong><small>13 totaal · winkel geeft staal verschillend op</small></button>
-<button class="shop-card" data-preset="sela-nomo93"><span>Thomann</span><b>Sela Nomo 9+3</b><strong>€ 930</strong><small>12 totaal · RVS</small></button>
+<button type="button" class="shop-card" data-preset="vevor10"><span>VEVOR</span><b>D mineur 10 · 432 Hz</b><strong>€ 179,90</strong><small>10 toonvelden</small></button>
+<a class="shop-card" href="https://www.beslist.nl/products/muziekinstrument/muziekinstrument_425411_426026/c/merk~23825718" target="_blank" rel="noopener noreferrer"><span>Temu · vergelijkingssite</span><b>D Kurd 12 · toonkaart ontbreekt</b><strong>€ 184,76</strong><small>Niet gesimuleerd · winkelindicatie ↗</small></a>
+<button type="button" class="shop-card" data-preset="sarospan10"><span>Amazon</span><b>Sarospan D Kurd 10</b><strong>€ 259,99</strong><small>10 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="hluru10"><span>HLURU</span><b>D Kurd 10</b><strong>€ 588,84</strong><small>10 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="shamann9"><span>Muziker</span><b>Shamann D Kurd Gold</b><strong>€ 699</strong><small>9 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="sela-nomo"><span>Bax / Thomann</span><b>Sela Nomo 9</b><strong>€ 798</strong><small>9 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="sela-nomo93"><span>Thomann</span><b>Sela Nomo 9+3</b><strong>€ 930</strong><small>9 boven, 3 onder</small></button>
+<button type="button" class="shop-card" data-preset="ukiyo10"><span>Handpanshop</span><b>Ukiyo D Kurd 10</b><strong>€ 1.188,75</strong><small>10 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="patera11"><span>Thomann</span><b>Patera HPDM-11</b><strong>€ 1.298</strong><small>11 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="patera432"><span>Thomann</span><b>Patera 11 · 432 Hz</b><strong>€ 1.298</strong><small>11 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="sela-kurd112"><span>Bax / Thomann</span><b>Sela Harmony 11+2</b><strong>€ 1.350</strong><small>11 boven, 2 onder</small></button>
+<button type="button" class="shop-card" data-preset="vivre10"><span>Handpanshop</span><b>Vivre 10 RVS</b><strong>€ 1.485</strong><small>10 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="vivre10n"><span>Handpanshop</span><b>Vivre 10 nitride</b><strong>€ 1.485</strong><small>10 toonvelden</small></button>
+<button type="button" class="shop-card" data-preset="sela-kurdplus"><span>Thomann</span><b>Sela Harmony 10+3</b><strong>€ 1.498</strong><small>10 boven, 3 onder</small></button>
 </div>
-<p class="pricing-foot">Tik op een kaart om de handpan te spelen. Kies daarna «Bekijk winkel» om de actuele prijs te controleren. De bedragen zijn een gecontroleerde momentopname, geen live prijsfeed.</p>
+<p class="pricing-foot">Tik op een kaart om de handpan te spelen. Kies daarna «Bekijk winkel» om de actuele prijs te controleren. Temu: €184,76 via vergelijkingssite, exacte toonindeling onbekend. Daarom is dit géén speelbaar profiel. Alle prijzen zijn momentopnames.</p>
 </section>
 <div class="layout">
 <section class="instrument-area" aria-label="Bespeelbare handpan">
@@ -114,45 +124,28 @@ select{appearance:none;-webkit-appearance:none;width:100%;padding:16px 40px 16px
 <button class="tonal-field" style="left:64%;top:19%;--rot:32deg" data-index="7" type="button"><span class="txt"><span class="note">G4</span><span class="hotkey">7</span></span></button>
 <button class="tonal-field" style="left:36%;top:19%;--rot:-32deg" data-index="8" type="button"><span class="txt"><span class="note">A4</span><span class="hotkey">8</span></span></button>
 <div class="pan-label" aria-hidden="true">H A N D P A N</div></div></div>
-<p class="instrument-caption">Tik met je vingers op de toonvelden · meerdere tonen tegelijk mogelijk</p>
+<p class="instrument-caption">Tik op de toonvelden · de weergegeven toonhoogtes kloppen exact met de gepubliceerde notenlijst.</p><p class="layout-alert" id="layoutAlert">De veldposities worden per toonset weergegeven. Exacte merkposities kunnen afwijken.</p>
 <div id="extras" class="bottom-area" hidden><span class="bottom-title">Extra tonen onderzijde:</span></div>
 </section>
 <aside class="sidebar">
 <section class="panel"><span class="kicker">01 / Kies een handpan</span><label class="control-name" for="tuning">Stemming en model</label>
 <select id="tuning">
-<optgroup label="🛍 D KURD 10/11 · PRIJZEN GEVERIFIEERD">
-<option value="ukiyo10">€ 1.188,75 · Ukiyo D Kurd 10 · Handpanshop</option>
-<option value="patera11" selected>€ 1.298 · Patera D Kurd 11 · Thomann</option>
-<option value="sela-kurd112">€ 1.350 · Sela Harmony 11+2 · Bax/Thomann</option>
-<option value="vivre10">€ 1.485 · Vivre D Kurd 10 RVS · Handpanshop</option>
-<option value="vivre10n">€ 1.485 · Vivre D Kurd 10 nitride · Handpanshop</option>
-<option value="sela-kurdplus">€ 1.498 · Sela Harmony 10+3 · Thomann</option>
-<option value="convex10">€ 2.300 · Convex D Kurd 10 Ember · Handpanshop</option>
-<option value="ayasa112">€ 3.200 · Ayasa D Kurd 11+2 · Handpanshop</option>
-<option value="sela-nomo93">€ 930 · Sela Nomo 9+3 · Thomann</option>
+<optgroup label="D KURD · prijzen tot €1.500">
+<option value="vevor10">€179,90 · VEVOR 10 · 432 Hz</option>
+<option value="sarospan10">€259,99 · Sarospan 10 · Amazon</option>
+<option value="hluru10">€588,84 · HLURU 10</option>
+<option value="shamann9">€699 · Shamann D Kurd Gold</option>
+<option value="sela-nomo">€798 · Sela Nomo D Kurd 9</option>
+<option value="sela-nomo93">€930 · Sela Nomo 9+3</option>
+<option value="ukiyo10">€1.188,75 · Ukiyo D Kurd 10</option>
+<option value="patera11" selected>€1.298 · Patera D Kurd 11 · 440 Hz</option>
+<option value="patera432">€1.298 · Patera D Kurd 11 · 432 Hz</option>
+<option value="sela-kurd112">€1.350 · Sela Harmony 11+2</option>
+<option value="vivre10">€1.485 · Vivre D Kurd 10 · RVS</option>
+<option value="vivre10n">€1.485 · Vivre D Kurd 10 · nitride</option>
+<option value="sela-kurdplus">€1.498 · Sela Harmony 10+3</option>
 </optgroup>
-<optgroup label="D KURD · Sela / Meinl / variaties">
-<option value="sela-kurd">Sela Harmony SE204 · D Kurd 9 · genitreerd</option>
-<option value="sela-harmony">Sela Harmony SE201 · D Kurd 9 · RVS</option>
-<option value="sela-nomo">Sela Nomo SEHP400 · D Kurd 9 · RVS</option>
-<option value="sela-kurd10">Sela Phoenix SE320 · D Kurd 10</option>
-<option value="meinl-kurd">Meinl Sensory HPSTL90 · D Kurd 9</option>
-<option value="meinl-kurd10">Meinl Sensory HPSTL100 · D Kurd 10</option>
-<option value="sela-kurd93">Sela Harmony SEHP203 · D Kurd 9+3</option>
-
-
-
-<option value="kurd12">D Kurd 12 · hoge uitbreiding (generiek)</option>
-<option value="kurd432">D Kurd 9 · 432 Hz (vergelijking)</option>
 </optgroup>
-<optgroup label="ANDERE STEMMINGEN">
-<option value="sela-amara">Sela Harmony · D Amara (9)</option>
-<option value="sela-hijaz">Sela Harmony · F# Hijaz (9)</option>
-<option value="sela-pygmy">Sela Harmony · F Low Pygmy (9)</option>
-<option value="sela-sabye">Sela Harmony · D Sabye (9)</option>
-<option value="sela-unity">Sela Unity · C# Kurd (432 Hz)</option>
-<option value="meinl-amara">Meinl Sensory · D Amara (9)</option>
-<option value="meinl-csharp">Meinl Sensory · C# Minor (432 Hz)</option>
 </optgroup>
 </select><div class="meta" id="meta"><span>11 tonen</span><span>440 Hz</span><span>RVS</span></div>
 <div id="shopInfo" class="shop-info" aria-live="polite"></div><p id="description" class="description">Een rijk D Kurd-instrument met 11 tonen.</p><p id="notes" class="notes-line">D3 • A3 • Bb3 • C4 • D4 • E4 • F4 • G4 • A4 • C5 • D5</p><a class="model-link" href="https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf" target="_blank" rel="noopener noreferrer" id="modelLink">Bekijk de winkel en details ↗</a></section>
@@ -162,13 +155,19 @@ select{appearance:none;-webkit-appearance:none;width:100%;padding:16px 40px 16px
 <select id="steelMode"><option value="auto">Automatisch: staal van gekozen model</option><option value="Stainless">Roestvrij staal · warm / lang</option><option value="Nitrided">Genitreerd · droog / direct</option><option value="Ember">Ember · diep / lange galm</option><option value="Titanium">High Chrome Titanium · helder</option><option value="Phoenix">Phoenix steel · gemiddeld</option></select>
 <p id="steelInfo" class="steel-info">Resonantie wordt berekend uit het metaalprofiel.</p>
 <div class="faders"><label><span class="fader-head"><span>Uittijd / sustain</span><strong id="sustainOut">Natuurlijk</strong></span><input id="sustain" type="range" min="0" max="100" value="55" aria-label="Uitklinktijd"></label><label><span class="fader-head"><span>Ruimte / galm</span><strong id="spaceOut">35%</strong></span><input id="space" type="range" min="0" max="100" value="35" aria-label="Ruimte en nagalm"></label><label><span class="fader-head"><span>Volume</span><strong id="volumeOut">80%</strong></span><input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume"></label></div></section>
-<section class="panel"><span class="kicker">Speeltip</span><p class="tips">Probeer <b>Ukiyo 10</b> tegenover <b>Patera 11</b>: de extra D5 maakt hogere melodieën mogelijk. Ga daarna naar <b>Sela 11+2</b> voor F3/G3 aan de onderkant. Kies <b>Vivre genitreerd</b> versus <b>Vivre RVS</b> om vooral het staalprofiel te horen. Gebruik liefst een koptelefoon.</p></section>
+<section class="panel"><span class="kicker">Speeltip</span><p class="tips">Begin met <b>Sarospan 10</b> en schakel naar <b>Patera 11</b> om de extra D5 te horen. Kies daarna <b>Sela 11+2</b> voor F3 en G3 onderop. Bij goedkope modellen ontbreekt vaak een officiële veldkaart: de correcte noten zijn dan op een standaard D Kurd-indeling gezet. Gebruik een koptelefoon.</p></section>
 </aside></div>
-<footer class="footer"><span>Digitale fysieke klankbenadering: meerdere stemmodi, aanslagruis, asymmetrische metaalresonantie, zweving, klankkast en stereo nagalm. Geen opnames van de echte instrumenten; individuele bouwers en instrumenten kunnen aanzienlijk afwijken. Prijzen gecontroleerd 31 oktober 2026, daarna niet automatisch geactualiseerd. Sela SEHP201: Thomann vermeldt 442 Hz en Bax 440 Hz; simulator volgt Thomann (442 Hz).</span><span>Aanbieders: <a href="https://www.bax-shop.nl/percussie/handpans-tongue-drums" target="_blank" rel="noreferrer">Bax</a> · <a href="https://www.thomann.nl/handpan_steel_tongue_drum.html" target="_blank" rel="noreferrer">Thomann</a> · <a href="https://handpanshop.nl/" target="_blank" rel="noreferrer">Handpanshop</a></span></footer>
+<footer class="footer"><span>Modal-synthese op basis van trillingsmodi 1:2:3, stemveld-zweving, aanraking en kastresonantie. <b>Geen echte instrumentopnames of merk-specifieke metingen.</b> Notenfrequenties volgen de vermelde stemming; posities zijn alleen model-exact met officiële veldkaart. Prijzen: momentopname op 1 november 2026.</span><span>Bronnen: <a href="https://www.thomann.nl" target="_blank">Thomann</a> · <a href="https://www.bax-shop.nl" target="_blank">Bax</a> · <a href="https://handpanshop.nl" target="_blank">Handpanshop</a> · <a href="https://www.amazon.nl" target="_blank">Amazon</a></span></footer>
 </main>
 <script>
 (()=>{'use strict';
 const presets={
+'vevor10':{title:'VEVOR D mineur · 10 tonen · 432 Hz',model:'VEVOR 10',shop:'VEVOR NL',price:179.90,stock:'Prijs genoteerd; controleer beschikbaarheid',material:'Nitrided',hz:432,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Budgethandpan. De winkel bevestigt 10 tonen in D mineur en 432 Hz, maar publiceert geen verifieerbare individuele toonveldkaart. De gebruikelijke D Kurd-noten zijn daarom een referentieset, niet bevestigd voor dit exemplaar.',why:'€179,90. Toonset als D Kurd 10-referentie, niet merk-exact.',layout:'referentie',url:'https://www.vevor.nl/stalen-vaten-c_13377/vevor-handpan-drum-55cm-10-noten-d-mineur-handtrommelinstrument-met-hamer-p_010587414733'},
+'sarospan10':{title:'Sarospan 22 inch D Kurd · 10 tonen',model:'Sarospan 10',shop:'Amazon.nl (verkoper)',price:259.99,stock:'Marktplaats-aanbod; prijs kan wijzigen',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Goedkope D Kurd 10. De exacte fysieke plek van iedere toon is niet door de verkoper bevestigd: de simulator gebruikt de bekende D Kurd 10-indeling.',why:'€259,99. De getoonde toonvelden zijn een D Kurd 10-referentie.',layout:'referentie',url:'https://www.amazon.nl/s?k=Sarospan+D+Kurd+10+handpan'},
+'hluru10':{title:'HLURU D Kurd 10 · 440 Hz',model:'HLURU 10',shop:'HLURU Shop',price:588.84,stock:'Check prijs en verzendkosten',material:'Nitrided',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Budgetmodel met 10 tonen en een meer percussieve aanslag. De fabrikant biedt meerdere varianten. Voor de exacte veldkaart is nader bewijs nodig.',why:'€588,84. D Kurd 10: referentiepositie.',layout:'referentie',url:'https://hluru.shop/search?q=handpan%20D%20Kurd%2010'},
+'shamann9':{title:'Shamann D Kurd Gold · 9 tonen',model:'Shamann Gold',shop:'Muziker',price:699,stock:'Actuele aanbieding mogelijk lager',material:'Nitrided',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'9-tonig D Kurd-instrument in de middelste prijsklasse. De exacte positie per merk is niet apart geverifieerd.',why:'D Kurd 9-referentie. Controleer notenlijst voor aankoop.',layout:'referentie',url:'https://www.muziker.nl/shamann-handpans'},
+'patera432':{title:'Patera HPDM-11 · D Kurd 432 Hz',model:'HPDM-11 432',shop:'Thomann',price:1298,stock:'Direct leverbaar volgens winkel',material:'Stainless',hz:432,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5','D5'],mood:'Dezelfde elf toonvelden als de 440 Hz-Patera, maar met de A-referentie op 432 Hz. Je hoort een klein toonhoogteverschil, niet een ander notenpatroon.',why:'11 tonen: D3 + tien velden; veldplaatsing niet door fabrikant bevestigd.',layout:'referentie',url:'https://www.thomann.nl/patera_hpdm_11_d_kurd_es_432.htm'},
+
 'ukiyo10':{title:'Ukiyo D Kurd 10 · High Chrome Titanium',model:'Ukiyo 10',shop:'Handpanshop',price:1188.75,stock:'Op voorraad',material:'Titanium',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Een 10-tonige D Kurd met heldere respons. De bijzondere staallegering benaderen we met meer sprankelende boventonen.',why:'D Kurd 10: ding + 9 velden, waaronder de hoge C5.',url:'https://handpanshop.nl/product/ukiyo-d-kurd-10-high-chrome-titanium/'},
 'vivre10':{title:'Vivre D Kurd 10 · RVS',model:'Vivre 10 RVS',shop:'Handpanshop',price:1485,stock:'Op voorraad',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Stainless staal: een ronde zingende toon met heldere middentonen en lange uitklinktijd.',why:'Dezelfde exacte noten als Vivre 10 genitreerd. Test alleen het verschil in metaalrespons.',url:'https://handpanshop.nl/product/vivre-d-kurd-10-stainless-2/'},
 'vivre10n':{title:'Vivre D Kurd 10 · genitreerd',model:'Vivre 10 Nitro',shop:'Handpanshop',price:1485,stock:'Op voorraad',material:'Nitrided',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],mood:'Genitreerd staal: ronder aanslagkarakter, minder hoog en een kortere, ritmische uitklank.',why:'Vergelijk met Vivre 10 RVS om het staalverschil te horen zonder andere noten.',url:'https://handpanshop.nl/product/vivre-d-kurd-10-genitreerd-2/'},
@@ -178,7 +177,7 @@ const presets={
 
 'sela-kurd':{title:'Sela Harmony D Kurd 9 · nitride',model:'SE 204',material:'Nitrided',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'De klassieke D Kurd. Genitreerd staal geeft in deze simulatie een iets kortere, percussievere klank.',why:'9 tonen = ding D3 + 8 toonvelden. Alle basisnoten; helder en overzichtelijk.',url:'https://www.bax-shop.be/nl/handpans-tongue-drums/sela-se-204-harmony-handpan-d-kurd-staal'},
 'sela-harmony':{title:'Sela Harmony D Kurd 9 · RVS',model:'SE 201',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Dezelfde 9 noten als het nitride-model, maar langer uitklinkend door de benadering van roestvrij staal.',why:'Zelfde toonladder als de SE204: verschil zit vooral in aanslag en sustain, niet in de noten.',url:'https://selapercussion.com/wp-content/uploads/SELA-World-Of-Sounds-Catalog-2024.pdf'},
-'sela-nomo':{title:'Sela Nomo D Kurd 9',model:'SEHP400',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Een actuele Sela Nomo met de klassieke D Kurd-indeling. RVS, warm en ruimtelijk.',why:'Geen andere stemming dan de klassieke D Kurd 9; dit is een ander model met dezelfde toonset.',url:'https://www.thomann.nl/sela_nomo_handpan_d_kurd_sehp400.htm'},
+'sela-nomo':{title:'Sela Nomo D Kurd 9',model:'SEHP400',shop:'Bax / Thomann',price:798,stock:'Direct leverbaar volgens winkel',layout:'standaard',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Een actuele Sela Nomo met de klassieke D Kurd-indeling. RVS, warm en ruimtelijk.',why:'Geen andere stemming dan de klassieke D Kurd 9; dit is een ander model met dezelfde toonset.',url:'https://www.thomann.nl/sela_nomo_handpan_d_kurd_sehp400.htm'},
 'sela-amara':{title:'Sela Harmony D Amara',model:'SE 202',material:'Stainless',hz:440,notes:['D3','A3','C4','D4','E4','F4','G4','A4','C5'],mood:'Open, dromerig en zacht. Minder spanning dan Kurd door het ontbreken van de Bb.'},
 'sela-hijaz':{title:'Sela Harmony F# Hijaz',model:'SE 203',material:'Stainless',hz:440,notes:['F#3','C#4','D4','F4','F#4','G#4','A4','C5','C#5'],mood:'Mysterieus, dramatisch en oriëntaals. De halve toonstappen geven veel kleur.'},
 'sela-pygmy':{title:'Sela Harmony F Low Pygmy',model:'SE 211',material:'Stainless',hz:440,notes:['F3','G3','G#3','C4','D#4','F4','G4','G#4','C5'],mood:'Aards, donker en bezwerend. Veel ruimte voor repetitieve ritmische patronen.'},
@@ -187,8 +186,8 @@ const presets={
 'sela-unity':{title:'Sela Unity C# Kurd',model:'SE 215',material:'Stainless',hz:432,notes:['C#3','G#3','A3','B3','C#4','D#4','E4','F#4','G#4'],mood:'Dromerige C#-mineurstemming, met A4 op 432 Hz in plaats van 440 Hz.'},
 'sela-kurdplus':{title:'Sela Harmony D Kurd 10+3',model:'SEHP330',shop:'Thomann',price:1498,stock:'Binnen circa 1 week',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5'],extra:['C3','F3','G3'],mood:'10 tonen bovenop en drie extra onder. De lage C3 klinkt zelfs onder de centrale D3.',why:'Extra hoge C5 + lage C3/F3/G3. Let op de drie onderknoppen.',url:'https://www.thomann.nl/sela_sehp330_harmony_d_kurd_103.htm'},
 'sela-kurd93':{title:'Sela Harmony D Kurd 9+3',model:'SEHP203',material:'Stainless',hz:442,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],extra:['C3','F3','G3'],mood:'De klassieke 9 boven, plus drie lage ondertonen: C3, F3 en G3.',why:'Niet méér hoge noten; wél 3 extra lage velden op de onderzijde.',url:'https://www.thomann.nl/sela_sehp203_harmony_d_kurd_93.htm'},
-'sela-nomo93':{title:'Sela Nomo D Kurd 9+3',model:'SEHP401',shop:'Thomann',price:930,stock:'Binnen 2–3 weken',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],extra:['C3','F3','G3'],mood:'D Kurd 9 met extra C3/F3/G3 aan de achterkant. Voornamelijk meer lage melodieruimte.',why:'Dezelfde uitbreiding als 9+3 Harmony, met een modelafhankelijke klank.',url:'https://www.thomann.nl/sela_nomo_handpan_d_kurd_sehp401.htm'},
-'sela-kurd112':{title:'Sela Harmony D Kurd 11+2',model:'SEHP201',shop:'Bax / Thomann',price:1350,stock:'Bij beide op voorraad',material:'Stainless',hz:442,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5','D5'],extra:['F3','G3'],mood:'13 toonvelden totaal, inclusief C5/D5 boven en F3/G3 onder. Breder melodisch speelbereik.',why:'Twee extra hoge noten C5 en D5; onder zitten F3 en G3. C3 ontbreekt hier.',url:'https://www.thomann.nl/sela_sehp201_harmony_d_kurd13_112.htm'},
+'sela-nomo93':{title:'Sela Nomo D Kurd 9+3',layout:'standaard',model:'SEHP401',shop:'Thomann',price:930,stock:'Binnen 2–3 weken',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],extra:['C3','F3','G3'],mood:'D Kurd 9 met extra C3/F3/G3 aan de achterkant. Voornamelijk meer lage melodieruimte.',why:'Dezelfde uitbreiding als 9+3 Harmony, met een modelafhankelijke klank.',url:'https://www.thomann.nl/sela_nomo_handpan_d_kurd_sehp401.htm'},
+'sela-kurd112':{title:'Sela Harmony D Kurd 11+2',model:'SEHP201',shop:'Bax / Thomann',price:1350,stock:'Controleer actuele voorraad',material:'Stainless',hz:442,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5','D5'],extra:['F3','G3'],mood:'13 toonvelden totaal, inclusief C5/D5 boven en F3/G3 onder. Breder melodisch speelbereik.',why:'Twee extra hoge noten C5 en D5; onder zitten F3 en G3. C3 ontbreekt hier.',url:'https://www.thomann.nl/sela_sehp201_harmony_d_kurd13_112.htm'},
 'kurd12':{title:'D Kurd 12 · uitbreiding boven',model:'Referentie',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4','C5','D5','E5'],mood:'Een generieke D Kurd-variant met drie hogere melodienoten in plaats van extra ondernoten.',why:'12 velden op de bovenzijde: C5, D5 en E5 vergroten vooral de hoge melodische ruimte.',url:'https://opsilon.de/pages/tonleiter-datenbank'},
 'kurd432':{title:'D Kurd 9 · 432 Hz experiment',model:'Vergelijking',material:'Stainless',hz:432,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'Exact dezelfde D Kurd 9-noten, met een iets lagere A-referentie: 432 in plaats van 440 Hz. Geen bewezen bijzondere helende werking.',why:'Dit laat alleen een kleine toonhoogteverschuiving horen; niet een andere toonladder of automatisch een ander staal.',url:'https://www.noomsound.studio/guides/how-to-choose-your-handpan/'},
 'meinl-kurd':{title:'Meinl Sensory D Kurd 9',model:'HPSTL90',material:'Stainless',hz:440,notes:['D3','A3','Bb3','C4','D4','E4','F4','G4','A4'],mood:'De klassieke D Kurd in RVS-uitvoering van Meinl Sonic Energy.',why:'Dezelfde 9 noten als Sela: verschillen tussen instrumenten zitten in bouw en klank, niet in de schaal.',url:'https://meinlpercussion.com/content/percussion/service/downloads/Catalog/PER-CATALOG23.pdf'},
@@ -222,7 +221,7 @@ $('pan').classList.toggle('many',ring.length>=9);$('pan').classList.toggle('very
 $('meta').innerHTML=`<span>${p.notes.length+(p.extra?.length||0)} tonen${p.extra?' ('+p.notes.length+'+'+p.extra.length+')':''}</span><span>${p.hz} Hz</span><span>${({Nitrided:'Genitreerd staal',Stainless:'RVS · lange sustain',Phoenix:'Phoenix steel'})[p.material]}</span><span>${p.model}</span>`;
 $('description').textContent=p.mood;$('notes').textContent=p.notes.join('  ·  ')+(p.extra?'  / onder: '+p.extra.join(', '):'');
 $('modelLink').href=p.url||'https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf';
-$('shopInfo').innerHTML=p.price?`<strong>${money(p.price)} <small>incl. btw · 31-10-2026</small></strong><small>${p.shop} · ${p.stock} · <a href="${p.url}" target="_blank" rel="noopener noreferrer">Bekijk winkel ↗</a></small>`:'<small>Voor dit model is geen actuele winkelprijs geverifieerd.</small>';
+$('shopInfo').innerHTML=p.price?`<strong>${money(p.price)} <small>incl. btw · 01-11-2026</small></strong><small>${p.shop} · ${p.stock} · <a href="${p.url}" target="_blank" rel="noopener noreferrer">Bekijk winkel ↗</a></small>`:'<small>Voor dit model is geen actuele winkelprijs geverifieerd.</small>';
 $('steelInfo').textContent=steelText[steelMaterial()]||'';
 document.querySelectorAll('.shop-card[data-preset]').forEach(c=>{c.classList.toggle('current',c.dataset.preset===activeKey);c.setAttribute('aria-pressed',String(c.dataset.preset===activeKey))}); $('compareExplain').textContent=p.why||p.mood;document.querySelectorAll('#quickButtons [data-preset]').forEach(b=>{b.classList.toggle('current',b.dataset.preset===activeKey);b.setAttribute('aria-pressed',String(b.dataset.preset===activeKey));});
 const ex=$('extras');ex.hidden=!p.extra;ex.innerHTML=p.extra?'<span class="bottom-title">Extra tonen onderzijde:</span>'+p.extra.map((n,i)=>`<button class="bottom-pad" type="button" data-extra="${i}" aria-label="Onderkant ${n}">${n}</button>`).join(''):'';
