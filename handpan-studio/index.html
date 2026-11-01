@@ -212,80 +212,92 @@ Titanium:{sustain:6.5,noise:.048,high:1.24,beating:1.12,body:.93,attack:.006},
 Phoenix:{sustain:4.6,noise:.048,high:.86,beating:.86,body:1.0,attack:.006}
 };
 function padHTML(index,note,x,y,rot){const ding=index===0;return `<button type="button" class="tonal-field${ding?' ding':''}" data-index="${index}" style="left:${x}%;top:${y}%;--rot:${rot}deg" aria-label="Speel ${note}${ding?', middennoot':''}"><span class="txt"><span class="note">${note.replace('b','♭')}</span><span class="hotkey">${ding?'DING':index===10?'0':index}</span></span></button>`}
-function render(){const p=preset(),ring=p.notes.slice(1),eight=[[70,78,-28],[30,78,28],[80,57,62],[20,57,-62],[78,35,-62],[22,35,62],[64,19,32],[36,19,-32]];
+function render(){
+const p=preset(),ring=p.notes.slice(1);
+const standard9={A3:[50,80,0],Bb3:[27,75,32],C4:[73,75,-32],D4:[18,51,78],E4:[82,51,-78],F4:[24,28,40],G4:[76,28,-40],A4:[50,17,0]};
+const standard10={A3:[50,81,0],Bb3:[26,75,32],C4:[74,75,-32],D4:[18,51,78],E4:[82,51,-78],F4:[24,28,40],G4:[76,28,-40],A4:[40,16,-24],C5:[60,16,24]};
+const standard11={A3:[50,81,0],Bb3:[27,75,32],C4:[73,75,-32],D4:[18,53,78],E4:[82,53,-78],F4:[22,32,38],G4:[78,32,-38],A4:[34,17,-22],C5:[66,17,22],D5:[50,14,0]};
+const map=ring.length===8?standard9:ring.length===9?standard10:ring.length===10?standard11:null;
 let html=padHTML(0,p.notes[0],50,50,0);
-if(ring.length===8)ring.forEach((n,i)=>html+=padHTML(i+1,n,...eight[i]));
-else ring.forEach((n,i)=>{let a=(68 + i*360/ring.length)*Math.PI/180;let x=50+32*Math.cos(a),y=50+32*Math.sin(a);html+=padHTML(i+1,n,x.toFixed(1),y.toFixed(1),Math.round((a*180/Math.PI+90)%180-90));});
+ring.forEach((n,i)=>{const pos=map?.[n];if(pos)html+=padHTML(i+1,n,...pos);else{const a=(90+i*360/ring.length)*Math.PI/180;html+=padHTML(i+1,n,(50+31*Math.cos(a)).toFixed(1),(50+31*Math.sin(a)).toFixed(1),0)}});
 $('pan').innerHTML=html+'<div class="pan-label" aria-hidden="true">H A N D P A N</div>';
-$('pan').classList.toggle('many',ring.length>=9);$('pan').classList.toggle('very-many',ring.length>=11);
-$('meta').innerHTML=`<span>${p.notes.length+(p.extra?.length||0)} tonen${p.extra?' ('+p.notes.length+'+'+p.extra.length+')':''}</span><span>${p.hz} Hz</span><span>${({Nitrided:'Genitreerd staal',Stainless:'RVS · lange sustain',Phoenix:'Phoenix steel'})[p.material]}</span><span>${p.model}</span>`;
-$('description').textContent=p.mood;$('notes').textContent=p.notes.join('  ·  ')+(p.extra?'  / onder: '+p.extra.join(', '):'');
-$('modelLink').href=p.url||'https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf';
-$('shopInfo').innerHTML=p.price?`<strong>${money(p.price)} <small>incl. btw · 01-11-2026</small></strong><small>${p.shop} · ${p.stock} · <a href="${p.url}" target="_blank" rel="noopener noreferrer">Bekijk winkel ↗</a></small>`:'<small>Voor dit model is geen actuele winkelprijs geverifieerd.</small>';
+$('pan').classList.toggle('many',ring.length>=9);$('pan').classList.toggle('very-many',ring.length>=10);
+const layout=p.layout==='standaard'?'Gecontroleerd standaard D Kurd 9-patroon; de feitelijke hoek kan per instrument verschillen.':'NOTEN exact volgens '+(p.layout==='referentie'?'D Kurd referentiepatroon':'gepubliceerde toonspecificatie')+'. De plaats van elk veld op het echte model is niet onafhankelijk bevestigd.';
+$('layoutAlert').textContent=layout+' Middennoot altijd '+p.notes[0]+'.'+(p.extra?.length?' Onderzijde: '+p.extra.join(' en ')+'.':'');
+$('meta').innerHTML=`<span>${p.notes.length+(p.extra?.length||0)} tonen${p.extra?' ('+p.notes.length+'+'+p.extra.length+')':''}</span><span>A = ${p.hz} Hz</span><span>${({Nitrided:'Genitreerd staal',Stainless:'RVS',Phoenix:'Phoenix staal',Titanium:'High Chrome Titanium',Ember:'Ember staal'})[p.material]||'Staal onbekend'}</span><span>${p.model}</span>`;
+$('description').textContent=p.mood;$('notes').textContent=p.notes.join(' · ')+(p.extra?' | onder: '+p.extra.join(', '):'');
+$('modelLink').href=p.url||'https://www.thomann.nl';
+$('shopInfo').innerHTML=p.price?`<strong>${money(p.price)} <small>indicatieve winkelprijs · 01-11-2026</small></strong><small>${p.shop} · ${p.stock||'Verifieer beschikbaarheid'} · <a href="${p.url}" target="_blank" rel="noopener noreferrer">Bekijk winkel ↗</a></small>`:'<small>Geen gecontroleerde winkelprijs.</small>';
 $('steelInfo').textContent=steelText[steelMaterial()]||'';
-document.querySelectorAll('.shop-card[data-preset]').forEach(c=>{c.classList.toggle('current',c.dataset.preset===activeKey);c.setAttribute('aria-pressed',String(c.dataset.preset===activeKey))}); $('compareExplain').textContent=p.why||p.mood;document.querySelectorAll('#quickButtons [data-preset]').forEach(b=>{b.classList.toggle('current',b.dataset.preset===activeKey);b.setAttribute('aria-pressed',String(b.dataset.preset===activeKey));});
-const ex=$('extras');ex.hidden=!p.extra;ex.innerHTML=p.extra?'<span class="bottom-title">Extra tonen onderzijde:</span>'+p.extra.map((n,i)=>`<button class="bottom-pad" type="button" data-extra="${i}" aria-label="Onderkant ${n}">${n}</button>`).join(''):'';
+document.querySelectorAll('.shop-card[data-preset]').forEach(c=>{c.classList.toggle('current',c.dataset.preset===activeKey);c.setAttribute('aria-pressed',String(c.dataset.preset===activeKey))});
+$('compareExplain').textContent=p.why||p.mood;
+document.querySelectorAll('#quickButtons [data-preset]').forEach(b=>{b.classList.toggle('current',b.dataset.preset===activeKey);b.setAttribute('aria-pressed',String(b.dataset.preset===activeKey))});
+const ex=$('extras');ex.hidden=!p.extra;ex.innerHTML=p.extra?'<span class="bottom-title">Extra tonen aan de onderzijde:</span>'+p.extra.map((n,i)=>`<button class="bottom-pad" type="button" data-extra="${i}" aria-label="Onderkant ${n}">${n}</button>`).join(''):'';
 }
-function buildReverb(){const len=Math.round(ctx.sampleRate*2.9),buffer=ctx.createBuffer(2,len,ctx.sampleRate);
-for(let c=0;c<2;c++){let ch=buffer.getChannelData(c),last=0;for(let i=0;i<len;i++){const x=i/len;last=last*.5+(Math.random()*2-1)*.5;ch[i]=last*Math.pow(1-x,2.4)*.19;}}const cv=ctx.createConvolver();cv.buffer=buffer;return cv}
+function buildReverb(){const len=Math.round(ctx.sampleRate*2.6),buffer=ctx.createBuffer(2,len,ctx.sampleRate);
+for(let c=0;c<2;c++){let ch=buffer.getChannelData(c),last=0;for(let i=0;i<len;i++){const x=i/len;last=last*.5+(Math.random()*2-1)*.5;ch[i]=last*Math.pow(1-x,2.2)*.13;}}const cv=ctx.createConvolver();cv.buffer=buffer;return cv}
 async function activate(){try{if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();dry=ctx.createGain();wet=ctx.createGain();comp=ctx.createDynamicsCompressor();comp.threshold.value=-16;comp.knee.value=18;comp.ratio.value=3.3;master=ctx.createGain();rev=buildReverb();dry.connect(comp);dry.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(master);master.connect(ctx.destination);updateAudio();}if(ctx.state!=='running')await ctx.resume();return ctx.state==='running';}catch(e){$('status').textContent='Geluid kon niet starten. Open de pagina in Safari/Chrome.';console.error(e);return false}}
-function updateAudio(){if(!ctx)return;dry.gain.value=.95;wet.gain.value=(+$('space').value/100)*.95;master.gain.value=(+$('volume').value/100)*.7}
+function updateAudio(){if(!ctx)return;dry.gain.value=.95;wet.gain.value=(+$('space').value/100)*.48;master.gain.value=(+$('volume').value/100)*.85}
 function hitNoise(t,vel,pan,material){
   const prof=steelProfiles[material]||steelProfiles.Stainless;
-  const len=Math.round(ctx.sampleRate*.115),b=ctx.createBuffer(1,len,ctx.sampleRate),data=b.getChannelData(0);
-  for(let i=0;i<len;i++){const z=i/len;data[i]=(Math.random()*2-1)*Math.exp(-z*13)*(0.75+0.25*Math.sin(i*.19))}
+  const len=Math.round(ctx.sampleRate*.078),b=ctx.createBuffer(1,len,ctx.sampleRate),data=b.getChannelData(0);
+  for(let i=0;i<len;i++){const z=i/len;data[i]=(Math.random()*2-1)*Math.exp(-z*18)*(0.75+0.25*Math.sin(i*.19))}
   const src=ctx.createBufferSource();src.buffer=b;
   const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=material==='Nitrided'?1250:material==='Titanium'?2550:1950;bp.Q.value=.55;
-  const g=ctx.createGain();g.gain.setValueAtTime(.00001,t);g.gain.linearRampToValueAtTime(vel*prof.noise,t+.004);g.gain.exponentialRampToValueAtTime(.00001,t+.1);
-  src.connect(bp);bp.connect(g);g.connect(pan);src.start(t);src.stop(t+.115);
+  const g=ctx.createGain();g.gain.setValueAtTime(.00001,t);g.gain.linearRampToValueAtTime(vel*prof.noise,t+.004);g.gain.exponentialRampToValueAtTime(.00001,t+.075);
+  src.connect(bp);bp.connect(g);g.connect(pan);src.start(t);src.stop(t+.078);
 }
 function strike(note,idx,velocity=1,options={}){
-  if(!ctx||ctx.state!=='running')return;
-  const p=preset(),material=steelMaterial(),prof=steelProfiles[material]||steelProfiles.Stainless;
-  const t=ctx.currentTime+.006,f=freq(note,p.hz),setting=+$('sustain').value/100;
-  const dur=prof.sustain*(.55+setting*.95)*(idx===0?1.21:1),strength=.62+velocity*.48;
-  // Natuurlijke stereopositie: geen vaste pan, maar een subtiele ruimtelijke positie per toonveld.
-  const voice=ctx.createGain();voice.gain.value=1;
-  const leftRight=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();
-  if(leftRight.pan)leftRight.pan.setValueAtTime(idx===0?0:Math.sin(idx*2.17)*.25,t);
-  voice.connect(leftRight);leftRight.connect(dry);
-  // Stemvelden van handpannen bevatten doorgaans drie sterke stemmodi: 1x, 2x en 3x.
-  // Zwakke, licht ontstemde paren simuleren zweving en het afwijken van echte metalen schalen.
-  const modes=[
-    {ratio:1,level:.255,decay:1.00,attack:1},
-    {ratio:2,level:.141,decay:.88,attack:.72},
-    {ratio:3,level:.084,decay:.74,attack:.60},
-    {ratio:.5,level:idx===0?.066:.014,decay:.62,attack:1.8},
-    {ratio:4.024,level:.025,decay:.40,attack:.50},
-    {ratio:5.51,level:.013,decay:.28,attack:.38},
-    {ratio:1.995,level:.030,decay:.66,attack:.78},
-    {ratio:3.014,level:.015,decay:.55,attack:.65}
-  ];
-  const nodes=[];
-  modes.forEach((m,i)=>{
-    const end=Math.max(.35,dur*m.decay);
-    const o=ctx.createOscillator(),a=ctx.createGain();o.type='sine';
-    const detune=(i>=6?(i===6?1.15:-1.4)*prof.beating:0);
-    o.frequency.setValueAtTime(f*m.ratio*Math.pow(2,detune/1200),t);
-    // Heel lichte toonhoogtebuiging tijdens de eerste 80 ms van de tik.
-    if(i<=2){o.frequency.setValueAtTime(f*m.ratio*1.0015,t);o.frequency.exponentialRampToValueAtTime(f*m.ratio,t+.085)}
-    const high=m.ratio>=3?prof.high:1;
-    const amp=Math.max(.0002,m.level*strength*high*prof.body);
-    a.gain.setValueAtTime(.00001,t);a.gain.exponentialRampToValueAtTime(amp,t+prof.attack*m.attack);
-    a.gain.exponentialRampToValueAtTime(.00001,t+end);
-    o.connect(a);a.connect(voice);o.start(t);o.stop(t+end+.03);nodes.push(o);
-  });
-  // Zachte, brede lichaamstrilling die in elk model wat langer aanwezig blijft.
-  const shell=ctx.createOscillator(),shellGain=ctx.createGain();shell.type='sine';shell.frequency.value=(idx===0?f*.998:Math.min(f*.50,220));
-  shellGain.gain.setValueAtTime(.00001,t);shellGain.gain.exponentialRampToValueAtTime(.012*strength*prof.body,t+.025);
-  shellGain.gain.exponentialRampToValueAtTime(.00001,t+Math.max(.45,dur*.50));
-  shell.connect(shellGain);shellGain.connect(voice);shell.start(t);shell.stop(t+Math.max(.45,dur*.50)+.05);nodes.push(shell);
-  hitNoise(t,strength,voice,material);
-  voices.push({end:t+dur,stop:()=>{for(const o of nodes){try{o.stop()}catch(_){}}}});
-  voices=voices.filter(v=>v.end>ctx.currentTime);
-  if(voices.length>21){for(const v of voices.splice(0,voices.length-21)){v.stop()}}
-  if(options.element){options.element.classList.remove('played');void options.element.offsetWidth;options.element.classList.add('played');setTimeout(()=>options.element?.classList.remove('played'),210)}
-  $('status').textContent=`♪ ${note} · ${p.model} · ${steelMaterial()}`;
+if(!ctx||ctx.state!=='running')return;
+const p=preset(),material=steelMaterial(),prof=steelProfiles[material]||steelProfiles.Stainless;
+const now=ctx.currentTime+.004,f=freq(note,p.hz),setting=+$('sustain').value/100;
+const sustain=prof.sustain*(.48+setting*.96)*(idx===0?1.24:1);
+const strength=Math.max(.25,Math.min(1.2,velocity));
+const voice=ctx.createGain();voice.gain.value=.74;
+const stereo=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();
+const pos=$('pan').querySelector(`[data-index="${idx}"]`);
+const x=pos?parseFloat(pos.style.left):50;
+if(stereo.pan)stereo.pan.setValueAtTime(Math.max(-.55,Math.min(.55,(x-50)/75)),now);
+voice.connect(stereo);stereo.connect(dry);
+const modes=[
+[1,.39,1.00],[2,.24,.87],[3,.125,.71],[4.03,.040,.44],
+[5.17,.024,.30],[6.69,.016,.19],[7.94,.009,.13]
+];
+const nodes=[];
+modes.forEach(([ratio,level,decay],i)=>{
+  const amp=level*strength*(ratio>=3?prof.high:1)*prof.body;
+  const dur=Math.max(.20,sustain*decay);
+  const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';
+  // De eerste drie stemmodi worden exact op 1:2:3 gehouden.
+  osc.frequency.setValueAtTime(f*ratio,now);
+  if(i>=3){osc.frequency.setValueAtTime(f*ratio*1.0009,now);osc.frequency.exponentialRampToValueAtTime(f*ratio,now+.09);}
+  gain.gain.setValueAtTime(.00001,now);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.00002,amp),now+Math.max(.002,prof.attack*(1+i*.09)));
+  gain.gain.exponentialRampToValueAtTime(.000015,now+dur);
+  osc.connect(gain);gain.connect(voice);osc.start(now);osc.stop(now+dur+.035);nodes.push(osc);
+});
+// Klankveld-verdubbeling: zwakke licht afwijkende resonanties maken metaalzweving.
+[[1,.074,1.32,.5],[2,.061,.97,-.8],[3,.028,.66,1.4]].forEach(([ratio,amp,decay,cents])=>{
+ const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';
+ osc.frequency.value=f*ratio*Math.pow(2,cents*prof.beating/1200);
+ const dur=sustain*decay;
+ gain.gain.setValueAtTime(.00001,now);
+ gain.gain.exponentialRampToValueAtTime(amp*strength,now+.011);
+ gain.gain.exponentialRampToValueAtTime(.00001,now+dur);
+ osc.connect(gain);gain.connect(voice);osc.start(now);osc.stop(now+dur+.035);nodes.push(osc);
+});
+// Zachte klankkastresonantie, heel stil zodat de muzikale toon niet vervalst.
+const shell=ctx.createOscillator(),shellG=ctx.createGain();shell.type='sine';
+shell.frequency.setValueAtTime(idx===0?108:116,now);
+shellG.gain.setValueAtTime(.00001,now);shellG.gain.exponentialRampToValueAtTime(.004*strength*prof.body,now+.021);
+shellG.gain.exponentialRampToValueAtTime(.00001,now+Math.min(1.2,sustain*.32));
+shell.connect(shellG);shellG.connect(voice);shell.start(now);shell.stop(now+Math.min(1.2,sustain*.32)+.04);nodes.push(shell);
+hitNoise(now,strength*.57,voice,material);
+voices.push({end:now+sustain*1.4,stop:()=>{for(const o of nodes){try{o.stop()}catch(_){}}}});
+voices=voices.filter(v=>v.end>ctx.currentTime);
+while(voices.length>16){let v=voices.shift();v.stop()}
+if(options.element){const el=options.element;el.classList.remove('played');void el.offsetWidth;el.classList.add('played');setTimeout(()=>el.classList.remove('played'),170)}
+$('status').textContent=`♪ ${note} · ${p.model} · ${material} · ${p.hz} Hz`;
 }
 async function playIndex(i,el){const p=preset(),n=p.notes[i];if(!n)return;const ok=await activate();if(ok)strike(n,i,.83,{element:el})}
 async function playExtra(i,el){const p=preset(),n=p.extra?.[i];if(!n)return;const ok=await activate();if(ok)strike(n,i+10,.8,{element:el})}
