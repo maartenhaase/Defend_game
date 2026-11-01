@@ -43,6 +43,9 @@ jobs:
           cp -a acid-rhythm-lab _site/acid-rhythm-lab
           test -s _site/handpan-studio/index.html
           test -s _site/acid-rhythm-lab/index.html
+          # Check inline HTML5 synthesizer JavaScript before publishing.
+          node -e 'const fs=require("fs");let h=fs.readFileSync("_site/handpan-studio/index.html","utf8");let js=[...h.matchAll(/<script[^>]*>([\\s\\S]*?)<\\/script>/g)].map(m=>m[1]).join("\\n");if(js.length<10000)throw Error("Handpan JS missing");new Function(js);console.log("Handpan JavaScript syntax OK")'
+          node -e 'const fs=require("fs");let h=fs.readFileSync("_site/handpan-studio/index.html","utf8");if(!h.includes("vevor10")||!h.includes("patera432")||!h.includes("layoutAlert"))throw Error("Handpan models/layout missing")'
           touch _site/.nojekyll
           test -s _site/jbd_web/v9_9_26/index.html
           test -s _site/jbd_web/v9_9_26/game.js
