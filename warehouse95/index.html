@@ -35,7 +35,7 @@ button{touch-action:manipulation}.shell{max-width:1560px;padding:22px 28px 60px;
 <div class="layout">
 <main>
  <div class="panel">
- <div class="section-head"><div><h2 id="seqTitle">TR-909 · Drumcomputer</h2><small id="seqSub">Tik op de vakjes om stappen aan of uit te zetten</small></div><div class="row"><span class="pill" id="barDisplay">MAAT 1 · 1/16</span><label class="quick">LOOP <select id="len"><option value="3">3</option><option value="5">5</option><option value="7">7</option><option value="8">8</option><option value="12">12</option><option value="16" selected>16</option><option value="24">24</option><option value="32">32</option></select></label></div></div>
+ <div class="section-head"><div><h2 id="seqTitle">TR-909 · Drumcomputer</h2><small id="seqSub">Tik op de vakjes om stappen aan of uit te zetten</small></div><div class="row"><span class="pill" id="barDisplay">MAAT 1 · 1/16</span><label class="quick">LOOP <select id="len"><option value="3">3</option><option value="5">5</option><option value="7">7</option><option value="8">8</option><option value="12">12</option><option value="16" selected>16</option><option value="24">24</option><option value="32">32</option></select></label><button id="page" class="btn small" type="button">PAGE 1 / 2</button></div></div>
  <div class="sequencer-wrap">
   <div class="legend"><div class="leftrow"><span class="pill">◉ 1/16 GRID</span><span class="pill" id="colorKey">● = NOTE</span></div><div class="quick" id="help">Kick elke tel, open hat op de offbeat</div></div>
   <div class="seq-scroll"><div id="grid"></div></div>
@@ -109,7 +109,7 @@ function makeProject(kind) {
  if(kind==='poly'){state.bpm=133;state.swing=0;drums[3].len=3;drums[3].steps.fill(false);drums[3].steps[0]=true;drums[4].steps.fill(false);on(drums[4],[2,6,10,14]);state.params.lead.level=63;}
  return state;
 }
-let presetKey='warehouse',p=makeProject('warehouse'),selected='drums',selectedDrum=0,editStep=0,ctx=null,mix=null,masterGain=null,compressor=null,meter=null,delay=null,delayGain=null,noise=null,playing=false,timer=null,nextTime=0,stepIndex=0,lastTime=0,beatLast=-1,recorder=null,recChunks=[],recDest=null;
+let presetKey='warehouse',p=makeProject('warehouse'),selected='drums',selectedDrum=0,editStep=0,page=0,ctx=null,mix=null,masterGain=null,compressor=null,meter=null,delay=null,delayGain=null,noise=null,playing=false,timer=null,nextTime=0,stepIndex=0,lastTime=0,beatLast=-1,recorder=null,recChunks=[],recDest=null;
 let sampleBuffer=null,speechLoading=false, speechURL='',livePadStop=[];
 const speechSources={
  fdr:{file:'speech/fdr.mp3',name:'FDR · Fear Itself',duration:47.5,credit:'Wikimedia Commons · Public Domain'},
@@ -216,7 +216,7 @@ function paintClock(){
   while(fixedStepTimes.length>1&&fixedStepTimes[1].t<at)fixedStepTimes.shift();
   const s=fixedStepTimes[0];if(s&&s.t<=at+.03){if(beatLast!==s.s){beatLast=s.s;$('barDisplay').textContent='MAAT '+(Math.floor(s.s/16)+1)+' · '+(s.s%16+1)+'/16';
    document.querySelectorAll('.step.current').forEach(e=>e.classList.remove('current'));
-   const column=s.s%16;document.querySelectorAll('[data-step="'+column+'"]').forEach(e=>e.classList.add('current'))}}
+   const loop=selected==='drums'?p.drums[selectedDrum].len:p[selected].len;const column=s.s%loop;document.querySelectorAll('[data-step="'+column+'"]').forEach(e=>e.classList.add('current'))}}
   if(meter){const vals=new Uint8Array(meter.frequencyBinCount);meter.getByteFrequencyData(vals);let v=vals.reduce((a,b)=>a+b,0)/vals.length;$('meterFill').style.width=clamp(v/1.8,2,100)+'%'}
  }
  requestAnimationFrame(paintClock);
@@ -241,15 +241,16 @@ function showModule(){
  $('len').value=selected==='drums'?p.drums[selectedDrum].len:trackObj().len;
  renderGrid();renderParams();
 }
-function gridNums(){return '<div class="stepnums">'+Array.from({length:16},(_,i)=>'<span class="'+(i%4===0?'barstart':'')+'">'+(i+1)+'</span>').join('')+'</div>'}
+function gridNums(){return '<div class="stepnums">'+Array.from({length:16},(_,i)=>'<span class="'+(i%4===0?'barstart':'')+'">'+(i+1+page*16)+'</span>').join('')+'</div>'}
 function stepButton(lane,s,trackIndex){
  const within=s<lane.len,on=selected==='drums'?lane.steps[s]:!!lane.steps[s].on;
  const st=selected==='drums'?null:lane.steps[s];
- return '<button type="button" data-step="'+s+'" data-row="'+trackIndex+'" class="step'+(on&&within?' active':'')+(within?'':' outside')+'" style="--color:'+colors[selected]+'" title="'+(selected==='drums'?drumnames[trackIndex]:'Step '+(s+1))+'"'+(within?'':' disabled')+'>'+(st&&st.on?midiNote(st.n):'')+(st&&st.a?'<span class="accent">★</span>':'')+(st&&st.slide?'<span class="slide">↗</span>':'')+'</button>';
+ return '<button type="button" data-step="'+s+'" data-row="'+trackIndex+'" class="step'+(on&&within?' active':'')+(within?'':' outside')+'" style="--color:'+colors[selected]+'" title="'+(selected==='drums'?drumnames[trackIndex]:'Step '+(s+1))+'"'+(within?'':' disabled')+'>'+(st&&st.on?(selected==='speech'?'PAD '+((st.n%8)+1):midiNote(st.n)):'')+(st&&st.a?'<span class="accent">★</span>':'')+(st&&st.slide?'<span class="slide">↗</span>':'')+'</button>';
 }
 function renderGrid(){
+ if($('page')){$('page').textContent='PAGE '+(page+1)+' / 2';$('page').disabled=(selected==='drums'?p.drums[selectedDrum].len:p[selected].len)<=16}
  let rows=selected==='drums'?p.drums.map((lane,i)=>({lane,i,label:lane.name})):([{lane:p[selected],i:0,label:selected==='speech'?'SAMPLE 8':selected.toUpperCase()}]);
- $('grid').innerHTML=gridNums()+rows.map(({lane,i,label})=>'<div class="drumrow"><div class="drumname"><button type="button" data-rowpick="'+i+'" title="Selecteer spoor">'+(selected==='drums'?'0'+(i+1):'●')+'</button><span class="'+(lane.mute?'muted':'')+'">'+label+'</span></div><div class="steps">'+Array.from({length:16},(_,s)=>stepButton(lane,s,i)).join('')+'</div></div>').join('');
+ $('grid').innerHTML=gridNums()+rows.map(({lane,i,label})=>'<div class="drumrow"><div class="drumname"><button type="button" data-rowpick="'+i+'" title="Selecteer spoor">'+(selected==='drums'?'0'+(i+1):'●')+'</button><span class="'+(lane.mute?'muted':'')+'">'+label+'</span></div><div class="steps">'+Array.from({length:16},(_,s)=>stepButton(lane,s+page*16,i)).join('')+'</div></div>').join('');
  $('seqSummary').textContent=selected==='drums'?'Geselecteerde drum: '+drumnames[selectedDrum]+' · '+p.drums[selectedDrum].len+' stappen':selected==='speech'?'Speech trigger · lengte '+p.speech.len+' stappen':'Patroon: '+p[selected].len+' stappen · klik een vakje voor nootbewerking';
 }
 function paramDefs(){
@@ -263,11 +264,12 @@ function renderParams(){
  let insp=$('inspector');
  if(selected==='drums'){insp.innerHTML='<div class="quick">Geselecteerde 909-rij: <b>'+drumnames[selectedDrum]+'</b>. Gebruik LOOP om de lengte te veranderen. Voor de herkenbare technotruc: closed hat op LOOP 3.</div>';return}
  const st=p[selected].steps[editStep];
+ if(selected==='speech'){insp.innerHTML='<div class="quick">SPEECH STAP '+(editStep+1)+'</div><div class="row"><label>TRIGGER PAD <select id="padNoteInput">'+Array.from({length:8},(_,i)=>'<option value="'+i+'"'+((st.n%8)===i?' selected':'')+'>Pad '+(i+1)+'</option>').join('')+'</select></label></div><div class="row"><label class="tick"><input id="stepOn" type="checkbox" '+(st.on?'checked':'')+'> Actief</label></div>';return}
  insp.innerHTML='<div class="quick">STAP '+(editStep+1)+' · '+(st.on?'ACTIEF':'UIT')+'</div><div class="row"><label>NOOT <select id="noteInput">'+Array.from({length:60},(_,i)=>i+33).map(n=>'<option value="'+n+'"'+(st.n===n?' selected':'')+'>'+midiNote(n)+'</option>').join('')+'</select></label></div><div class="row"><label class="tick"><input id="stepOn" type="checkbox" '+(st.on?'checked':'')+'> Actief</label><label class="tick"><input id="stepAccent" type="checkbox" '+(st.a?'checked':'')+'> Accent</label><label class="tick"><input id="stepSlide" type="checkbox" '+(st.slide?'checked':'')+'> Slide</label></div>';
 }
 function editNote(){
  const st=p[selected].steps[editStep];
- const n=$('noteInput');if(n)st.n=Number(n.value);
+ const n=$('noteInput')||document.getElementById('padNoteInput');if(n)st.n=Number(n.value);
  const o=$('stepOn'),a=$('stepAccent'),s=$('stepSlide');
  if(o)st.on=o.checked;if(a)st.a=a.checked;if(s)st.slide=s.checked;
  renderGrid();autoSave();
@@ -329,7 +331,7 @@ function restore(){
  }catch(e){}return false;
 }
 function changePreset(key){
- stop();presetKey=key;p=makeProject(key);selected='drums';selectedDrum=0;editStep=0;sampleBuffer=null;$('preset').value=key;
+ stop();presetKey=key;p=makeProject(key);selected='drums';selectedDrum=0;editStep=0;page=0;sampleBuffer=null;$('preset').value=key;
  $('bpm').value=p.bpm;$('swing').value=p.swing;$('swingV').textContent=p.swing+'%';$('speechSelect').value=p.speechKey;
  showModule();renderPadUI();autoSave();updateStatus('Nieuwe preset: '+$('preset').selectedOptions[0].text);
 }
@@ -338,7 +340,7 @@ function exportProject(){
 }
 async function importProject(file){
  try{let data=JSON.parse(await file.text());if(!data.p||!data.p.drums||!data.p.params)throw Error('Ongeldig project');
- stop();p=data.p;presetKey=data.presetKey||'warehouse';selected='drums';$('bpm').value=p.bpm;$('swing').value=p.swing;
+ stop();p=data.p;presetKey=data.presetKey||'warehouse';selected='drums';page=0;$('bpm').value=p.bpm;$('swing').value=p.swing;
  $('swingV').textContent=p.swing+'%';$('preset').value=presetKey;$('speechSelect').value=p.speechKey||'fdr';showModule();renderPadUI();autoSave();updateStatus('Project geladen. Speech opnieuw laden via Laad online.');
  }catch(e){updateStatus('Project kon niet worden geopend: '+e.message)}
 }
@@ -349,9 +351,9 @@ function bind(){
  $('master').oninput=e=>{if(masterGain)masterGain.gain.value=e.target.value/100};
  $('preset').onchange=e=>changePreset(e.target.value);
  $('modules').onclick=e=>{const node=e.target.closest('[data-track]');if(!node)return;const type=node.dataset.track;
- if(e.target.closest('[data-mute]')){p.muted[type]=!p.muted[type];autoSave();showModule();return}selected=type;editStep=0;showModule()};
+ if(e.target.closest('[data-mute]')){p.muted[type]=!p.muted[type];autoSave();showModule();return}selected=type;editStep=0;page=0;showModule()};
  $('grid').onclick=e=>{const btn=e.target.closest('button');if(!btn)return;
- if(btn.hasAttribute('data-rowpick')){selectedDrum=Number(btn.dataset.rowpick);$('len').value=p.drums[selectedDrum].len;renderGrid();renderParams();return}
+ if(btn.hasAttribute('data-rowpick')){selectedDrum=Number(btn.dataset.rowpick);if(p.drums[selectedDrum].len<=16)page=0;$('len').value=p.drums[selectedDrum].len;renderGrid();renderParams();return}
  if(!btn.hasAttribute('data-step'))return;
  const s=Number(btn.dataset.step),r=Number(btn.dataset.row);
  if(selected==='drums'){selectedDrum=r;p.drums[r].steps[s]=!p.drums[r].steps[s];$('len').value=p.drums[r].len;if(!playing)demoTrack()}
@@ -359,7 +361,8 @@ function bind(){
  renderGrid();renderParams();autoSave();
  };
  $('grid').oncontextmenu=e=>{const btn=e.target.closest('[data-step]');if(!btn||selected==='drums')return;e.preventDefault();let s=Number(btn.dataset.step);p[selected].steps[s].on=false;editStep=s;renderGrid();renderParams();autoSave()};
- $('len').onchange=e=>{let n=Number(e.target.value);if(selected==='drums')p.drums[selectedDrum].len=n;else p[selected].len=n;renderGrid();autoSave()};
+ $('page').onclick=()=>{page=1-page;renderGrid()};
+ $('len').onchange=e=>{let n=Number(e.target.value);if(selected==='drums')p.drums[selectedDrum].len=n;else p[selected].len=n;if(n<=16)page=0;renderGrid();autoSave()};
  $('knobs').oninput=e=>{const input=e.target.closest('[data-param]');if(!input)return;
  p.params[selected][input.dataset.param]=Number(input.value);$('knobs').querySelector('[data-output="'+input.dataset.param+'"]').textContent=input.value+'%';autoSave()};
  $('inspector').onchange=e=>{if(e.target.matches('select,input'))editNote()};
