@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#13161b">
+<title>WAREHOUSE 95 — Acid &amp; Rave Studio</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111419;color:#e6e8e7;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#242e31 0,#111419 38%,#0d1014 100%);min-height:100vh}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #ffcc6b;outline-offset:2px}
+button{touch-action:manipulation}.shell{max-width:1560px;padding:22px 28px 60px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:19px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:14px}.mark{background:linear-gradient(135deg,#e79e4f,#d05537);color:#24160f;border-radius:10px;font-weight:1000;letter-spacing:-3px;padding:10px;font-size:24px;box-shadow:0 4px 24px #bb542844}.logo{font-size:26px;letter-spacing:-1px;font-weight:900;line-height:1.1}.sub{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:#a2aaa8;margin-top:5px}.badge{border:1px solid #475052;background:#222b2c;border-radius:99px;color:#98b0a9;padding:7px 12px;font-size:10px;letter-spacing:1.1px}
+.controlbar{background:linear-gradient(#292f34,#1b2127);border:1px solid #495257;border-radius:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:15px 18px;box-shadow:0 12px 40px #0006;margin-bottom:16px}.transport{display:flex;gap:8px}.btn{background:#343b42;border:1px solid #576167;color:#ecf0ea;border-radius:10px;padding:11px 17px;font-weight:750}.btn:hover{background:#45505a}.btn.play{background:#f2b364;color:#1a1713;border-color:#ffd08b;min-width:120px}.btn.play.on{background:#da7855}.btn.small{padding:8px 10px;font-size:12px}.control{display:flex;gap:7px;align-items:center}.control label{font-size:10px;font-weight:800;color:#9ca7a8;letter-spacing:1px}.control input[type=number]{width:70px;text-align:center}.control input[type=range]{width:98px}.control select,.control input[type=number],select,.field,textarea{background:#151b21;color:#e9edeb;border:1px solid #536068;border-radius:9px;padding:9px;outline:none}.control select{max-width:250px}.value{font-variant-numeric:tabular-nums;min-width:36px;font-weight:800;color:#f6c075}.right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}.panel{border:1px solid #404951;background:linear-gradient(150deg,#232a30,#171d23);border-radius:14px;overflow:hidden;box-shadow:0 8px 25px #0004}.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px;margin-bottom:16px}.module{position:relative;background:linear-gradient(#31393e,#252b30);padding:14px;border-radius:13px;border:1px solid #566167;min-height:110px;text-align:left;color:#e9ebeb}.module:before{content:"";display:block;background:var(--color);width:9px;height:9px;border-radius:50%;box-shadow:0 0 13px var(--color);margin-bottom:12px}.module.active{border-color:var(--color);box-shadow:0 0 0 1px var(--color),inset 0 0 40px #ffffff04}.module .mn{font-size:18px;font-weight:900;letter-spacing:-.5px}.module .desc{font-size:10px;color:#b0b7b7;line-height:1.5;margin-top:5px}.module .onoff{position:absolute;top:11px;right:11px;font-size:11px;color:#b9c3c7;background:#161c21;border-radius:6px;padding:6px 8px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 345px;gap:16px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #414d52;padding:16px 19px}.section-head h2{font-size:18px;letter-spacing:-.5px;margin:0}.section-head small{font-size:11px;color:#94a1a5}.sequencer-wrap{padding:17px 16px 19px}.legend{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.legend .leftrow{display:flex;align-items:center;gap:10px}.pill{padding:6px 10px;border-radius:7px;border:1px solid #455058;font-size:11px;color:#aebdbb}.stepnums{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:5px;margin-left:120px;min-width:560px;margin-bottom:8px}.stepnums span{text-align:center;font-size:9px;color:#859196;font-variant-numeric:tabular-nums}.stepnums .barstart{color:#f1c075}.seq-scroll{overflow-x:auto;padding-bottom:7px}.drumrow{display:grid;grid-template-columns:112px minmax(560px,1fr);gap:8px;align-items:center;margin-bottom:8px}.drumname{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:750;white-space:nowrap}.drumname button{background:transparent;border:1px solid #515960;border-radius:6px;color:#aab7b8;padding:3px 5px;font-size:10px}.drumname .muted{opacity:.45}.steps{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:5px}.step{height:44px;border:1px solid #465059;border-radius:6px;background:#2e353d;color:#8a959f;padding:0;position:relative;font-size:10px;font-weight:800;font-variant-numeric:tabular-nums}.step:nth-child(4n+1){border-left:2px solid #7e8b92}.step.active{background:var(--color,#d4a36d);color:#181b1c;border-color:#eed5b4;box-shadow:inset 0 0 9px #ffffff3c}.step.current:after{content:"";position:absolute;height:4px;border-radius:3px;background:#fff;left:20%;right:20%;bottom:2px;box-shadow:0 0 7px #fff}.step.outside{opacity:.24}.step:disabled{cursor:default}.step .accent{position:absolute;right:3px;top:1px;font-size:10px}.step .slide{position:absolute;right:3px;bottom:1px;font-size:11px}.bottomline{border-top:1px solid #394349;padding-top:14px;margin-top:18px;color:#abb8b7;font-size:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.col{display:flex;flex-direction:column;gap:6px}.split{display:grid;grid-template-columns:1fr 1fr;gap:9px}.param{background:#22292f;border:1px solid #3e4a51;padding:12px;border-radius:11px}.param .ptitle{font-size:10px;color:#9eacac;text-transform:uppercase;letter-spacing:.7px;display:block;margin-bottom:9px}.param input[type=range]{width:100%;accent-color:#f4b35d}.param output{font-size:11px;color:#f3c68c}.parameters{padding:14px}.params-title{font-size:11px;color:#bfcbcd;letter-spacing:1px;text-transform:uppercase;font-weight:800;margin:5px 0 14px}.hint{color:#a0b1b0;font-size:11px;line-height:1.7}.inspector{background:#161d22;border-radius:11px;border:1px solid #455158;padding:14px;margin-top:14px}.inspector label{color:#adbcba;font-size:10px;text-transform:uppercase;font-weight:700}.inspector select{width:100%;margin-top:6px}.inspector .row{margin-top:12px}.tick{display:flex;align-items:center;gap:5px;font-size:12px;color:#d1d7d5}.tick input{accent-color:#f2ba6e}.sampler{padding:16px;border-top:1px solid #3e494f}.speech-top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.speech-top select{flex:1;min-width:180px}.speech-pads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}.speechpad{background:linear-gradient(#424445,#22262d);border:1px solid #596368;color:#ebe7de;border-radius:10px;height:76px;font-size:13px;font-weight:900;position:relative}.speechpad i{display:block;font-size:10px;font-style:normal;color:#adbbb9;font-weight:500;margin-top:7px}.speechpad.hit{background:#d5a463;color:#231b13}.speechpad.hit i{color:#48331e}#wave{width:100%;height:92px;background:#111820;border:1px solid #39464b;border-radius:9px;cursor:crosshair;display:block}.status{background:#121920;border:1px solid #3a444b;border-radius:9px;padding:10px 12px;color:#b5c3c2;font-size:11px;margin-top:10px;line-height:1.5}.status b{color:#f6cc88}.controls-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}.controls-row input{min-width:95px;max-width:100%;flex:1}.foot{margin-top:22px;display:flex;justify-content:space-between;gap:14px;font-size:11px;color:#879396;line-height:1.6}.foot a{color:#d4b38b}.modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:100}.dialog{background:#222a30;border:1px solid #657176;border-radius:15px;padding:24px;width:min(560px,95vw);box-shadow:0 20px 90px #000}.dialog h3{margin:0 0 14px}.dialog textarea{width:100%;height:120px;resize:vertical}.dialog input{width:100%}.dialog .row{margin-top:12px}.hidden{display:none!important}.statusline{font-size:11px;color:#9eaca7;min-height:16px}#meter{width:90px;height:10px;background:#12191b;border:1px solid #59656b;border-radius:10px;overflow:hidden}#meter em{display:block;background:linear-gradient(90deg,#77cfaa,#f1bf68,#e57061);height:100%;width:3%;transition:width .08s}.hotkey{color:#f4c67a;font-size:10px;margin-left:5px}.samplebox{display:none}.samplebox.visible{display:block}.melgrid{margin-top:5px}.seq-info{background:#192126;color:#b9c4c3;padding:10px 12px;border:1px solid #39464d;border-radius:9px;font-size:12px;margin-bottom:12px;line-height:1.5}#speechInfo{font-size:11px;color:#b8c6c6}.sample-set{margin-top:9px}.sample-set label{display:inline-flex;gap:6px;align-items:center;color:#b9c6c6;font-size:11px}.sample-set input{accent-color:#e7b374}.knobs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.knob{background:#202830;border:1px solid #49535a;border-radius:10px;text-align:center;padding:12px}.knob label{display:block;color:#aebdbb;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}.knob input{width:100%;accent-color:#edb06a}.knob b{display:block;font-size:12px;color:#f1bf88}.quick{font-size:11px;color:#a6b8b9}.shortcuts{font-size:11px;color:#97a8a7}.shortcuts b{color:#f1bd74}
+@media(max-width:1040px){.layout{grid-template-columns:1fr}.parameters{display:grid;grid-template-columns:1fr 1fr;gap:15px}.params-title{grid-column:1/-1}.strip{grid-template-columns:repeat(3,1fr)}}@media(max-width:720px){.shell{padding:12px}.top{align-items:flex-start}.logo{font-size:21px}.strip{grid-template-columns:repeat(2,1fr)}.controlbar{padding:12px;gap:12px}.right{margin:0}.stepnums{margin-left:101px}.drumrow{grid-template-columns:95px minmax(560px,1fr)}.step{height:40px}.parameters{display:block}.foot{display:block}.module .mn{font-size:15px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top"><div class="brand"><div class="mark">95</div><div><div class="logo">WAREHOUSE / 95</div><div class="sub">ACID · PRE-HARDCORE · HYPNOTIC TECHNO · TRANCE</div></div></div><div class="badge">MAC GROOVE LAB · WEB AUDIO · v1.0</div></header>
+<div class="controlbar">
+ <div class="transport"><button id="play" class="btn play">▶ PLAY</button><button id="stop" class="btn">■ STOP</button></div>
+ <div class="control"><label for="bpm">BPM</label><input id="bpm" type="number" value="138" min="70" max="190" step="1"></div>
+ <div class="control"><label for="swing">SWING</label><input id="swing" type="range" min="0" max="70" value="11"><span id="swingV" class="value">11%</span></div>
+ <div class="control"><label for="master">MASTER</label><input id="master" type="range" min="0" max="100" value="65"></div>
+ <div id="meter"><em id="meterFill"></em></div>
+ <div class="right"><select id="preset" aria-label="Kies een fabriekspatroon"><option value="warehouse">1995 · Warehouse Hypnosis</option><option value="parkzicht">1993 · Acid Rotterdam</option><option value="house">1994 · Deep Acid House</option><option value="trance">1999 · Trance Machine</option><option value="poly">Techno · Drie tegen vier</option></select><button id="record" class="btn small">● REC</button><button id="export" class="btn small">⇩ PROJECT</button><button id="import" class="btn small">⇧ OPEN</button></div>
+</div>
+<div class="strip" id="modules">
+<button class="module active" data-track="drums" style="--color:#e8a865"><span class="onoff" data-mute="drums">ON</span><div class="mn">TR-909</div><div class="desc">8 drumkanalen · 16 stappen</div></button>
+<button class="module" data-track="bass" style="--color:#edcf70"><span class="onoff" data-mute="bass">ON</span><div class="mn">TB-303 BASS</div><div class="desc">Slide · accent · resonantie</div></button>
+<button class="module" data-track="lead" style="--color:#78cb91"><span class="onoff" data-mute="lead">ON</span><div class="mn">ACID LEAD</div><div class="desc">Hoge 303 · trance-acid</div></button>
+<button class="module" data-track="strings" style="--color:#7caedb"><span class="onoff" data-mute="strings">ON</span><div class="mn">STRING 95</div><div class="desc">Analoge strijkersmachine</div></button>
+<button class="module" data-track="pad" style="--color:#b1a0ec"><span class="onoff" data-mute="pad">ON</span><div class="mn">RAVE PAD</div><div class="desc">Breed · langzaam · melancholisch</div></button>
+<button class="module" data-track="speech" style="--color:#e98ab5"><span class="onoff" data-mute="speech">ON</span><div class="mn">SPEECH 8</div><div class="desc">8 live samples · internetbron</div></button>
+</div>
+<div class="layout">
+<main>
+ <div class="panel">
+ <div class="section-head"><div><h2 id="seqTitle">TR-909 · Drumcomputer</h2><small id="seqSub">Tik op de vakjes om stappen aan of uit te zetten</small></div><div class="row"><span class="pill" id="barDisplay">MAAT 1 · 1/16</span><label class="quick">LOOP <select id="len"><option value="3">3</option><option value="5">5</option><option value="7">7</option><option value="8">8</option><option value="12">12</option><option value="16" selected>16</option><option value="24">24</option><option value="32">32</option></select></label></div></div>
+ <div class="sequencer-wrap">
+  <div class="legend"><div class="leftrow"><span class="pill">◉ 1/16 GRID</span><span class="pill" id="colorKey">● = NOTE</span></div><div class="quick" id="help">Kick elke tel, open hat op de offbeat</div></div>
+  <div class="seq-scroll"><div id="grid"></div></div>
+  <div class="bottomline"><span id="seqSummary">Klik om de groove te programmeren.</span><button id="clear" class="btn small">Wis deze track</button><button id="random" class="btn small">Variatie</button><button id="preview" class="btn small">♪ Voorbeeldtoon</button></div>
+ </div>
+ </div>
+ <div class="panel" style="margin-top:16px"><div class="section-head"><div><h2>LIVE PERFORMANCE</h2><small>8 speechpads · live knippen, pitchen en triggeren</small></div><span class="pill">Q W E R · A S D F</span></div>
+ <div class="sampler">
+  <div class="speech-top"><select id="speechSelect"><option value="fdr">1933 · Roosevelt — Fear Itself (47 sec)</option><option value="berliner">1963 · Kennedy — Berliner (15 sec)</option><option value="moon">1961/62 · Kennedy — Moon Challenge (11 sec)</option><option value="custom">Eigen audiobestand / URL</option></select><button id="loadSpeech" class="btn small">↻ Laad online</button><button id="uploadSpeech" class="btn small">+ AUDIO</button><input id="speechFile" type="file" accept="audio/*" hidden></div>
+  <canvas id="wave" width="940" height="92" aria-label="Golfvorm van geladen speech; klik voor beginpositie"></canvas>
+  <div class="status" id="speechInfo">Kies een speech en klik op Laad online. Bron: Wikimedia Commons, publiek domein.</div>
+  <div id="speechPads" class="speech-pads"></div>
+  <div class="controls-row"><label class="quick">SELECTIE</label><select id="editPad" aria-label="Geselecteerde pad"></select><label class="quick">START (s)</label><input id="padStart" type="number" min="0" value="0" step=".1"><label class="quick">DUUR (s)</label><input id="padDuration" type="number" min=".1" max="12" step=".1" value="1.7"><label class="quick">PITCH</label><input id="padRate" type="range" min="50" max="150" value="95"><span id="padRateV" class="value">95%</span></div>
+  <div class="controls-row"><input id="urlSpeech" class="field" placeholder="Of plak een directe URL naar MP3/WAV/OGG (CORS vereist)"><button id="useUrl" class="btn small">Laad URL</button></div>
+  <div class="sample-set"><label><input id="speechSeq" type="checkbox"> Laat deze speechpad meespelen met de sequencer</label><label><input id="speechMute" type="checkbox"> Alleen live</label></div>
+  <p class="hint">Speel direct via <b>Q W E R A S D F</b>. De fragmenten worden pas geladen als je ze kiest. Je kunt ook een eigen audiofragment gebruiken; bij een externe URL moet de aanbieder afspelen in een browser toestaan.</p>
+ </div>
+ </div>
+</main>
+<aside>
+ <div class="panel"><div class="section-head"><div><h2>PATCH BAY</h2><small id="patchTitle">909 · Drumgeluid</small></div></div><div class="parameters">
+  <div class="params-title">SOUND DESIGN · LIVE FILTER</div><div class="knobs" id="knobs"></div>
+  <div class="inspector" id="inspector"><div class="quick">Selecteer een melodische stap om de noot, slide en accent te bewerken.</div></div>
+  <div class="status" id="trackStatus">Klaar. Druk op PLAY om de 1995-machine te starten.</div>
+ </div></div>
+ <div class="panel" style="margin-top:16px"><div class="section-head"><div><h2>HOW TO GROOVE</h2><small>Live workflow</small></div></div><div class="parameters">
+  <div class="seq-info"><b>1.</b> Selecteer <b>TB-303 BASS</b> en verander de noten. Accent en slide maken de acid.<br><br><b>2.</b> Open <b>ACID LEAD</b>: dezelfde sequencer, maar met hoge tonen.<br><br><b>3.</b> Stel bij TR-909 de closed hat in op <b>LOOP 3</b> voor een 3/16-polymeter over de 4/4-kick.<br><br><b>4.</b> Gebruik de <b>SPEECH 8</b>-pads tijdens het afspelen.</div>
+  <div class="shortcuts"><b>SPATIE</b> starten / stoppen · <b>QWER / ASDF</b> speech live · <b>1–8</b> drums voorspelen</div>
+  <div style="margin-top:15px" class="controls-row"><button id="saveBrowser" class="btn small">Bewaar lokaal</button><button id="reset" class="btn small">Herstel preset</button></div>
+  <div class="statusline" id="saveStatus"></div>
+ </div></div>
+</aside>
+</div>
+<footer class="foot"><span>WAREHOUSE 95 is een originele softwarematige groovebox, geen officiële Roland- of ReBirth-emulatie. Geluid wordt live door Web Audio gemaakt.</span><span>Spraakbronnen: <a href="https://commons.wikimedia.org/wiki/File:First_Inauguration_of_FDR_-_Fear_Itself_Excerpt.ogg" target="_blank" rel="noopener">FDR</a> · <a href="https://commons.wikimedia.org/wiki/File:Kennedy_berliner.ogg" target="_blank" rel="noopener">JFK Berlin</a> · <a href="https://commons.wikimedia.org/wiki/File:Discurso_de_Kennedy.ogg" target="_blank" rel="noopener">JFK Moon</a> · publiek domein volgens Wikimedia Commons.</span></footer>
+</div>
+<script>
+(function() {
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const choices=['drums','bass','lead','strings','pad','speech'];
+const colors={drums:'#e8a865',bass:'#edcf70',lead:'#78cb91',strings:'#7caedb',pad:'#b1a0ec',speech:'#e98ab5'};
+const names={drums:'TR-909 · Drumcomputer',bass:'TB-303 · Acid Bass',lead:'303 · High Acid Lead',strings:'STRING 95 · Analoge Strijkers',pad:'RAVE PAD · Melodic Atmosphere',speech:'SPEECH 8 · Sampler'};
+const drumnames=['Kick','Snare','Clap','Closed Hat','Open Hat','Ride','Low Tom','Rim'];
+const midiNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const midiNote=n=>midiNames[n%12]+(Math.floor(n/12)-1);
+function noteToMidi(note) {
+ const m=/^([A-G])([#b]?)(-?[0-9])$/.exec(note||'');
+ if(!m)return 57;
+ const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]];
+ return (Number(m[3])+1)*12+base+(m[2]==='#'?1:m[2]==='b'?-1:0);
+}
+const mkStep=(on=false,n=57,a=false,slide=false)=>({on,n,a,slide});
+const mkTrack=(n,steps)=>({len:16,mute:false,steps:Array.from({length:32},(_,i)=>mkStep(steps.includes(i),n))});
+const mkDrums=()=>drumnames.map((name,i)=>({name,len:16,mute:false,steps:Array.from({length:32},()=>false)}));
+function makeProject(kind) {
+ let bpm=138,swing=10;
+ const drums=mkDrums(),bass=mkTrack(33,[]),lead=mkTrack(69,[]),strings=mkTrack(57,[]),pad=mkTrack(57,[]),speech=mkTrack(0,[]);
+ const state={bpm,swing,drums,bass,lead,strings,pad,speech,muted:Object.fromEntries(choices.map(t=>[t,false])),speechPads:Array.from({length:8},(_,i)=>({start:i*4.5,dur:1.7,rate:.95})),speechKey:'fdr',speechPad:0,params:{
+ drums:{tone:52,drive:17,level:78},bass:{cutoff:35,res:70,env:60,decay:44,drive:38,level:72},lead:{cutoff:53,res:72,env:53,decay:28,drive:23,level:54},strings:{cutoff:58,attack:33,release:69,chorus:44,level:46},pad:{cutoff:41,attack:68,release:80,chorus:64,level:43},speech:{filter:55,delay:24,level:65}}};
+ function on(lane,indices){indices.forEach(i=>{lane.steps[i]=true})}
+ on(drums[0],[0,4,8,12]);on(drums[1],[4,12]);on(drums[2],[4,12]);on(drums[3],[2,6,10,14]);on(drums[4],[2,6,10,14]);on(drums[5],[3,11]);on(drums[6],[15]);on(drums[7],[7]);
+ const setMel=(tr,seq,acc=[],slides=[])=>{seq.forEach((n,i)=>{if(n!==null&&n!==undefined){tr.steps[i]={on:true,n,a:acc.includes(i),slide:slides.includes(i)}}})};
+ setMel(bass,[33,null,45,43,45,null,40,43,null,33,null,36,40,43,null,40],[0,6,11,15],[3,12]);
+ setMel(lead,[69,null,72,76,null,74,72,null,69,null,72,79,null,76,74,null],[0,10],[2,11]);
+ setMel(strings,[57,null,null,null,null,null,null,null,53],[0],[]);
+ setMel(pad,[57,null,null,null,null,null,null,null,53],[],[]);
+ if(kind==='parkzicht'){state.bpm=148;state.swing=3;lead.mute=false;state.params.bass.drive=53;state.params.bass.res=87;state.params.lead.res=80;drums[3].steps[15]=true;on(drums[6],[6,14]);}
+ if(kind==='house'){state.bpm=127;state.swing=19;state.params.bass.cutoff=46;state.params.bass.res=65;drums[3].steps[6]=false;setMel(bass,[33,null,36,40,43,null,40,36,33,null,36,40,null,43,45,null],[4,13],[6]);lead.mute=true;}
+ if(kind==='trance'){state.bpm=140;state.swing=2;state.params.strings.level=59;state.params.pad.level=62;state.params.lead.cutoff=60;setMel(lead,[69,72,76,72,69,72,79,76,65,69,72,69,65,69,76,72],[0,6,8,14],[]);setMel(bass,[33,null,33,null,33,null,33,null,29,null,29,null,29,null,29,null],[],[]);on(drums[5],[0,4,8,12]);}
+ if(kind==='poly'){state.bpm=133;state.swing=0;drums[3].len=3;drums[3].steps.fill(false);drums[3].steps[0]=true;drums[4].steps.fill(false);on(drums[4],[2,6,10,14]);state.params.lead.level=63;}
+ return state;
+}
+let presetKey='warehouse',p=makeProject('warehouse'),selected='drums',selectedDrum=0,editStep=0,ctx=null,mix=null,masterGain=null,compressor=null,meter=null,delay=null,delayGain=null,noise=null,playing=false,timer=null,nextTime=0,stepIndex=0,lastTime=0,beatLast=-1,recorder=null,recChunks=[],recDest=null;
+let sampleBuffer=null,speechLoading=false, speechURL='',livePadStop=[];
+const speechSources={
+ fdr:{file:'speech/fdr.mp3',name:'FDR · Fear Itself',duration:47.5,credit:'Wikimedia Commons · Public Domain'},
+ berliner:{file:'speech/berliner.mp3',name:'JFK · Ich bin ein Berliner',duration:15.7,credit:'Wikimedia Commons · Public Domain'},
+ moon:{file:'speech/moon.mp3',name:'JFK · Moon Challenge',duration:11.5,credit:'Wikimedia Commons · Public Domain'}
+};
+function updateStatus(text){$('trackStatus').textContent=text}
+function updateSaveStatus(text){$('saveStatus').textContent=text}
+function ensureAudio(){
+ if(!ctx){ctx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+ mix=ctx.createGain();masterGain=ctx.createGain();compressor=ctx.createDynamicsCompressor();
+ compressor.threshold.value=-14;compressor.knee.value=14;compressor.ratio.value=4;compressor.attack.value=.004;compressor.release.value=.18;
+ masterGain.gain.value=.65;
+ mix.connect(compressor);compressor.connect(masterGain);masterGain.connect(ctx.destination);
+ meter=ctx.createAnalyser();meter.fftSize=256;masterGain.connect(meter);
+ delay=ctx.createDelay(1.5);delay.delayTime.value=.345;delayGain=ctx.createGain();delayGain.gain.value=.23;
+ mix.connect(delay);delay.connect(delayGain);delayGain.connect(mix);
+ noise=ctx.createBuffer(1,Math.floor(ctx.sampleRate*1.1),ctx.sampleRate);
+ const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+ }
+ if(ctx.state!=='running')ctx.resume();
+ return ctx;
+}
+function vol(track){return p.muted[track]?0:(p.params[track]?.level||70)/100}
+function envGain(dest,t,duration,attack,peak){const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+Math.max(.002,attack));g.gain.exponentialRampToValueAtTime(.0001,t+duration);g.connect(dest);return g}
+function addNoise(t,dur,amp,filterHz,output){const s=ctx.createBufferSource();s.buffer=noise;const filt=ctx.createBiquadFilter();filt.type='highpass';filt.frequency.value=filterHz;
+ const g=envGain(output,t,dur,.001,amp);s.connect(filt);filt.connect(g);s.start(t);s.stop(t+dur+.025)}
+function osc(t,f,type,output,duration,level,attack=.003){const o=ctx.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);let g=envGain(output,t,duration,attack,level);o.connect(g);o.start(t);o.stop(t+duration+.03);return o}
+function drumHit(i,t,vel=1){
+ const cfg=p.params.drums;if(!vol('drums')||p.drums[i].mute)return;
+ const out=ctx.createGain();out.gain.value=vol('drums')*vel*(i===0?.82:.6);out.connect(mix);
+ const tune=(cfg.tone-50)/110;
+ if(i===0){
+   const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';
+   o.frequency.setValueAtTime(174*(1+tune),t);o.frequency.exponentialRampToValueAtTime(46*(1+tune),t+.14);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(1.2,t+.003);g.gain.exponentialRampToValueAtTime(.0001,t+.42);o.connect(g);g.connect(out);o.start(t);o.stop(t+.44);
+   addNoise(t,.021,.09,2200,out);
+ } else if(i===1){osc(t,182,'triangle',out,.19,.48);addNoise(t,.24,.48,1750,out)}
+ else if(i===2){for(let j=0;j<3;j++)addNoise(t+j*.018,.072,.29,1600,out)}
+ else if(i===3){addNoise(t,.072,.37,6500,out)}
+ else if(i===4){addNoise(t,.36,.31,5700,out)}
+ else if(i===5){addNoise(t,.83,.17,4800,out)}
+ else if(i===6){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(86,t+.27);g.gain.setValueAtTime(.38,t);g.gain.exponentialRampToValueAtTime(.0001,t+.32);o.connect(g);g.connect(out);o.start(t);o.stop(t+.34)}
+ else {addNoise(t,.065,.12,2100,out);osc(t,1200,'triangle',out,.10,.09)}
+}
+function driveCurve(amount){let n=256,a=amount*.23,curve=new Float32Array(n);for(let i=0;i<n;i++){let x=2*i/n-1;curve[i]=Math.tanh(x*(1+a))/Math.tanh(1+a)}return curve}
+function acidHit(which,st,t,stepSec,prev){
+ if(!st.on||!vol(which))return;
+ const q=p.params[which];const tlen=Math.min(.64,stepSec*.91*(st.slide?1.85:1));
+ const out=ctx.createGain();out.gain.value=vol(which)*.56;out.connect(mix);
+ const filt=ctx.createBiquadFilter();filt.type='lowpass';filt.Q.value=2+(q.res/100)*23;
+ const base=100*Math.pow(100,clamp(q.cutoff,1,100)/100);
+ const jump=q.env/100*(st.a?3.7:2.1);
+ filt.frequency.setValueAtTime(Math.min(11000,base*(1+jump)),t);
+ filt.frequency.exponentialRampToValueAtTime(Math.max(75,base),t+.07+q.decay/120);
+ const wave=ctx.createWaveShaper();wave.curve=driveCurve(q.drive/100);wave.oversample='2x';
+ filt.connect(wave);wave.connect(out);
+ const amp=ctx.createGain();amp.gain.setValueAtTime(.0001,t);
+ amp.gain.exponentialRampToValueAtTime(st.a?.9:.55,t+.004);
+ amp.gain.exponentialRampToValueAtTime(.0001,t+tlen);
+ amp.connect(filt);
+ const f=440*Math.pow(2,(st.n-69)/12);const o=ctx.createOscillator();o.type='sawtooth';
+ o.frequency.setValueAtTime(prev&&prev.slide?440*Math.pow(2,(prev.n-69)/12):f,t);
+ if(prev&&prev.slide)o.frequency.exponentialRampToValueAtTime(f,t+.075);
+ o.connect(amp);o.start(t);o.stop(t+tlen+.03);
+}
+function chords(root,variant=0){return variant===1?[root,root+3,root+7,root+10]:[root,root+3,root+7]}
+function polyHit(which,st,t,stepSec){
+ if(!st.on||!vol(which))return;
+ const q=p.params[which],isPad=which==='pad';
+ const at=(q.attack/100)*(isPad?.65:.17)+.008;
+ const rel=(q.release/100)*(isPad?4:2)+.4;
+ const dur=Math.min(7,Math.max(stepSec*2,at+rel));const out=ctx.createGain();out.gain.value=vol(which)*(isPad?.22:.22);out.connect(mix);
+ const filt=ctx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=130+Math.pow(q.cutoff/100,1.7)*5900;filt.Q.value=.65;filt.connect(out);
+ chords(st.n,isPad?1:0).forEach((m,k)=>{
+  const gain=ctx.createGain();gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(isPad?.28:.42,t+at);gain.gain.setValueAtTime(isPad?.28:.42,t+dur*.61);gain.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  gain.connect(filt);
+  for(let v=0;v<2;v++){const o=ctx.createOscillator();o.type=isPad?(v?'triangle':'sawtooth'):(v?'sawtooth':'triangle');
+   o.frequency.setValueAtTime(440*Math.pow(2,(m-69)/12),t);o.detune.value=(v?1:-1)*((q.chorus/100)*12+1);
+   o.connect(gain);o.start(t);o.stop(t+dur+.03)}
+ });
+}
+const fixedStepTimes=[];
+function schedule(s,t){
+ const stepSec=60/clamp(p.bpm,70,190)/4;
+ if(!p.muted.drums)for(let i=0;i<8;i++){const lane=p.drums[i];if(!lane.mute&&lane.steps[s%lane.len])drumHit(i,t)}
+ for(const type of ['bass','lead']){
+   const lane=p[type],pos=s%lane.len;const st=lane.steps[pos];const prev=lane.steps[(pos-1+lane.len)%lane.len];
+   if(!p.muted[type])acidHit(type,st,t,stepSec,prev);
+ }
+ for(const type of ['strings','pad']){const lane=p[type];if(!p.muted[type])polyHit(type,lane.steps[s%lane.len],t,stepSec)}
+ if(!p.muted.speech&&p.speech.steps[s%p.speech.len].on){const n=p.speech.steps[s%p.speech.len].n;sampleHit(n%8,t)}
+ fixedStepTimes.push({s,t});
+ if(fixedStepTimes.length>72)fixedStepTimes.shift();
+}
+function stepInterval(s){let sec=60/clamp(p.bpm,70,190)/4;return sec*((s%2)?1-p.swing/200:1+p.swing/200)}
+function clock(){
+ if(!ctx||!playing)return;
+ let horizon=ctx.currentTime+.115,loops=0;
+ while(nextTime<horizon&&loops++<32){schedule(stepIndex,nextTime);nextTime+=stepInterval(stepIndex);stepIndex++}
+}
+function paintClock(){
+ if(playing&&ctx){const at=ctx.currentTime;
+  while(fixedStepTimes.length>1&&fixedStepTimes[1].t<at)fixedStepTimes.shift();
+  const s=fixedStepTimes[0];if(s&&s.t<=at+.03){if(beatLast!==s.s){beatLast=s.s;$('barDisplay').textContent='MAAT '+(Math.floor(s.s/16)+1)+' · '+(s.s%16+1)+'/16';
+   document.querySelectorAll('.step.current').forEach(e=>e.classList.remove('current'));
+   const column=s.s%16;document.querySelectorAll('[data-step="'+column+'"]').forEach(e=>e.classList.add('current'))}}
+  if(meter){const vals=new Uint8Array(meter.frequencyBinCount);meter.getByteFrequencyData(vals);let v=vals.reduce((a,b)=>a+b,0)/vals.length;$('meterFill').style.width=clamp(v/1.8,2,100)+'%'}
+ }
+ requestAnimationFrame(paintClock);
+}
+async function start(){
+ ensureAudio();await ctx.resume();if(playing)return;
+ playing=true;nextTime=ctx.currentTime+.05;stepIndex=0;beatLast=-1;fixedStepTimes.length=0;
+ timer=setInterval(clock,23);clock();$('play').classList.add('on');$('play').textContent='Ⅱ PAUSE';updateStatus('PLAY · '+p.bpm+' BPM · Hardware aan.');
+}
+function stop(){playing=false;if(timer!==null)clearInterval(timer);timer=null;fixedStepTimes.length=0;beatLast=-1;
+ $('play').classList.remove('on');$('play').textContent='▶ PLAY';$('barDisplay').textContent='MAAT 1 · 1/16';
+ document.querySelectorAll('.step.current').forEach(e=>e.classList.remove('current'));
+ updateStatus('Gestopt. Alle modules klaar voor live performance.');
+}
+function trackObj(){return p[selected]}
+function showModule(){
+ document.querySelectorAll('.module').forEach(e=>{const key=e.dataset.track;e.classList.toggle('active',key===selected);e.querySelector('.onoff').textContent=p.muted[key]?'OFF':'ON'});
+ $('seqTitle').textContent=names[selected];$('patchTitle').textContent=names[selected];
+ $('colorKey').style.color=colors[selected];$('colorKey').textContent='● '+(selected==='drums'?'DRUM':'NOTE')+' · ● = aan';
+ $('seqSub').textContent=selected==='drums'?'Klik per drum op de stap; closed hat kan ook 3 stappen lopen.':selected==='speech'?'Sequencer triggert de geselecteerde speechpad. Speel live met QWERASDF.':'Klik op een stap om een noot te plaatsen. Klik een actieve stap om hem te selecteren.';
+ $('help').textContent=selected==='drums'?'Drum 1–8 · kies een rij voor zijn lengte':selected==='speech'?'Gebruik Q W E R A S D F om live te jammen':'Klik een noot aan; verander hem rechts in de inspector';
+ $('len').value=selected==='drums'?p.drums[selectedDrum].len:trackObj().len;
+ renderGrid();renderParams();
+}
+function gridNums(){return '<div class="stepnums">'+Array.from({length:16},(_,i)=>'<span class="'+(i%4===0?'barstart':'')+'">'+(i+1)+'</span>').join('')+'</div>'}
+function stepButton(lane,s,trackIndex){
+ const within=s<lane.len,on=selected==='drums'?lane.steps[s]:!!lane.steps[s].on;
+ const st=selected==='drums'?null:lane.steps[s];
+ return '<button type="button" data-step="'+s+'" data-row="'+trackIndex+'" class="step'+(on&&within?' active':'')+(within?'':' outside')+'" style="--color:'+colors[selected]+'" title="'+(selected==='drums'?drumnames[trackIndex]:'Step '+(s+1))+'"'+(within?'':' disabled')+'>'+(st&&st.on?midiNote(st.n):'')+(st&&st.a?'<span class="accent">★</span>':'')+(st&&st.slide?'<span class="slide">↗</span>':'')+'</button>';
+}
+function renderGrid(){
+ let rows=selected==='drums'?p.drums.map((lane,i)=>({lane,i,label:lane.name})):([{lane:p[selected],i:0,label:selected==='speech'?'SAMPLE 8':selected.toUpperCase()}]);
+ $('grid').innerHTML=gridNums()+rows.map(({lane,i,label})=>'<div class="drumrow"><div class="drumname"><button type="button" data-rowpick="'+i+'" title="Selecteer spoor">'+(selected==='drums'?'0'+(i+1):'●')+'</button><span class="'+(lane.mute?'muted':'')+'">'+label+'</span></div><div class="steps">'+Array.from({length:16},(_,s)=>stepButton(lane,s,i)).join('')+'</div></div>').join('');
+ $('seqSummary').textContent=selected==='drums'?'Geselecteerde drum: '+drumnames[selectedDrum]+' · '+p.drums[selectedDrum].len+' stappen':selected==='speech'?'Speech trigger · lengte '+p.speech.len+' stappen':'Patroon: '+p[selected].len+' stappen · klik een vakje voor nootbewerking';
+}
+function paramDefs(){
+ return selected==='drums'?[['tone','Tuning',0,100],['drive','Drive',0,100],['level','Volume',0,100]]:selected==='bass'||selected==='lead'?
+ [['cutoff','Cutoff',0,100],['res','Resonance',0,100],['env','Env Mod',0,100],['decay','Decay',0,100],['drive','Drive',0,100],['level','Volume',0,100]]:
+ selected==='speech'?[['filter','Speech Filter',0,100],['delay','Tape Echo',0,100],['level','Volume',0,100]]:
+ [['cutoff','Warmte / Cutoff',0,100],['attack','Attack',0,100],['release','Release',0,100],['chorus','Detune',0,100],['level','Volume',0,100]];
+}
+function renderParams(){
+ $('knobs').innerHTML=paramDefs().map(([key,label,min,max])=>'<div class="knob"><label>'+label+'</label><input data-param="'+key+'" type="range" min="'+min+'" max="'+max+'" value="'+p.params[selected][key]+'"><b data-output="'+key+'">'+p.params[selected][key]+'%</b></div>').join('');
+ let insp=$('inspector');
+ if(selected==='drums'){insp.innerHTML='<div class="quick">Geselecteerde 909-rij: <b>'+drumnames[selectedDrum]+'</b>. Gebruik LOOP om de lengte te veranderen. Voor de herkenbare technotruc: closed hat op LOOP 3.</div>';return}
+ const st=p[selected].steps[editStep];
+ insp.innerHTML='<div class="quick">STAP '+(editStep+1)+' · '+(st.on?'ACTIEF':'UIT')+'</div><div class="row"><label>NOOT <select id="noteInput">'+Array.from({length:60},(_,i)=>i+33).map(n=>'<option value="'+n+'"'+(st.n===n?' selected':'')+'>'+midiNote(n)+'</option>').join('')+'</select></label></div><div class="row"><label class="tick"><input id="stepOn" type="checkbox" '+(st.on?'checked':'')+'> Actief</label><label class="tick"><input id="stepAccent" type="checkbox" '+(st.a?'checked':'')+'> Accent</label><label class="tick"><input id="stepSlide" type="checkbox" '+(st.slide?'checked':'')+'> Slide</label></div>';
+}
+function editNote(){
+ const st=p[selected].steps[editStep];
+ const n=$('noteInput');if(n)st.n=Number(n.value);
+ const o=$('stepOn'),a=$('stepAccent'),s=$('stepSlide');
+ if(o)st.on=o.checked;if(a)st.a=a.checked;if(s)st.slide=s.checked;
+ renderGrid();autoSave();
+}
+function renderPadUI(){
+ const keys='QWERASDF';
+ $('speechPads').innerHTML=p.speechPads.map((pad,i)=>'<button data-pad="'+i+'" class="speechpad" style="border-color:'+(p.speechPad===i?'#dfb281':'#586369')+'"><span>'+String(i+1).padStart(2,'0')+'</span><span class="hotkey">'+keys[i]+'</span><i>'+pad.start.toFixed(1)+'s → '+(pad.start+pad.dur).toFixed(1)+'s</i></button>').join('');
+ $('editPad').innerHTML=p.speechPads.map((pad,i)=>'<option value="'+i+'"'+(p.speechPad===i?' selected':'')+'>Pad '+(i+1)+'</option>').join('');
+ let pad=p.speechPads[p.speechPad];$('padStart').value=pad.start.toFixed(1);$('padDuration').value=pad.dur.toFixed(1);$('padRate').value=Math.round(pad.rate*100);$('padRateV').textContent=Math.round(pad.rate*100)+'%';
+ drawWave();
+}
+function drawWave(){
+ const canvas=$('wave');if(!canvas)return;const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();
+ const w=Math.max(100,Math.floor(rect.width*dpr)),h=Math.floor(92*dpr);
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+ const c=canvas.getContext('2d');c.fillStyle='#12191f';c.fillRect(0,0,w,h);
+ c.strokeStyle='#283b43';c.lineWidth=1;for(let i=1;i<8;i++){let x=i*w/8;c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}
+ c.strokeStyle='#edba79';c.lineWidth=1.2;
+ if(sampleBuffer){const a=sampleBuffer.getChannelData(0),length=a.length,cols=Math.max(50,Math.floor(w/2));c.beginPath();
+ for(let i=0;i<cols;i++){let start=Math.floor(length*i/cols),end=Math.floor(length*(i+1)/cols),min=1,max=-1,inc=Math.max(1,Math.floor((end-start)/24));
+ for(let j=start;j<end;j+=inc){min=Math.min(min,a[j]);max=Math.max(max,a[j])}let x=i*w/cols;c.moveTo(x,h/2+min*h*.42);c.lineTo(x,h/2+max*h*.42)}
+ c.stroke()}else{c.fillStyle='#a2b0b3';c.font=Math.round(12*dpr)+'px system-ui';c.fillText('KIES EEN SPEECH EN KLIK OP LAAD ONLINE',12*dpr,h/2)}
+ const dur=sampleBuffer?sampleBuffer.duration:(speechSources[p.speechKey]?.duration||47);
+ const pad=p.speechPads[p.speechPad];const start=clamp(pad.start/dur,0,1),size=clamp(pad.dur/dur,0,1);
+ c.fillStyle='#edba7830';c.fillRect(start*w,0,size*w,h);c.strokeStyle='#edba79';c.beginPath();c.moveTo(start*w,0);c.lineTo(start*w,h);c.stroke();
+}
+async function loadSpeech(url,label){
+ ensureAudio();$('speechInfo').textContent='⏳ Laden: '+label+' — eenmalig downloaden, daarna direct 8 pads beschikbaar.';speechLoading=true;
+ try{const resp=await fetch(url,{mode:'cors'});if(!resp.ok)throw Error('HTTP '+resp.status+' · audiobestand niet beschikbaar');
+ const arr=await resp.arrayBuffer();const buf=await ctx.decodeAudioData(arr.slice(0));sampleBuffer=buf;speechLoading=false;
+ for(let i=0;i<8;i++){p.speechPads[i].start=Math.round(Math.min(buf.duration-0.4,i*buf.duration/9)*10)/10;p.speechPads[i].dur=clamp(Math.min(2.2,buf.duration/8),.3,4);p.speechPads[i].rate=.95}
+ $('speechInfo').innerHTML='<b>✓ Geladen:</b> '+label+' · '+buf.duration.toFixed(1)+' seconden · 8 live pads klaar';
+ renderPadUI();autoSave();
+ }catch(e){speechLoading=false;sampleBuffer=null;$('speechInfo').textContent='Kon niet laden: '+e.message+'. Controleer internet of gebruik + AUDIO om zelf een fragment te kiezen.';drawWave()}
+}
+function sampleHit(i,time){
+ if(!sampleBuffer||p.muted.speech)return;
+ ensureAudio();const pad=p.speechPads[i%8],at=time||ctx.currentTime+.006;
+ const max=sampleBuffer.duration,start=clamp(pad.start,0,max-.05),duration=clamp(pad.dur,.05,Math.min(12,max-start)),rate=clamp(pad.rate,.5,1.5);
+ const src=ctx.createBufferSource();src.buffer=sampleBuffer;src.playbackRate.setValueAtTime(rate,at);
+ const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=330+Math.pow(p.params.speech.filter/100,1.4)*10500;
+ const amp=ctx.createGain();let length=Math.min(duration/rate,10);
+ amp.gain.setValueAtTime(.0001,at);amp.gain.linearRampToValueAtTime(.58*vol('speech'),at+.006);
+ amp.gain.setValueAtTime(.58*vol('speech'),at+Math.max(.01,length-.06));amp.gain.linearRampToValueAtTime(0,at+length);
+ src.connect(filter);filter.connect(amp);amp.connect(mix);src.start(at,start,duration);try{src.stop(at+length+.02)}catch(e){}
+ const padNode=$('speechPads').querySelector('[data-pad="'+i+'"]');if(padNode){padNode.classList.add('hit');setTimeout(()=>padNode.classList.remove('hit'),160)}
+}
+function demoTrack(){
+ ensureAudio();const t=ctx.currentTime+.018;
+ if(selected==='drums')drumHit(selectedDrum,t,1);
+ else if(selected==='bass'||selected==='lead'){let st=p[selected].steps[editStep];acidHit(selected,{...st,on:true},t,.15,null)}
+ else if(selected==='strings'||selected==='pad'){polyHit(selected,{...p[selected].steps[editStep],on:true},t,.3)}
+ else sampleHit(p.speechPad,t);
+}
+function autoSave(){try{localStorage.setItem('warehouse95-project',JSON.stringify({p,presetKey}))}catch(e){}}
+function restore(){
+ try{const raw=localStorage.getItem('warehouse95-project');if(!raw)return false;
+ const data=JSON.parse(raw);if(data.p&&data.p.drums&&data.p.bass&&data.p.params){p=data.p;presetKey=data.presetKey||'warehouse';return true}
+ }catch(e){}return false;
+}
+function changePreset(key){
+ stop();presetKey=key;p=makeProject(key);selected='drums';selectedDrum=0;editStep=0;sampleBuffer=null;$('preset').value=key;
+ $('bpm').value=p.bpm;$('swing').value=p.swing;$('swingV').textContent=p.swing+'%';$('speechSelect').value=p.speechKey;
+ showModule();renderPadUI();autoSave();updateStatus('Nieuwe preset: '+$('preset').selectedOptions[0].text);
+}
+function exportProject(){
+ let s=JSON.stringify({app:'warehouse95',version:1,presetKey,p},null,2),b=new Blob([s],{type:'application/json'}),url=URL.createObjectURL(b),a=document.createElement('a');a.href=url;a.download='warehouse95-project.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function importProject(file){
+ try{let data=JSON.parse(await file.text());if(!data.p||!data.p.drums||!data.p.params)throw Error('Ongeldig project');
+ stop();p=data.p;presetKey=data.presetKey||'warehouse';selected='drums';$('bpm').value=p.bpm;$('swing').value=p.swing;
+ $('swingV').textContent=p.swing+'%';$('preset').value=presetKey;$('speechSelect').value=p.speechKey||'fdr';showModule();renderPadUI();autoSave();updateStatus('Project geladen. Speech opnieuw laden via Laad online.');
+ }catch(e){updateStatus('Project kon niet worden geopend: '+e.message)}
+}
+function bind(){
+ $('play').onclick=()=>playing?stop():start();$('stop').onclick=stop;
+ $('bpm').onchange=e=>{p.bpm=clamp(Number(e.target.value)||138,70,190);e.target.value=p.bpm;autoSave()};
+ $('swing').oninput=e=>{p.swing=Number(e.target.value);$('swingV').textContent=p.swing+'%';autoSave()};
+ $('master').oninput=e=>{if(masterGain)masterGain.gain.value=e.target.value/100};
+ $('preset').onchange=e=>changePreset(e.target.value);
+ $('modules').onclick=e=>{const node=e.target.closest('[data-track]');if(!node)return;const type=node.dataset.track;
+ if(e.target.closest('[data-mute]')){p.muted[type]=!p.muted[type];autoSave();showModule();return}selected=type;editStep=0;showModule()};
+ $('grid').onclick=e=>{const btn=e.target.closest('button');if(!btn)return;
+ if(btn.hasAttribute('data-rowpick')){selectedDrum=Number(btn.dataset.rowpick);$('len').value=p.drums[selectedDrum].len;renderGrid();renderParams();return}
+ if(!btn.hasAttribute('data-step'))return;
+ const s=Number(btn.dataset.step),r=Number(btn.dataset.row);
+ if(selected==='drums'){selectedDrum=r;p.drums[r].steps[s]=!p.drums[r].steps[s];$('len').value=p.drums[r].len;if(!playing)demoTrack()}
+ else{editStep=s;const st=p[selected].steps[s];if(st.on){/* select without erasing */}else{st.on=true;st.n=selected==='bass'?33:selected==='lead'?72:57}if(!playing)demoTrack()}
+ renderGrid();renderParams();autoSave();
+ };
+ $('grid').oncontextmenu=e=>{const btn=e.target.closest('[data-step]');if(!btn||selected==='drums')return;e.preventDefault();let s=Number(btn.dataset.step);p[selected].steps[s].on=false;editStep=s;renderGrid();renderParams();autoSave()};
+ $('len').onchange=e=>{let n=Number(e.target.value);if(selected==='drums')p.drums[selectedDrum].len=n;else p[selected].len=n;renderGrid();autoSave()};
+ $('knobs').oninput=e=>{const input=e.target.closest('[data-param]');if(!input)return;
+ p.params[selected][input.dataset.param]=Number(input.value);$('knobs').querySelector('[data-output="'+input.dataset.param+'"]').textContent=input.value+'%';autoSave()};
+ $('inspector').onchange=e=>{if(e.target.matches('select,input'))editNote()};
+ $('clear').onclick=()=>{if(selected==='drums')p.drums[selectedDrum].steps.fill(false);else p[selected].steps.forEach(s=>s.on=false);renderGrid();autoSave()};
+ $('random').onclick=()=>{if(selected==='drums'){const l=p.drums[selectedDrum];l.steps.forEach((s,i)=>l.steps[i]=i<l.len?Math.random()<.22:false)}
+ else{p[selected].steps.forEach((s,i)=>{if(i<p[selected].len){s.on=Math.random()<.58;if(selected==='bass'||selected==='lead'){s.n=(selected==='bass'?33:69)+[0,3,5,7,10,12][Math.floor(Math.random()*6)];s.a=Math.random()<.2;s.slide=Math.random()<.17}}})}renderGrid();renderParams();autoSave()};
+ $('preview').onclick=demoTrack;
+ $('speechPads').onclick=e=>{let b=e.target.closest('[data-pad]');if(!b)return;let i=Number(b.dataset.pad);p.speechPad=i;sampleHit(i);renderPadUI()};
+ $('editPad').onchange=e=>{p.speechPad=Number(e.target.value);renderPadUI()};
+ for(const id of ['padStart','padDuration','padRate'])$(id).oninput=()=>{let pad=p.speechPads[p.speechPad];pad.start=Math.max(0,Number($('padStart').value)||0);
+ pad.dur=clamp(Number($('padDuration').value)||1.7,.1,12);pad.rate=Number($('padRate').value)/100;$('padRateV').textContent=Math.round(pad.rate*100)+'%';renderPadUI();autoSave()};
+ $('wave').onclick=e=>{if(!sampleBuffer)return;const rect=e.target.getBoundingClientRect();p.speechPads[p.speechPad].start=Math.round(clamp((e.clientX-rect.left)/rect.width,0,.99)*sampleBuffer.duration*10)/10;renderPadUI();autoSave()};
+ $('speechSelect').onchange=e=>{p.speechKey=e.target.value;autoSave();if(e.target.value!=='custom')loadSpeech(speechSources[e.target.value].file,speechSources[e.target.value].name)};
+ $('loadSpeech').onclick=()=>{let o=speechSources[p.speechKey];if(o)loadSpeech(o.file,o.name);else $('speechInfo').textContent='Kies eerst een online speech of gebruik + AUDIO.'};
+ $('uploadSpeech').onclick=()=>$('speechFile').click();
+ $('speechFile').onchange=e=>{const file=e.target.files?.[0];if(!file)return;let u=URL.createObjectURL(file);loadSpeech(u,file.name).finally(()=>URL.revokeObjectURL(u))};
+ $('useUrl').onclick=()=>{const u=$('urlSpeech').value.trim();if(!/^https?:\/\//.test(u)){updateStatus('Voer een directe HTTPS-link naar een audiobestand in.');return}p.speechKey='custom';$('speechSelect').value='custom';loadSpeech(u,'Eigen online bron')};
+ $('speechSeq').onchange=e=>{p.speech.steps[0].on=e.target.checked;p.speech.steps[0].n=p.speechPad;autoSave()};
+ $('speechMute').onchange=e=>{p.muted.speech=e.target.checked;showModule();autoSave()};
+ $('saveBrowser').onclick=()=>{autoSave();updateSaveStatus('✓ Project lokaal in deze browser bewaard.')};
+ $('reset').onclick=()=>changePreset(presetKey);
+ $('export').onclick=exportProject;
+ $('import').onclick=()=>{let i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{if(i.files?.[0])importProject(i.files[0])};i.click()};
+ $('record').onclick=toggleRecording;
+ window.addEventListener('keydown',e=>{const tag=(e.target.tagName||'').toLowerCase();if(['input','select','textarea'].includes(tag)||e.metaKey||e.ctrlKey||e.altKey)return;
+ if(e.code==='Space'){e.preventDefault();playing?stop():start();return}
+ const pos='QWERASDF'.indexOf(e.key.toUpperCase());if(pos>=0&&!e.repeat){e.preventDefault();p.speechPad=pos;sampleHit(pos);renderPadUI()}
+ const dr=Number(e.key);if(dr>=1&&dr<=8&&selected==='drums'){ensureAudio();drumHit(dr-1,ctx.currentTime+.01,1)}
+ });
+ window.addEventListener('resize',()=>drawWave());
+ document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop()});
+}
+async function toggleRecording(){
+ if(recorder&&recorder.state==='recording'){recorder.stop();$('record').textContent='● REC';return}
+ try{ensureAudio();await ctx.resume();recDest=ctx.createMediaStreamDestination();masterGain.connect(recDest);
+ let kind=['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(x=>MediaRecorder.isTypeSupported(x));
+ recorder=new MediaRecorder(recDest.stream,kind?{mimeType:kind}:undefined);recChunks=[];
+ recorder.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data)};
+ recorder.onstop=()=>{const mime=recorder.mimeType||'audio/webm';const blob=new Blob(recChunks,{type:mime});let url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='warehouse95-live.'+(mime.includes('mp4')?'mp4':'webm');a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);masterGain.disconnect(recDest);recorder=null;updateStatus('Opname klaar — bestand gedownload.')};
+ recorder.start();$('record').textContent='■ STOP REC';updateStatus('Opname loopt — speel live en klik STOP REC om op te slaan.');
+ }catch(err){updateStatus('Opnemen niet beschikbaar in deze browser: '+err.message)}
+}
+function init(){
+ let restored=restore();$('preset').value=presetKey;$('bpm').value=p.bpm;$('swing').value=p.swing;$('swingV').textContent=p.swing+'%';$('speechSelect').value=p.speechKey||'fdr';
+ if(!restored){p.speech.steps[0].on=false;}
+ bind();showModule();renderPadUI();requestAnimationFrame(paintClock);
+ updateStatus('Klaar. '+(restored?'Je vorige project is hersteld.':'Warehouse Hypnosis is geladen.')+' Druk op PLAY.');
+}
+init();
+})();
+</script>
+</body></html>
