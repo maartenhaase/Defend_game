@@ -41,6 +41,15 @@ jobs:
           cp -a jbd_web _site/jbd_web
           cp -a handpan-studio _site/handpan-studio
           cp -a acid-rhythm-lab _site/acid-rhythm-lab
+          # CC0 recordings: FreePats Hang D minor, recorded 2017.
+          # We transcode FLAC to MP3 for reliable iPhone/Safari playback.
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
+          mkdir -p _site/handpan-studio/samples
+          for tone in A3 A4 Bb4 C5 D4 D5 E4 F4 G4; do
+            curl -fLsS --retry 3 --retry-delay 2 "https://raw.githubusercontent.com/freepats/hang-D-minor/main/samples/${tone}_01.flac" -o "/tmp/handpan-${tone}.flac"
+            ffmpeg -nostdin -hide_banner -loglevel error -y -i "/tmp/handpan-${tone}.flac" -codec:a libmp3lame -q:a 3 "_site/handpan-studio/samples/${tone}.mp3"
+            test -s "_site/handpan-studio/samples/${tone}.mp3"
+          done
           test -s _site/handpan-studio/index.html
           test -s _site/acid-rhythm-lab/index.html
           # Check inline HTML5 synthesizer JavaScript before publishing.
