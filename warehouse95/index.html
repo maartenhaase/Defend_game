@@ -94,7 +94,7 @@ const mkDrums=()=>drumnames.map((name,i)=>({name,len:16,mute:false,steps:Array.f
 function makeProject(kind) {
  let bpm=138,swing=10;
  const drums=mkDrums(),bass=mkTrack(33,[]),lead=mkTrack(69,[]),strings=mkTrack(57,[]),pad=mkTrack(57,[]),speech=mkTrack(0,[]);
- const state={bpm,swing,drums,bass,lead,strings,pad,speech,muted:Object.fromEntries(choices.map(t=>[t,false])),speechPads:Array.from({length:8},(_,i)=>({start:i*4.5,dur:1.7,rate:.95})),speechKey:'fdr',speechPad:0,params:{
+ const state={bpm,swing,drums,bass,lead,strings,pad,speech,speechOnlyLive:false,muted:Object.fromEntries(choices.map(t=>[t,false])),speechPads:Array.from({length:8},(_,i)=>({start:i*4.5,dur:1.7,rate:.95})),speechKey:'fdr',speechPad:0,params:{
  drums:{tone:52,drive:17,level:78},bass:{cutoff:35,res:70,env:60,decay:44,drive:38,level:72},lead:{cutoff:53,res:72,env:53,decay:28,drive:23,level:54},strings:{cutoff:58,attack:33,release:69,chorus:44,level:46},pad:{cutoff:41,attack:68,release:80,chorus:64,level:43},speech:{filter:55,delay:24,level:65}}};
  function on(lane,indices){indices.forEach(i=>{lane.steps[i]=true})}
  on(drums[0],[0,4,8,12]);on(drums[1],[4,12]);on(drums[2],[4,12]);on(drums[3],[2,6,10,14]);on(drums[4],[2,6,10,14]);on(drums[5],[3,11]);on(drums[6],[15]);on(drums[7],[7]);
@@ -201,7 +201,7 @@ function schedule(s,t){
    if(!p.muted[type])acidHit(type,st,t,stepSec,prev);
  }
  for(const type of ['strings','pad']){const lane=p[type];if(!p.muted[type])polyHit(type,lane.steps[s%lane.len],t,stepSec)}
- if(!p.muted.speech&&p.speech.steps[s%p.speech.len].on){const n=p.speech.steps[s%p.speech.len].n;sampleHit(n%8,t)}
+ if(!p.muted.speech&&!p.speechOnlyLive&&p.speech.steps[s%p.speech.len].on){const n=p.speech.steps[s%p.speech.len].n;sampleHit(n%8,t)}
  fixedStepTimes.push({s,t});
  if(fixedStepTimes.length>72)fixedStepTimes.shift();
 }
@@ -357,7 +357,7 @@ function bind(){
  if(!btn.hasAttribute('data-step'))return;
  const s=Number(btn.dataset.step),r=Number(btn.dataset.row);
  if(selected==='drums'){selectedDrum=r;p.drums[r].steps[s]=!p.drums[r].steps[s];$('len').value=p.drums[r].len;if(!playing)demoTrack()}
- else{editStep=s;const st=p[selected].steps[s];if(st.on){/* select without erasing */}else{st.on=true;st.n=selected==='bass'?33:selected==='lead'?72:57}if(!playing)demoTrack()}
+ else{editStep=s;const st=p[selected].steps[s];if(st.on){/* select without erasing */}else{st.on=true;st.n=selected==='bass'?33:selected==='lead'?72:selected==='speech'?p.speechPad:57}if(!playing)demoTrack()}
  renderGrid();renderParams();autoSave();
  };
  $('grid').oncontextmenu=e=>{const btn=e.target.closest('[data-step]');if(!btn||selected==='drums')return;e.preventDefault();let s=Number(btn.dataset.step);p[selected].steps[s].on=false;editStep=s;renderGrid();renderParams();autoSave()};
@@ -381,7 +381,7 @@ function bind(){
  $('speechFile').onchange=e=>{const file=e.target.files?.[0];if(!file)return;let u=URL.createObjectURL(file);loadSpeech(u,file.name).finally(()=>URL.revokeObjectURL(u))};
  $('useUrl').onclick=()=>{const u=$('urlSpeech').value.trim();if(!/^https?:\/\//.test(u)){updateStatus('Voer een directe HTTPS-link naar een audiobestand in.');return}p.speechKey='custom';$('speechSelect').value='custom';loadSpeech(u,'Eigen online bron')};
  $('speechSeq').onchange=e=>{p.speech.steps[0].on=e.target.checked;p.speech.steps[0].n=p.speechPad;autoSave()};
- $('speechMute').onchange=e=>{p.muted.speech=e.target.checked;showModule();autoSave()};
+ $('speechMute').onchange=e=>{p.speechOnlyLive=e.target.checked;autoSave()};
  $('saveBrowser').onclick=()=>{autoSave();updateSaveStatus('✓ Project lokaal in deze browser bewaard.')};
  $('reset').onclick=()=>changePreset(presetKey);
  $('export').onclick=exportProject;
