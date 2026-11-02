@@ -43,6 +43,7 @@ jobs:
           cp -a handpan-studio _site/handpan-studio
           cp -a acid-rhythm-lab _site/acid-rhythm-lab
           cp -a warehouse95 _site/warehouse95
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
           # Public-domain Wikimedia Commons speech excerpts, transcoded to MP3 for Safari.
           mkdir -p _site/warehouse95/speech
           curl -fL -sS --retry 3 --retry-delay 2 --max-time 90 "https://upload.wikimedia.org/wikipedia/commons/3/35/First_Inauguration_of_FDR_-_Fear_Itself_Excerpt.ogg" -o /tmp/warehouse-fdr.ogg
@@ -56,7 +57,6 @@ jobs:
           node -e 'const fs=require("fs");const h=fs.readFileSync("_site/warehouse95/index.html","utf8");const js=h.split("<script>")[1]?.split("</script>")[0]||"";if(js.length<25000)throw Error("Warehouse95 JS incomplete");new Function(js);for(const s of ["function acidHit(","function drumHit(","function sampleHit(","function polyHit(","speech/fdr.mp3","speech/moon.mp3"])if(!js.includes(s))throw Error("Missing "+s);console.log("Warehouse95 Web Audio syntax OK");'
           # CC0 recordings: FreePats Hang D minor, recorded 2017.
           # We transcode FLAC to MP3 for reliable iPhone/Safari playback.
-          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
           mkdir -p _site/handpan-studio/samples
           for tone in A3 A4 Bb4 C5 D4 D5 E4 F4 G4; do
             curl -fLsS --retry 3 --retry-delay 2 "https://raw.githubusercontent.com/freepats/hang-D-minor/main/samples/${tone}_01.flac" -o "/tmp/handpan-${tone}.flac"
