@@ -75,7 +75,7 @@ select{appearance:none;-webkit-appearance:none;width:100%;padding:16px 40px 16px
 </head>
 <body>
 <main class="shell">
-<header class="top"><div class="brand"><span class="brandmark" aria-hidden="true"></span> HANDPAN STUDIO</div><span class="quality">Handpan Engine 4.0</span></header>
+<header class="top"><div class="brand"><span class="brandmark" aria-hidden="true"></span> HANDPAN STUDIO</div><span class="quality">Handpan Studio 5 · echte opnames</span></header>
 <h1>Ontdek jouw D Kurd.</h1>
 <p class="intro">Speel echte D Kurd-notensets van 9, 10, 11 en 11+2 tonen. Vergelijk goedkope en professionele modellen van circa €180 tot maximaal €1.500.</p>
 <section class="kurd-compare" aria-label="D Kurd snel vergelijken">
@@ -154,15 +154,21 @@ select{appearance:none;-webkit-appearance:none;width:100%;padding:16px 40px 16px
 </select><div class="meta" id="meta"><span>11 tonen</span><span>440 Hz</span><span>RVS</span></div>
 <div id="shopInfo" class="shop-info" aria-live="polite"></div><p id="description" class="description">Een rijk D Kurd-instrument met 11 tonen.</p><p id="notes" class="notes-line">D3 • A3 • Bb3 • C4 • D4 • E4 • F4 • G4 • A4 • C5 • D5</p><a class="model-link" href="https://selapercussion.com/wp-content/uploads/SELA-Catalog-2026.pdf" target="_blank" rel="noopener noreferrer" id="modelLink">Bekijk de winkel en details ↗</a></section>
 <section class="panel"><span class="kicker">02 / Luisteren</span><div class="cta"><button class="primary" id="demo" type="button">▶ Speel voorbeeld</button><button class="secondary" id="stop" type="button">■ Stop</button></div><p class="status" id="status" role="status" aria-live="polite">Kies een noot of speel het voorbeeld af.</p></section>
-<section class="panel"><span class="kicker">03 / Handpan soundengine 4.0</span>
+<section class="panel"><span class="kicker">03 / Natuurgetrouw geluid</span>
 <label class="control-name" for="steelMode">Staalprofiel <small style="color:#aec5b5;font-weight:500">(standaard: model)</small></label>
 <select id="steelMode"><option value="auto">Automatisch: staal van gekozen model</option><option value="Stainless">Roestvrij staal · warm / lang</option><option value="Nitrided">Genitreerd · droog / direct</option><option value="Carbon">Koolstofstaal · budget</option><option value="Ember">Ember · diep / lange galm</option><option value="Titanium">High Chrome Titanium · helder</option><option value="Phoenix">Phoenix steel · gemiddeld</option></select>
 <p id="steelInfo" class="steel-info">Resonantie wordt berekend uit het metaalprofiel.</p>
+<label class="control-name" for="soundSource">Klankbron</label>
+<select id="soundSource">
+ <option value="recordings" selected>Echte handpan-opnames · FreePats CC0</option>
+ <option value="synthesis">Synthetische handpan · offline</option>
+</select>
+<p class="steel-info" id="sampleStatus">Opnames voorbereiden… Bij laden klinkt eerst de synth.</p>
 <label class="control-name" for="touchMode">Aanraken van het staal</label><select id="touchMode"><option value="pad" selected>Vingerkussen · warm en zacht</option><option value="finger">Vingertop · direct</option><option value="nail">Nagel · scherp</option></select>
 <div class="faders"><label><span class="fader-head"><span>Uittijd / sustain</span><strong id="sustainOut">Natuurlijk</strong></span><input id="sustain" type="range" min="0" max="100" value="55" aria-label="Uitklinktijd"></label><label><span class="fader-head"><span>Ruimte / galm</span><strong id="spaceOut">17%</strong></span><input id="space" type="range" min="0" max="100" value="17" aria-label="Ruimte en nagalm"></label><label><span class="fader-head"><span>Volume</span><strong id="volumeOut">80%</strong></span><input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume"></label></div></section>
 <section class="panel"><span class="kicker">Speeltip</span><p class="tips">Begin met <b>Sarospan 10</b> en schakel naar <b>Patera 11</b> om de extra D5 te horen. Kies daarna <b>Sela 11+2</b> voor F3 en G3 onderop. Bij goedkope modellen ontbreekt vaak een officiële veldkaart: de correcte noten zijn dan op een standaard D Kurd-indeling gezet. Gebruik een koptelefoon.</p></section>
 </aside></div>
-<footer class="footer"><span>Handpan Engine 4.0: zachte vingeraanslag, dynamische 1:2:3-modes, langzaam veranderende boventonen en subtiele klankkast. <b>Nog steeds synthetisch: geen echte samples of metingen van de aangeboden instrumenten.</b> Notenfrequenties volgen de vermelde stemming; posities zijn alleen model-exact met officiële veldkaart. Prijzen: momentopname op 1 november 2026.</span><span>Bronnen: <a href="https://www.thomann.nl" target="_blank">Thomann</a> · <a href="https://www.bax-shop.nl" target="_blank">Bax</a> · <a href="https://handpanshop.nl" target="_blank">Handpanshop</a> · <a href="https://www.amazon.nl" target="_blank">Amazon</a></span></footer>
+<footer class="footer"><span>Echte handpan-opnames van FreePats (CC0) uit 2017, opgenomen van een Hang in D mineur. Negen bronnoten, ontbrekende lage tonen worden omlaag getransponeerd; daarom is het geen echte opname van ieder merkmodel. Indien audio ontbreekt schakelt de simulator terug naar synthese. <b>Opnames en merkmodellen zijn niet van dezelfde fabrikant; toonhoogte klopt muzikaal, klankkleur blijft referentie.</b> Notenfrequenties volgen de vermelde stemming; posities zijn alleen model-exact met officiële veldkaart. Prijzen: momentopname op 1 november 2026.</span><span>Audio: <a href="https://freepats.zenvoid.org/ChromaticPercussion/hang.html" target="_blank" rel="noopener noreferrer">FreePats Hang D minor · CC0</a> · Bronnen: <a href="https://www.thomann.nl" target="_blank">Thomann</a> · <a href="https://www.bax-shop.nl" target="_blank">Bax</a> · <a href="https://handpanshop.nl" target="_blank">Handpanshop</a> · <a href="https://www.amazon.nl" target="_blank">Amazon</a></span></footer>
 </main>
 <script>
 (()=>{'use strict';
@@ -244,7 +250,7 @@ const ex=$('extras');ex.hidden=!p.extra;ex.innerHTML=p.extra?'<span class="botto
 }
 function buildReverb(){const len=Math.round(ctx.sampleRate*2.6),buffer=ctx.createBuffer(2,len,ctx.sampleRate);
 for(let c=0;c<2;c++){let ch=buffer.getChannelData(c),last=0;for(let i=0;i<len;i++){const x=i/len;last=last*.80+(Math.random()*2-1)*.20;ch[i]=last*Math.pow(1-x,2.6)*.075;}}const cv=ctx.createConvolver();cv.buffer=buffer;return cv}
-async function activate(){try{if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();dry=ctx.createGain();wet=ctx.createGain();comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.knee.value=12;comp.ratio.value=2.2;master=ctx.createGain();rev=buildReverb();dry.connect(comp);dry.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(master);master.connect(ctx.destination);updateAudio();}if(ctx.state!=='running')await ctx.resume();return ctx.state==='running';}catch(e){$('status').textContent='Geluid kon niet starten. Open de pagina in Safari/Chrome.';console.error(e);return false}}
+async function activate(){try{if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();dry=ctx.createGain();wet=ctx.createGain();comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.knee.value=12;comp.ratio.value=2.2;master=ctx.createGain();rev=buildReverb();dry.connect(comp);dry.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(master);master.connect(ctx.destination);updateAudio();}if(ctx.state!=='running')await ctx.resume();hydrateSamples();return ctx.state==='running';}catch(e){$('status').textContent='Geluid kon niet starten. Open de pagina in Safari/Chrome.';console.error(e);return false}}
 function updateAudio(){if(!ctx)return;dry.gain.value=.95;wet.gain.value=(+$('space').value/100)*.24;master.gain.value=(+$('volume').value/100)*.85}
 
 const handStyles={
@@ -281,8 +287,75 @@ function handImpact(time,velocity,output,style,base){
  const g=ctx.createGain();g.gain.setValueAtTime(0,time);g.gain.linearRampToValueAtTime(style.tap*velocity,time+.002);g.gain.exponentialRampToValueAtTime(.00001,time+.042);
  s.connect(bp);bp.connect(g);g.connect(output);s.start(time);s.stop(time+.045);
 }
+
+// Handpan Studio 5: real recordings of a Hang in D minor (FreePats, CC0).
+// The samples are served by this same website as MP3 after build-time
+// FLAC transcoding. We do not pitch-shift notes that already exist.
+const sampleNames=['A3','A4','Bb4','C5','D4','D5','E4','F4','G4'];
+const recorded={},rawFiles={},pendingSamples={};
+let sampleHydrateStarted=false;
+function sampleOrigin(note){
+  if(sampleNames.includes(note))return note;
+  // If no exact recording exists, the closest matching note at the
+  // octave is shifted; a real handpan's shared resonances also shift.
+  const match=/^([A-G][b#]?)(\d)$/.exec(note);
+  if(!match)return null;
+  const lower=match[1]+(Number(match[2])-1),higher=match[1]+(Number(match[2])+1);
+  return sampleNames.includes(higher)?higher:sampleNames.includes(lower)?lower:null;
+}
+function sampleNoteStatus(){
+  const ok=Object.keys(recorded).length;
+  const txt=ok===sampleNames.length?'Alle '+ok+' echte handpan-opnames klaar':ok?ok+'/'+sampleNames.length+' echte opnames klaar — overige tonen tijdelijk synth':'Echte opnames laden; eerste tik kan nog de synth gebruiken';
+  if($('sampleStatus'))$('sampleStatus').textContent=txt;
+}
+for(const n of sampleNames){
+  pendingSamples[n]=fetch('samples/'+n+'.mp3',{cache:'force-cache'})
+    .then(resp=>{if(!resp.ok)throw Error('Sample '+n+' HTTP '+resp.status);return resp.arrayBuffer()})
+    .then(data=>{rawFiles[n]=data;return data}).catch(err=>{console.warn('Handpan sample unavailable:',n,err);return null});
+}
+function hydrateSamples(){
+  if(sampleHydrateStarted||!ctx)return;
+  sampleHydrateStarted=true;
+  for(const n of sampleNames){
+    pendingSamples[n].then(bytes=>{
+      if(!bytes||!ctx)return;
+      ctx.decodeAudioData(bytes.slice(0)).then(buffer=>{recorded[n]=buffer;sampleNoteStatus()})
+        .catch(err=>{console.warn('MP3 decode failed:',n,err);sampleNoteStatus()});
+    });
+  }
+}
+function recordedStrike(note,idx,velocity,options){
+  if(!ctx||!$('soundSource')||$('soundSource').value!=='recordings')return false;
+  const origin=sampleOrigin(note);
+  const buffer=origin&&recorded[origin];if(!buffer)return false;
+  const p=preset(),style=handStyle(),now=ctx.currentTime+.002;
+  const playback=freq(note,p.hz)/freq(origin,440);
+  const src=ctx.createBufferSource();src.buffer=buffer;src.playbackRate.value=playback;
+  const gain=ctx.createGain(),low=ctx.createBiquadFilter(),pan=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();
+  const field=$('pan').querySelector('[data-index="'+idx+'"]'),x=field?Number.parseFloat(field.style.left):50;
+  low.type='lowpass';low.frequency.value=style===handStyles.pad?3500:style===handStyles.nail?10500:6500;low.Q.value=.5;
+  if(pan.pan)pan.pan.setValueAtTime(Math.max(-.32,Math.min(.32,(x-50)/125)),now);
+  // Samples carry their own recorded attack and acoustic decay.
+  const level=Math.max(.18,Math.min(1.12,velocity))*style.body*.95;
+  gain.gain.setValueAtTime(0,now);
+  gain.gain.linearRampToValueAtTime(level,now+.005);
+  const natural=buffer.duration/playback;
+  const ring=(.5+(+$('sustain').value/100))*(steelProfiles[steelMaterial()]?.sustain||4);
+  const duration=Math.min(natural,Math.max(1.9,ring*1.25));
+  gain.gain.setValueAtTime(level,now+Math.max(.01,duration-.14));
+  gain.gain.linearRampToValueAtTime(0,now+duration);
+  src.connect(low);low.connect(gain);gain.connect(pan);pan.connect(dry);
+  src.start(now);src.stop(now+duration+.01);
+  voices=voices.filter(v=>v.end>ctx.currentTime);
+  voices.push({end:now+duration+.1,stop:()=>{try{src.stop()}catch(e){}}});
+  while(voices.length>14)voices.shift().stop();
+  if(options.element){const e=options.element;e.classList.remove('played');void e.offsetWidth;e.classList.add('played');setTimeout(()=>e.classList.remove('played'),170)}
+  $('status').textContent='♪ '+note+' · ECHTE handpan-opname'+(origin===note?'':' (getransponeerd uit '+origin+')')+' · '+p.model;
+  return true;
+}
 function strike(note,idx,velocity=1,options={}){
  if(!ctx||ctx.state!=='running')return;
+ if(recordedStrike(note,idx,velocity,options))return;
  const p=preset(),profile=steelProfiles[steelMaterial()]||steelProfiles.Stainless;
  const style=handStyle(),t=ctx.currentTime+.003,f=freq(note,p.hz);
  const sustain=(.36+(+$('sustain').value/100)*.82)*profile.sustain*(idx===0?1.12:1);
