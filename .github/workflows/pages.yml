@@ -9,6 +9,7 @@ on:
       - "jbd_web/**"
       - "handpan-studio/**"
       - "acid-rhythm-lab/**"
+      - "warehouse95/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -41,6 +42,18 @@ jobs:
           cp -a jbd_web _site/jbd_web
           cp -a handpan-studio _site/handpan-studio
           cp -a acid-rhythm-lab _site/acid-rhythm-lab
+          cp -a warehouse95 _site/warehouse95
+          # Public-domain Wikimedia Commons speech excerpts, transcoded to MP3 for Safari.
+          mkdir -p _site/warehouse95/speech
+          curl -fL -sS --retry 3 --retry-delay 2 --max-time 90 "https://upload.wikimedia.org/wikipedia/commons/3/35/First_Inauguration_of_FDR_-_Fear_Itself_Excerpt.ogg" -o /tmp/warehouse-fdr.ogg
+          curl -fL -sS --retry 3 --retry-delay 2 --max-time 90 "https://upload.wikimedia.org/wikipedia/commons/4/41/Kennedy_berliner.ogg" -o /tmp/warehouse-berliner.ogg
+          curl -fL -sS --retry 3 --retry-delay 2 --max-time 90 "https://upload.wikimedia.org/wikipedia/commons/8/8d/Discurso_de_Kennedy.ogg" -o /tmp/warehouse-moon.ogg
+          for excerpt in fdr berliner moon; do
+            ffmpeg -nostdin -hide_banner -loglevel error -y -i "/tmp/warehouse-${excerpt}.ogg" -ar 32000 -ac 1 -codec:a libmp3lame -q:a 4 "_site/warehouse95/speech/${excerpt}.mp3"
+            test -s "_site/warehouse95/speech/${excerpt}.mp3"
+          done
+          test -s _site/warehouse95/index.html
+          node -e 'const fs=require("fs");const h=fs.readFileSync("_site/warehouse95/index.html","utf8");const js=h.split("<script>")[1]?.split("</script>")[0]||"";if(js.length<25000)throw Error("Warehouse95 JS incomplete");new Function(js);for(const s of ["function acidHit(","function drumHit(","function sampleHit(","function polyHit(","speech/fdr.mp3","speech/moon.mp3"])if(!js.includes(s))throw Error("Missing "+s);console.log("Warehouse95 Web Audio syntax OK");'
           # CC0 recordings: FreePats Hang D minor, recorded 2017.
           # We transcode FLAC to MP3 for reliable iPhone/Safari playback.
           command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
