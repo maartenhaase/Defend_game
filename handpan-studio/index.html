@@ -245,66 +245,73 @@ function buildReverb(){const len=Math.round(ctx.sampleRate*2.6),buffer=ctx.creat
 for(let c=0;c<2;c++){let ch=buffer.getChannelData(c),last=0;for(let i=0;i<len;i++){const x=i/len;last=last*.5+(Math.random()*2-1)*.5;ch[i]=last*Math.pow(1-x,2.2)*.13;}}const cv=ctx.createConvolver();cv.buffer=buffer;return cv}
 async function activate(){try{if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();dry=ctx.createGain();wet=ctx.createGain();comp=ctx.createDynamicsCompressor();comp.threshold.value=-16;comp.knee.value=18;comp.ratio.value=3.3;master=ctx.createGain();rev=buildReverb();dry.connect(comp);dry.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(master);master.connect(ctx.destination);updateAudio();}if(ctx.state!=='running')await ctx.resume();return ctx.state==='running';}catch(e){$('status').textContent='Geluid kon niet starten. Open de pagina in Safari/Chrome.';console.error(e);return false}}
 function updateAudio(){if(!ctx)return;dry.gain.value=.95;wet.gain.value=(+$('space').value/100)*.48;master.gain.value=(+$('volume').value/100)*.85}
-function hitNoise(t,vel,pan,material){
-  const prof=steelProfiles[material]||steelProfiles.Stainless;
-  const len=Math.round(ctx.sampleRate*.078),b=ctx.createBuffer(1,len,ctx.sampleRate),data=b.getChannelData(0);
-  for(let i=0;i<len;i++){const z=i/len;data[i]=(Math.random()*2-1)*Math.exp(-z*18)*(0.75+0.25*Math.sin(i*.19))}
-  const src=ctx.createBufferSource();src.buffer=b;
-  const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=material==='Nitrided'?1250:material==='Titanium'?2550:1950;bp.Q.value=.55;
-  const g=ctx.createGain();g.gain.setValueAtTime(.00001,t);g.gain.linearRampToValueAtTime(vel*prof.noise,t+.004);g.gain.exponentialRampToValueAtTime(.00001,t+.075);
-  src.connect(bp);bp.connect(g);g.connect(pan);src.start(t);src.stop(t+.078);
+
+const handStyles={
+ pad:{attack:.017,tap:.008,high:.55,body:.91,label:'Vingerkussen'},
+ finger:{attack:.008,tap:.019,high:1,body:1,label:'Vingertop'},
+ nail:{attack:.002,tap:.046,high:1.6,body:.86,label:'Nagel'}
+};
+function handStyle(){return handStyles[$('touchMode')?.value]||handStyles.pad}
+function modeEnvelope(dur,decay,attack,amp,bloom){
+ const arr=new Float32Array(96);
+ for(let i=0;i<96;i++){
+   const t=dur*i/95,soft=1-Math.exp(-t/Math.max(.002,attack));
+   const ring=.73*Math.exp(-t/decay)+.27*Math.exp(-t/(decay*2.2));
+   const grow=bloom?.35+.65*(1-Math.exp(-t/bloom)):1;
+   arr[i]=Math.max(.0000001,amp*soft*ring*grow*Math.min(1,(dur-t)/.07));
+ }
+ arr[0]=.0000001;arr[95]=.0000001;return arr;
+}
+function handMode(time,hz,amp,decay,duration,attack,bloom,output,nodes){
+ if(hz>ctx.sampleRate*.45)return;
+ const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';
+ osc.frequency.setValueAtTime(hz*1.001,time);
+ osc.frequency.exponentialRampToValueAtTime(hz,time+.075);
+ gain.gain.setValueAtTime(0,time);
+ gain.gain.setValueCurveAtTime(modeEnvelope(duration,decay,attack,amp,bloom),time+.0005,duration);
+ osc.connect(gain);gain.connect(output);osc.start(time);osc.stop(time+duration+.01);
+ nodes.push(osc);
+}
+function handImpact(time,velocity,output,style,base){
+ const b=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*.045),ctx.sampleRate);
+ const d=b.getChannelData(0);let x=0;
+ for(let i=0;i<d.length;i++){const t=i/ctx.sampleRate;x+=.12*((Math.random()*2-1)-x);d[i]=(x*.8+(Math.random()*2-1)*.2)*Math.exp(-t*145)}
+ const s=ctx.createBufferSource();s.buffer=b;const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=style===handStyles.nail?1450:style===handStyles.pad?480:760;bp.Q.value=.8;
+ const g=ctx.createGain();g.gain.setValueAtTime(0,time);g.gain.linearRampToValueAtTime(style.tap*velocity,time+.002);g.gain.exponentialRampToValueAtTime(.00001,time+.042);
+ s.connect(bp);bp.connect(g);g.connect(output);s.start(time);s.stop(time+.045);
 }
 function strike(note,idx,velocity=1,options={}){
-if(!ctx||ctx.state!=='running')return;
-const p=preset(),material=steelMaterial(),prof=steelProfiles[material]||steelProfiles.Stainless;
-const now=ctx.currentTime+.004,f=freq(note,p.hz),setting=+$('sustain').value/100;
-const sustain=prof.sustain*(.48+setting*.96)*(idx===0?1.24:1);
-const strength=Math.max(.25,Math.min(1.2,velocity));
-const voice=ctx.createGain();voice.gain.value=.74;
-const stereo=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();
-const pos=$('pan').querySelector(`[data-index="${idx}"]`);
-const x=pos?parseFloat(pos.style.left):50;
-if(stereo.pan)stereo.pan.setValueAtTime(Math.max(-.55,Math.min(.55,(x-50)/75)),now);
-voice.connect(stereo);stereo.connect(dry);
-const modes=[
-[1,.39,1.00],[2,.24,.87],[3,.125,.71],[4.03,.040,.44],
-[5.17,.024,.30],[6.69,.016,.19],[7.94,.009,.13]
-];
-const nodes=[];
-modes.forEach(([ratio,level,decay],i)=>{
-  const amp=level*strength*(ratio>=3?prof.high:1)*prof.body;
-  const dur=Math.max(.20,sustain*decay);
-  const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';
-  // De eerste drie stemmodi worden exact op 1:2:3 gehouden.
-  osc.frequency.setValueAtTime(f*ratio,now);
-  if(i>=3){osc.frequency.setValueAtTime(f*ratio*1.0009,now);osc.frequency.exponentialRampToValueAtTime(f*ratio,now+.09);}
-  gain.gain.setValueAtTime(.00001,now);
-  gain.gain.exponentialRampToValueAtTime(Math.max(.00002,amp),now+Math.max(.002,prof.attack*(1+i*.09)));
-  gain.gain.exponentialRampToValueAtTime(.000015,now+dur);
-  osc.connect(gain);gain.connect(voice);osc.start(now);osc.stop(now+dur+.035);nodes.push(osc);
-});
-// Klankveld-verdubbeling: zwakke licht afwijkende resonanties maken metaalzweving.
-[[1,.074,1.32,.5],[2,.061,.97,-.8],[3,.028,.66,1.4]].forEach(([ratio,amp,decay,cents])=>{
- const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';
- osc.frequency.value=f*ratio*Math.pow(2,cents*prof.beating/1200);
- const dur=sustain*decay;
- gain.gain.setValueAtTime(.00001,now);
- gain.gain.exponentialRampToValueAtTime(amp*strength,now+.011);
- gain.gain.exponentialRampToValueAtTime(.00001,now+dur);
- osc.connect(gain);gain.connect(voice);osc.start(now);osc.stop(now+dur+.035);nodes.push(osc);
-});
-// Zachte klankkastresonantie, heel stil zodat de muzikale toon niet vervalst.
-const shell=ctx.createOscillator(),shellG=ctx.createGain();shell.type='sine';
-shell.frequency.setValueAtTime(idx===0?108:116,now);
-shellG.gain.setValueAtTime(.00001,now);shellG.gain.exponentialRampToValueAtTime(.004*strength*prof.body,now+.021);
-shellG.gain.exponentialRampToValueAtTime(.00001,now+Math.min(1.2,sustain*.32));
-shell.connect(shellG);shellG.connect(voice);shell.start(now);shell.stop(now+Math.min(1.2,sustain*.32)+.04);nodes.push(shell);
-hitNoise(now,strength*.57,voice,material);
-voices.push({end:now+sustain*1.4,stop:()=>{for(const o of nodes){try{o.stop()}catch(_){}}}});
-voices=voices.filter(v=>v.end>ctx.currentTime);
-while(voices.length>16){let v=voices.shift();v.stop()}
-if(options.element){const el=options.element;el.classList.remove('played');void el.offsetWidth;el.classList.add('played');setTimeout(()=>el.classList.remove('played'),170)}
-$('status').textContent=`♪ ${note} · ${p.model} · ${material} · ${p.hz} Hz`;
+ if(!ctx||ctx.state!=='running')return;
+ const p=preset(),profile=steelProfiles[steelMaterial()]||steelProfiles.Stainless;
+ const style=handStyle(),t=ctx.currentTime+.003,f=freq(note,p.hz);
+ const sustain=(.36+(+$('sustain').value/100)*.82)*profile.sustain*(idx===0?1.12:1);
+ const v=Math.max(.25,Math.min(1.1,velocity))*(.97+Math.random()*.06);
+ const voice=ctx.createGain();voice.gain.value=.84*style.body;
+ const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=style===handStyles.pad?2300:style===handStyles.nail?4400:3000;lp.Q.value=.55;
+ const stereo=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain();
+ const field=$('pan').querySelector('[data-index="'+idx+'"]'),x=field?parseFloat(field.style.left):50;
+ if(stereo.pan)stereo.pan.setValueAtTime(Math.max(-.33,Math.min(.33,(x-50)/125)),t);
+ voice.connect(lp);lp.connect(stereo);stereo.connect(dry);
+ const nodes=[],end=Math.max(3,Math.min(11,sustain*2.25));
+ const tuned=[
+   [1,.58,sustain*.76,0],
+   [2,.27*profile.high,sustain*.60,.095],
+   [3,.080*profile.high*style.high,sustain*.29,.022]
+ ];
+ for(const [ratio,amp,decay,bloom] of tuned){
+   handMode(t,f*ratio,amp*v*profile.body,Math.max(.38,decay),ratio===3?Math.min(end,Math.max(1.6,sustain)):end,style.attack,bloom,voice,nodes);
+ }
+ handMode(t,f*1.00045,.070*v,sustain*.9,end,style.attack*1.4,.025,voice,nodes);
+ handMode(t,f*2*Math.pow(2,-.65*profile.beating/1200),.038*v,sustain*.55,end,style.attack*1.4,.09,voice,nodes);
+ for(const [r,a,d] of [[3.85,.015,.16],[4.60,.009,.1],[6.37,.005,.068]])
+   handMode(t,f*r,a*v*style.high,d,.65,style.attack*.6,0,voice,nodes);
+ if(idx===0||f<330)handMode(t,86.5,idx===0?.017*v:.007*v,.27,.74,.012,0,voice,nodes);
+ handImpact(t,v,voice,style,f);
+ voices=voices.filter(o=>o.end>ctx.currentTime);
+ voices.push({end:t+end+.1,stop:()=>{for(const o of nodes){try{o.stop()}catch(e){}}}});
+ while(voices.length>14)voices.shift().stop();
+ if(options.element){const el=options.element;el.classList.remove('played');void el.offsetWidth;el.classList.add('played');setTimeout(()=>el.classList.remove('played'),170)}
+ $('status').textContent='♪ '+note+' · '+p.model+' · '+style.label+' · '+p.hz+' Hz';
 }
 async function playIndex(i,el){const p=preset(),n=p.notes[i];if(!n)return;const ok=await activate();if(ok)strike(n,i,.83,{element:el})}
 async function playExtra(i,el){const p=preset(),n=p.extra?.[i];if(!n)return;const ok=await activate();if(ok)strike(n,i+10,.8,{element:el})}
