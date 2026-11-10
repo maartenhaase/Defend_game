@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#11191c">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>SEM in Cantique V13 — toegang</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#10181c;color:#f8f6ee;font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100dvh;display:grid;place-items:center;padding:max(env(safe-area-inset-top),18px) 18px max(env(safe-area-inset-bottom),18px)}
+main{width:min(100%,430px);text-align:center}
+.panel{padding:clamp(24px,6vw,42px) 24px;border:1px solid #455752;border-radius:20px;background:linear-gradient(160deg,#1d2d30,#132024);box-shadow:0 22px 70px #0008}
+.brand{font-size:12px;font-weight:800;letter-spacing:.26em;color:#e8c688;margin-bottom:10px}
+h1{font-size:clamp(25px,7vw,33px);margin:0 0 6px;font-weight:850;line-height:1.2}
+p{color:#c5cfcb;margin:9px 0 22px}
+label{display:block;text-align:left;color:#e8d6b5;font-size:13px;font-weight:700;margin:0 0 8px}
+input{width:100%;height:55px;padding:0 16px;border:1px solid #71817b;border-radius:12px;background:#0c1519;color:#fff;font:700 25px/1 system-ui;letter-spacing:.3em;text-align:center;outline:none}
+input:focus{border-color:#f0d184;box-shadow:0 0 0 3px #f0d18438}
+button{width:100%;min-height:54px;border:0;border-radius:12px;margin-top:14px;background:#e4bd72;color:#182020;font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation}
+button:active{background:#f4d99c}
+#error{min-height:21px;color:#ffb2a8;margin:12px 0 0;font-size:13px}
+.foot{font-size:12px;color:#a9b4b5;margin-top:22px}
+.spinner{margin:20px auto;width:32px;height:32px;border-radius:50%;border:3px solid #f0d18438;border-top-color:#f0d184;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <section class="panel" id="gate">
+    <div class="brand">CANTIQUE ADVENTURE</div>
+    <h1>SEM in Cantique</h1>
+    <p>Deze spelversie is bedoeld voor mensen met de toegangscode.</p>
+    <form id="entry" autocomplete="off">
+      <label for="pin">Toegangscode</label>
+      <input id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="••••" aria-describedby="error">
+      <button type="submit" id="unlock">Speel het spel</button>
+      <div id="error" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+  <section class="panel" id="loading" hidden>
+    <div class="brand">CANTIQUE ADVENTURE</div>
+    <h1>SEM in Cantique</h1>
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="status" role="status">De spelwereld wordt geladen…</p>
+  </section>
+  <div class="foot">Geoptimaliseerd voor mobiel en iPhone</div>
+</main>
+<script>
+(function(){
+  'use strict';
+  const gate=document.getElementById('gate');
+  const loading=document.getElementById('loading');
+  const entry=document.getElementById('entry');
+  const pin=document.getElementById('pin');
+  const error=document.getElementById('error');
+  const status=document.getElementById('status');
+  const sessionKey='cantique-sem-v13-unlocked';
+  const expected='e78f27ab3ef177a9926e6b90e572b9853ce6cf4d87512836e9ae85807ec9d7fe';
+  let busy=false;
+
+  async function hash(value){
+    const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
+    return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');
+  }
+  async function loadGame(){
+    gate.hidden=true;
+    loading.hidden=false;
+    try{
+      const files=Array.from({length:15},(_,i)=>'../sem-v11/data/part'+String(i).padStart(2,'0')+'.txt');
+      let ready=0;
+      const parts=await Promise.all(files.map(async file=>{
+        const response=await fetch(file,{cache:'no-cache'});
+        if(!response.ok)throw new Error('Kon '+file+' niet laden ('+response.status+')');
+        const result=await response.text();
+        ready++;
+        status.textContent='Spelbestanden laden: '+Math.round(ready/files.length*100)+'%';
+        return result;
+      }));
+      const rawHtml=parts.join('').replace(/cantique_sem_game_v10/g,'cantique_sem_game_v13').replace(/href="manifest.webmanifest"/g,'href="../sem-v11/manifest.webmanifest"').replace(/href="icon-192.png"/g,'href="../sem-v11/icon.svg"').replace(/register\('\.\/sw\.js'\)/g,"register('../sem-v11/sw.js')");
+      const extra='<script src="../sem-v11/v12-core.js"></'+'script><script src="../sem-v11/v12-compat.js"></'+'script><script src="./v13-art.js"></'+'script><script src="./v13-story.js"></'+'script><script src="./v13-finish.js"></'+'script>';
+      const html=rawHtml.replace(/<\/body>\s*<\/html>\s*$/i,extra+'</body></html>');
+      if(!html.includes('SEM in Cantique')||!html.includes('</html>'))throw new Error('Onvolledige spelbestanden');
+      document.open();
+      document.write(html);
+      document.close();
+    }catch(err){
+      console.error('Cantique laden',err);
+      status.textContent='Laden mislukt: '+err.message+'. Vernieuw de pagina.';
+    }
+  }
+  entry.addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(busy)return;
+    busy=true;
+    const entered=pin.value.trim();
+    try{
+      if(await hash(entered)===expected){
+        sessionStorage.setItem(sessionKey,'yes');
+        await loadGame();
+      }else{
+        error.textContent='De code is niet juist. Probeer het opnieuw.';
+        pin.value='';
+        pin.focus();
+      }
+    }catch(err){
+      error.textContent='Kan de code niet controleren. Open deze pagina via HTTPS.';
+    }finally{busy=false}
+  });
+  if(sessionStorage.getItem(sessionKey)==='yes')loadGame();
+})();
+</script>
+</body></html>
