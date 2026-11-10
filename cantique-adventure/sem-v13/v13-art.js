@@ -14,7 +14,7 @@ function grad(c,x,y,w,h,colors,vertical=true){
 }
 function rect(c,x,y,w,h,col,stroke='',sw=1){c.fillStyle=col;c.fillRect(x,y,w,h);if(stroke){c.lineWidth=sw;c.strokeStyle=stroke;c.strokeRect(x,y,w,h);}}
 function rounded(c,x,y,w,h,r,fill,stroke='',sw=1){
- c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=sw;c.stroke();}
+ c.beginPath();if(typeof c.roundRect==='function')c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=sw;c.stroke();}
 }
 function shadow(c,x,y,w,h,a=.28){c.save();c.filter='blur(19px)';c.fillStyle='rgba(0,0,0,'+a+')';c.fillRect(x,y,w,h);c.restore();}
 function light(c,x,y,r,color){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);}
