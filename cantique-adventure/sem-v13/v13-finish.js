@@ -45,6 +45,7 @@ finish=function(){
  if(!F('mainComplete')){say('Sem','Ik kan nog niet naar huis. Er is hier iets te veel onafgemaakt.',[{t:'Ik ga verder',f:closeDialog}]);return;}
  return oldFinish();
 };
+actions.finish=()=>finish();
 const oldV12Head=document.querySelector('.v12-nav header strong');
 if(oldV12Head)oldV12Head.textContent='VANUIT DEZE RUIMTE';
 if(scenes.restroom){
