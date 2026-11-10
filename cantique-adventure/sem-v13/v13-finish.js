@@ -7,6 +7,26 @@ document.title='SEM in Cantique V13 — Nierstraal 3000';
 const el=document.querySelector('#splash .eyebrow');if(el)el.textContent='V13 · De Nierstraal 3000';
 const titles=document.querySelectorAll('#splash h1, .logo strong');titles.forEach(n=>n.textContent='SEM IN CANTIQUE · V13');
 const info=document.querySelector('#splash .intro, #splash .subtitle, #splash p');if(info)info.textContent='Een onwaarschijnlijk kantooravontuur. Zoek zelf uit wat je collega’s verbergen, los puzzels op, verdien geld en ontdek de Nierstraal 3000. Alles is fictief.';
+/* Match characters to explicitly labeled portrait files, never to an unrelated fallback face. */
+const labeledFaces={
+ 'Sem':'sem_jonkman','Coen':'coen_vos','Jansje':'jansie_van_dijk','Jansie':'jansie_van_dijk',
+ 'Dianne':'dianne','Carmen':'carmen_van_den_berg','Sanne':'sanne_lenferink',
+ 'Jarno':'jarno_gerritsen_mulkes','Fenneke':'fenneke_van_dijk',
+ 'Marloes':'marloes_nieuwenhuis','Johanneke':'johanneke_wierbos',
+ 'Xaviera':'xaviera_pieter','Dirk-Jan':'dirkjan_dokters','Dirkjan':'dirkjan_dokters',
+ 'Rineke':'rineke_boers','Timo':'timo_reukema'
+};
+const unconfirmed=['Erik','Marthijn'];
+const oldPortrait=portrait;
+const neutralPortrait=name=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#2d3e49"/><stop offset="1" stop-color="#101b24"/></linearGradient></defs><rect width="320" height="320" fill="url(#g)"/><circle cx="160" cy="106" r="56" fill="#637781"/><path d="M43 294Q52 181 160 181Q271 181 280 294" fill="#4c5c68"/><text x="160" y="309" text-anchor="middle" fill="#ecdfc3" font-family="sans-serif" font-size="24">'+String(name).replace(/[<>&]/g,'')+'</text></svg>');
+portrait=function(name){
+ const id=labeledFaces[name];
+ if(id&&imagePaths['portrait_'+id])return imagePaths['portrait_'+id];
+ if(name==='Maarten'&&imagePaths['full_maarten'])return imagePaths['full_maarten'];
+ if(imagePaths['portrait_'+String(name).toLowerCase()])return imagePaths['portrait_'+String(name).toLowerCase()];
+ return neutralPortrait(name);
+};
+V.portraitAudit={labeled:Object.keys(labeledFaces),unconfirmed,missing:Object.entries(labeledFaces).filter(([,id])=>!imagePaths['portrait_'+id]).map(([name])=>name)};
 const oldToast=toast;
 toast=function(text){return oldToast(String(text).replace(/\b(godverdomme|verdomme|godsamme|tering|fokking|fucking|kut|shit|jezus)\b/gi,'verdorie'));};
 const oldNote=note;note=function(text){return oldNote(String(text).replace(/\b(godverdomme|verdomme|godsamme|tering|fokking|fucking|kut|shit|jezus)\b/gi,'verdorie'));};
