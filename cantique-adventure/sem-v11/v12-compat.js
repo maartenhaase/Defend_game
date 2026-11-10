@@ -41,5 +41,8 @@ if(window.CANTIQUE_V12){
   return{rooms:Object.keys(g).length,reachable:seen.size,objects:window.CANTIQUE_V12.spriteCount,scene:s.scene,saveCompatible:true};
  };
 }
+const visualFix=document.createElement('style');
+visualFix.textContent='@media (pointer:coarse) and (orientation:landscape) and (max-height:600px){.v12-nav{position:fixed;z-index:9;right:68px;bottom:4px;left:180px;margin:0;padding:4px 6px;background:#142229ee;max-height:66px;overflow:hidden}.v12-nav header{margin-bottom:2px}.v12-nav button{padding:4px 7px;min-height:27px;font-size:10px}.v12-nav-doors{flex-wrap:nowrap;overflow-x:auto}.v12-nav-doors button{flex-shrink:0}}@media (prefers-reduced-motion:reduce){.v12Scream{animation:none!important}}';
+document.head.append(visualFix);
 syncUI();
 })();
