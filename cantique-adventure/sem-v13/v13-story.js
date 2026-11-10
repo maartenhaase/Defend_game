@@ -49,7 +49,7 @@ V.isVisible=(it)=>{
  if(it.needs&&!F(it.needs))return false;
  if(has(it.id))return false;
  if(F('picked_'+it.id))return false;
- if(it.id==='v13_chewed'&&!F('chocGiven'))return false;
+ if(it.id==='v13_chewed'&&(!F('chocGiven')||F('kidneyRetrieved')))return false;
  if(it.id==='v13_yellow'&&!F('finalBeam'))return false;
  if(it.id==='v13_clean'&&!F('kidneyClean'))return false;
  if(it.id==='v13_plunger'&&F('toiletDone'))return false;
@@ -59,7 +59,9 @@ actions.v13Pickup=h=>{
  const id=h?.v13Item,it=V.items.find(x=>x.id===id);
  if(!it||!V.isVisible(it)){toast('Hier ligt niets meer.');return;}
  if(id==='v13_chewed'&&!F('chocGiven')){reply('Sem','Marloes wil eerst rust.');return;}
- S('picked_'+id);take(id,'Gevonden: '+it.name+'.');
+ S('picked_'+id);
+ if(id==='v13_chewed'){S('kidneyRetrieved');take('v13_damaged','Borre heeft de energienier beschadigd. Hij moet worden hersteld.');return;}
+ take(id,'Gevonden: '+it.name+'.');
 };
 const props=[
  ['v13_blaster','Nierstraal-straalkop','Een metalen apparaatonderdeel met een blauwe lens.','breakroom',386,436,108,72],
@@ -134,7 +136,7 @@ actions.v12Coen=()=>{
  {t:'Ik ga zoeken',f:()=>{S('heardPlunger');closeDialog();}}
  ]);
  S('heardPlunger');talk('Coen','Je hebt een ontstopper! Er is nog hoop voor deze wc.',[{t:'De verstopping aanpakken',f:()=>{
- let n=0;const render=()=>panel('Ontstopper','Pomp '+n+' van 4. Nog '+(4-n)+' keer!',[['Pompen',()=>{n++;if(n>=4){closeMini();S('toiletDone');done('toiletReward',10,'Coens wc is weer bruikbaar');achieve('Rioolredder');reply('Coen','Dat is fantastisch! Hier is je tientje. En laten we hier nooit meer over praten.');}else render();}]]);render();
+ let n=0;const render=()=>panel('Ontstopper','Pomp '+n+' van 4. Nog '+(4-n)+' keer!',[['Pompen',()=>{n++;if(n>=4){closeMini();S('toiletDone');V.updateRestroom?.();done('toiletReward',10,'Coens wc is weer bruikbaar');achieve('Rioolredder');reply('Coen','Dat is fantastisch! Hier is je tientje. En laten we hier nooit meer over praten.');}else render();}]]);render();
  }}]);
 };
 actions.v12Flush=()=>actions.v12Coen();
@@ -154,7 +156,7 @@ wrap('jansie',(old)=>{
  return talk('Jansje','Ik ben erg benieuwd of die Nierstraal 3000 ooit werkt.',[{t:'Ik zoek verder.',f:closeDialog}]);
 });
 const dianneTalk=()=>{
- if(F('gathering')&&!F('secondClean')){
+ if(F('gathering')&&F('allGathered')&&!F('secondClean')){
   if(has('v13_cleanBlaster'))return talk('Dianne','Wat een apparaat, Sem. Moet ik de straalkop nog een keer schoonmaken?',[
  {t:'Ja, nog één keer graag.',f:()=>{S('secondClean');S('gather_Dianne');note('Dianne heeft de straalkop voor de finale gereinigd.');sequence('De laatste poetsbeurt',['Dianne neemt de straalkop voorzichtig aan.','Ze poetst de metalen punt tot het blauwe licht weer brandt.','Dianne geeft de straalkop terug en loopt naar de snijtafel.'],()=>reply('Dianne','Zo. Nu mag dat ding niet weer in de koffie vallen.'));}}
  ]);
