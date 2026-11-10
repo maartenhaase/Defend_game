@@ -99,6 +99,7 @@ function makeRoom(which){
  const url=can.toDataURL('image/jpeg',.89);const key='bg_'+which;imagePaths[key]=url;const im=new Image();im.src=url;images[key]=im;
 }
 makeRoom('restroom');makeRoom('storage');
+V.repaintRestroom=()=>makeRoom('restroom');
 function makeProp(it){
  const [can,c]=canvas(190,155),id=it.id;
  c.save();
@@ -176,6 +177,7 @@ function drawDoors(){
   ctx.restore();
  });
 }
+const crowdPortraits={};
 const oldDrawWorld=drawWorld;
 drawWorld=function(t){
  oldDrawWorld(t);
@@ -193,7 +195,7 @@ drawWorld=function(t){
    ctx.beginPath();ctx.ellipse(x,y+8,30,9,0,0,Math.PI*2);ctx.fillStyle='#0710138c';ctx.fill();
    const g=ctx.createLinearGradient(x-25,y-100,x+25,y);g.addColorStop(0,'#314e58');g.addColorStop(1,'#131c24');
    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-18,y-85);ctx.quadraticCurveTo(x,y-104,x+22,y-85);ctx.lineTo(x+30,y);ctx.lineTo(x-28,y);ctx.closePath();ctx.fill();
-   const face=new Image();face.src=portrait(name);if(face.complete&&face.naturalWidth){ctx.save();ctx.beginPath();ctx.arc(x,y-102,27,0,Math.PI*2);ctx.clip();ctx.drawImage(face,x-27,y-129,54,54);ctx.restore();}else{ctx.beginPath();ctx.arc(x,y-102,21,0,Math.PI*2);ctx.fillStyle='#b99d7f';ctx.fill();}
+   const face=crowdPortraits[name]||(crowdPortraits[name]=new Image());if(!face.src)face.src=portrait(name);if(face.complete&&face.naturalWidth){ctx.save();ctx.beginPath();ctx.arc(x,y-102,27,0,Math.PI*2);ctx.clip();ctx.drawImage(face,x-27,y-129,54,54);ctx.restore();}else{ctx.beginPath();ctx.arc(x,y-102,21,0,Math.PI*2);ctx.fillStyle='#b99d7f';ctx.fill();}
    ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff2d1';ctx.fillText(name,x,y-5);ctx.restore();
   });
  }
