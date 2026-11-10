@@ -26,7 +26,7 @@ const wrap=(name,fun)=>{const old=actions[name];beforeActions[name]=old;actions[
 const glyph=(s)=>String(s||'');
 function panel(title,desc,options){
  closeDialog();modal='v13game';const box=$('minigame');box.hidden=false;
- box.innerHTML='<div class="v13panel"><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(desc)+'</p><div class="v13options"></div><button class="secondary v13exit">Stoppen</button></div>';
+ box.innerHTML='<div class="v13panel"><h3>'+escapeHtml(title)+'</h3>'+(title==='Ontstopper'?'<div class="v13-plumbing"><span class="v13-wc"></span><span class="v13-plunger"></span><span class="v13-ripple"></span></div>':'')+'<p>'+escapeHtml(desc)+'</p><div class="v13options"></div><button class="secondary v13exit">Stoppen</button></div>';
  box.querySelector('.v13exit').onclick=closeMini;
  const holder=box.querySelector('.v13options');options.forEach(o=>{const b=document.createElement('button');b.className='primary';b.textContent=o[0];b.onclick=()=>o[1]();holder.append(b)});
 }
@@ -40,7 +40,18 @@ function quiz(title,questions,finish){
 }
 function sequence(title,frames,onEnd){
  closeDialog();modal='v13cut';const box=$('minigame');box.hidden=false;let step=0;
- const render=()=>{const f=frames[step];box.innerHTML='<div class="v13cinema"><div class="v13cinema-stage" data-step="'+step+'"><span class="v13beam"></span><span class="v13orb"></span><span class="v13dog"></span><span class="v13spark a"></span><span class="v13spark b"></span></div><small>SEM IN CANTIQUE · SCIENCEFICTION</small><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(f)+'</p><button class="primary v13next">'+(step===frames.length-1?'Afronden':'Verder · '+(step+1)+'/'+frames.length)+'</button></div>';box.querySelector('.v13next').onclick=()=>{if(++step===frames.length){closeMini();onEnd?.();}else render()};};
+ function visual(){
+  const photo=name=>escapeHtml(portrait(name));
+  if(title==='Een oprecht compliment')return '<div class="v13scene-hug"><div class="v13floor"></div><div class="v13actor v13left"><img src="'+photo('Sem')+'" alt="Sem"></div><div class="v13actor v13right"><img src="'+photo('Dirk-Jan')+'" alt="Dirk-Jan"></div></div>';
+  if(title==='Een onverwacht happy end')return '<div class="v13scene-dance"><div class="v13tabletop"></div><div class="v13dancer"><img src="'+photo('Jansje')+'" alt="Jansje"></div><span class="v13party v13party-a"></span><span class="v13party v13party-b"></span><span class="v13dog"></span></div>';
+  if(title==='Dianne poetst de straalkop'||title==='De laatste poetsbeurt')return '<div class="v13scene-clean"><div class="v13cleaner"><img src="'+photo('Dianne')+'" alt="Dianne"></div><span class="v13device"></span><span class="v13cloth"></span></div>';
+  return '<span class="v13beam"></span><span class="v13orb"></span><span class="v13dog"></span><span class="v13spark a"></span><span class="v13spark b"></span>';
+ }
+ const render=()=>{
+  const f=frames[step],kind=title==='Een oprecht compliment'?'hug':title==='Een onverwacht happy end'?'dance':'beam';
+  box.innerHTML='<div class="v13cinema"><div class="v13cinema-stage v13-stage-'+kind+'" data-step="'+step+'">'+visual()+'</div><small>SEM IN CANTIQUE · FICTIEVE SCIENCEFICTION</small><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(f)+'</p><button class="primary v13next">'+(step===frames.length-1?'Afronden':'Verder · '+(step+1)+'/'+frames.length)+'</button></div>';
+  box.querySelector('.v13next').onclick=()=>{if(++step===frames.length){closeMini();onEnd?.();}else render()};
+ };
  render();
 }
 V.sequence=sequence;V.quiz=quiz;
