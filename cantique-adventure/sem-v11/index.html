@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#11191c">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<title>SEM in Cantique — toegang</title>
+<title>SEM in Cantique V12 — toegang</title>
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
@@ -80,7 +80,9 @@ button:active{background:#f4d99c}
         status.textContent='Spelbestanden laden: '+Math.round(ready/files.length*100)+'%';
         return result;
       }));
-      const html=parts.join('');
+      const rawHtml=parts.join('');
+      const extra='<script src="./v12-core.js"></'+'script><script src="./v12-items.js"></'+'script>';
+      const html=rawHtml.replace(/<\/body>\s*<\/html>\s*$/i,extra+'</body></html>');
       if(!html.includes('SEM in Cantique')||!html.includes('</html>'))throw new Error('Onvolledige spelbestanden');
       document.open();
       document.write(html);
