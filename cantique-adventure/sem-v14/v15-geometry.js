@@ -95,7 +95,13 @@ actions.v15Map=function(){
  closeDialog();modal='v15map';const ui=$('minigame');ui.hidden=false;
  ui.innerHTML='<div class="v15-map"><h3>🧭 '+esc(scenes[s.scene]?.name||s.scene)+'</h3><p>Directe doorgangen; alle oude routes blijven bestaan.</p><div class="v15-dest"></div><button class="v15-close">Sluiten</button></div>';
  const grid=ui.querySelector('.v15-dest');
- for(const to of G[s.scene]||[]){
+ // Photographed rooms expose only exits that match a VISIBLE physical doorway.
+ // The older full graph is retained for legacy story logic, but it must not
+ // become a teleport menu in the new hubs.
+ const directions=portals[s.scene]
+  ?portals[s.scene].map(x=>x[0]).filter(to=>(G[s.scene]||[]).includes(to))
+  :(G[s.scene]||[]);
+ for(const to of directions){
   const b=document.createElement('button');b.type='button';b.textContent=(s.visited.includes(to)?'✓ ':'› ')+(scenes[to]?.name||to);
   b.addEventListener('click',()=>{closeMini();travel(to);});grid.append(b);
  }
@@ -145,6 +151,8 @@ V15.audit=()=>{
  return {version:V.version,rooms:all.length,reachable:seen.size,unreachable:all.filter(x=>!seen.has(x)),
  broken:Object.entries(G).flatMap(([a,bs])=>bs.filter(b=>!G[b]?.includes(a)).map(b=>a+'>'+b)),
  items:V15.objects.length,npcs:V15.npcManifest.length,
+ physicalRouteErrors:Object.entries(portals).flatMap(([room,ends])=>ends.filter(([to])=>!(G[room]||[]).includes(to)).map(([to])=>room+'>'+to)),
+ physicalRoutes:Object.fromEntries(Object.entries(portals).map(([room,ends])=>[room,ends.map(([to])=>to)])),
  photographed:[...photos],movedKitchenHotspots:Object.keys(placements.breakroom).length};
 };
 const style=document.createElement('style');
