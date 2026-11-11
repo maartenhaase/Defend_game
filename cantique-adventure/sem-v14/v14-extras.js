@@ -179,7 +179,7 @@ actions.borre=function(...args){
    {t:'Geef Borre een hondensnoepje.',f:()=>{
     remove('v14_dogtreat');S('v14_distract');
     note('Borre kauwt op een hondensnoepje. Marloes draait zich naar hem om; de lensmok staat even onbewaakt.');syncUI();
-    vignette('Een slimme afleiding','Borre krijgt een hondenkoekje en begint luid te smakken. Marloes draait zich om om te kijken wat hij uitspookt.','', 'dog');
+    vignette('Een slimme afleiding','Borre krijgt een hondenkoekje en begint luid te smakken. Marloes draait zich om om te kijken wat hij uitspookt.',null,'dog');
    }},{t:'Laat hem rustig liggen',f:closeDialog}]);
  }
  return oldBorre?.(...args);
@@ -295,7 +295,7 @@ drawWorld=function(t){
  ctx.restore();
 };
 const css=document.createElement('style');
-css.textContent=String.raw'
+css.textContent=String.raw`
 .v14cut{width:min(660px,96vw);margin:auto;text-align:center;background:#0c1c25;border:1px solid #51707e;border-radius:16px;padding:14px}
 .v14cut h3{color:#f4dfb2;margin:0 0 10px;font-size:22px}
 .v14cut p{min-height:46px;font-size:15px}
@@ -314,7 +314,7 @@ css.textContent=String.raw'
 @keyframes v14munch{to{transform:translateY(-10px) rotate(-4deg)}}
 @keyframes v14sob{to{transform:translateY(4px) rotate(1deg)}}
 @media(max-width:650px){.v14cut{padding:9px}.v14cut h3{font-size:19px}.v14cut p{font-size:13px}.v14-stage{aspect-ratio:16/9}}
-';
+`;
 document.head.append(css);
 // Show the optional quest after the player sees the mug; expose a simple QA probe.
 const oldSide=refreshSide;
