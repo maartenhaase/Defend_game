@@ -84,7 +84,13 @@ button:active{background:#f4d99c}
       try{if(!localStorage.getItem('cantique_sem_game_v15')){const prior=localStorage.getItem('cantique_sem_game_v14')||localStorage.getItem('cantique_sem_game_v13');if(prior)localStorage.setItem('cantique_sem_game_v15',prior);}}catch(e){}
       const rawHtml=parts.join('').replace(/cantique_sem_game_v10/g,'cantique_sem_game_v15').replace(/href="manifest.webmanifest"/g,'href="../sem-v11/manifest.webmanifest"').replace(/href="icon-192.png"/g,'href="../sem-v11/icon.svg"').replace(/register\('\.\/sw\.js'\)/g,"register('../sem-v11/sw.js')");
       const extra='<script src="../sem-v11/v12-core.js"></'+'script><script src="../sem-v11/v12-compat.js"></'+'script><script src="../sem-v13/v13-story.js"></'+'script><script src="../sem-v13/hall-photo.js"></'+'script><script src="./v14-art-base.js"></'+'script><script src="../sem-v13/v13-finish.js"></'+'script><script src="./v14-extras.js"></'+'script><script src="./v14-office-fix.js?v=143"></'+'script>'+'<script src="./v14-real-sound.js?v=144"></'+'script>'+'<script src="./v145-world.js?v=1454"></'+'script>'+'<script src="./v145-characters.js?v=1452"></'+'script>'+'<script src="./v15-geometry.js?v=1502"></'+'script>'+'<script src="./v15-render.js?v=1502"></'+'script>'+'<script src="./v15-sprites.js?v=1502"></'+'script>'+'<script src="./v151-polish.js?v=1511"></'+'script>';
-      const html=rawHtml.replace(/<head>/i,'<head><base href="../sem-v14/">').replace(/<\/body>\s*<\/html>\s*$/i,extra+'</body></html>');
+      // Old V11/V12 startup writes a fresh save before V14.5 can call load().
+      // Snapshot the real V15 save at the very start of document execution,
+      // restore it just before V14.5 reloads state and refreshes the UI.
+      const backupScript='<script>window.__cantiqueProtectedSave=localStorage.getItem("cantique_sem_game_v15");</'+'script>';
+      const restoreScript='<script>if(window.__cantiqueProtectedSave)localStorage.setItem("cantique_sem_game_v15",window.__cantiqueProtectedSave);</'+'script>';
+      const hydratedExtra=extra.replace('<script src="./v145-world.js?v=1454">',restoreScript+'<script src="./v145-world.js?v=1454">');
+      const html=rawHtml.replace(/<head>/i,'<head><base href="../sem-v14/">'+backupScript).replace(/<\/body>\s*<\/html>\s*$/i,hydratedExtra+'</body></html>');
       if(!html.includes('SEM in Cantique')||!html.includes('</html>'))throw new Error('Onvolledige spelbestanden');
       document.open();
       document.write(html);
