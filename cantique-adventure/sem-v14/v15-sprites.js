@@ -26,6 +26,7 @@ const sem=['idle_right','idle_left','walk_1','walk_2','inspect','pickup','offer'
 const marloes=['working','thinking','turning','surprised','sad','crying','comforted','neutral'];
 const borre=['sleep','alert','stand','sniff','walk_1','walk_2','happy','sit'];
 for(const [person,states] of Object.entries({sem,marloes,borre}))for(const state of states)pic('v15_'+person+'_'+state);
+for(const name of ['v15_marloes_working_clean','v15_marloes_turning_clean'])pic(name);
 const obj=['lensmug','coffee','beer_cans','note','plunger','toilet_roll','dirty_tissue','dirty_floor','tape_box','bubble_wrap','brochures','vinyl_roll'];
 for(const name of obj)pic('v15_glow_'+name);
 T.originalWebp={backgrounds:Object.entries(sources),characters:{sem,marloes,borre},animatedObjects:obj};
@@ -128,7 +129,8 @@ function paintBackground(room){
  }
 }
 function pose(person,state,x,y,w,h,t){
- const source=pic('v15_'+person+'_'+state);
+ const key=person==='marloes'&&['working','turning'].includes(state)?'v15_marloes_'+state+'_clean':'v15_'+person+'_'+state;
+ const source=pic(key);
  if(!ready(source))return false;
  ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
  const bob=person==='marloes'?Math.sin(t/800)*1.4:Math.sin(t/480)*.9;
@@ -145,16 +147,18 @@ function paintDesk(t){
  paintBackground('borreoffice');
  const emotion=mood();
  if(emotion==='working'||emotion==='turning'){
-  // The seat/desk is aligned and its lower portion is occluded behind the existing counter.
-  ctx.save();ctx.beginPath();ctx.rect(92,130,438,433);ctx.clip();
-  pose('marloes',emotion,192,279,285,285,t);ctx.restore();
+  // Cleaned seated sprites contain ONLY Marloes: no duplicate miniature desk,
+  // keyboard or monitor. She is registered into the existing photo chair.
+  pose('marloes',emotion,175,110,445,445,t);
  }else{
-  pose('marloes',emotion,124,258,318,328,t);
+  // Marloes stands up beside her chair when upset or relieved.
+  // Her feet land on the photographed office floor, not on the desk or chair.
+  pose('marloes',emotion,80,195,445,445,t);
  }
  if(emotion==='crying'||emotion==='sad'){
   // Animation includes a crying pose; small motion adds distinct falling tears.
   const drops=Fetched('v13art_v14_tears_'+Math.floor(t/310)%4);
-  if(ready(drops)){ctx.save();ctx.globalAlpha=.63;ctx.drawImage(drops,223,318,48,61);ctx.restore();}
+  if(ready(drops)){ctx.save();ctx.globalAlpha=.43;ctx.drawImage(drops,285,278,41,59);ctx.restore();}
  }
  if(mug&&(V.isVisible(mug)||F('v14_comforted')))draw(pic('v15_glow_lensmug'),705,254,85,92,t);
  nav(t,'borreoffice');
