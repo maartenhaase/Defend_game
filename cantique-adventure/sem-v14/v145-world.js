@@ -307,6 +307,8 @@ const style=document.createElement('style');
 style.textContent='.v145-map{padding:15px;max-width:680px;margin:auto;background:#16282c;border:1px solid #74878a;border-radius:14px;color:#faf0dc}.v145-map h3{font-size:21px;margin:0 0 5px}.v145-map p{font-size:14px}.v145-mapgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:14px 0}.v145-route{padding:12px;border:1px solid #a8a792;border-radius:8px;background:#273d42;color:#fff8df;text-align:left;font-weight:bold;cursor:pointer;min-height:47px}.v145-route:active{background:#526b67}.v145-close{width:100%;min-height:43px}@media(max-width:680px){.v145-map{padding:8px}.v145-route{min-height:44px;font-size:13px}}';
 document.head.append(style);
 const tag=document.querySelector('#splash .eyebrow');if(tag)tag.textContent='V14.5 · Nieuwe Cantique-wereld';
+// Restore save before any UI refresh can overwrite it with the fresh state.
+try{load();}catch(e){console.warn('Cantique save restoration failed',e);}
 syncUI();
 console.info('CANTIQUE V14.5 PHOTO HUBS LOADED',V.worldAudit());
 })();
