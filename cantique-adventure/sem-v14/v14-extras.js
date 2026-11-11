@@ -320,6 +320,7 @@ css.textContent=String.raw`
 @keyframes v14sob{to{transform:translateY(4px) rotate(1deg)}}
 @media(max-width:650px){.v14cut{padding:9px}.v14cut h3{font-size:19px}.v14cut p{font-size:13px}.v14-stage{aspect-ratio:16/9}}
 `;
+css.textContent+='\\n.v13-plumbing::before{content:"";position:absolute;z-index:4;pointer-events:none;width:135px;height:72px;left:23%;bottom:12px;background:url("'+imagePaths.v13art_v14_poop+'") center/contain no-repeat;animation:v14munch .6s infinite alternate}.v13-plumbing::after{content:"";position:absolute;z-index:5;pointer-events:none;width:115px;height:125px;left:38%;top:-5px;opacity:.54;background:url("'+imagePaths.v13art_v14_stench+'") center/contain no-repeat;animation:v14stink 1.4s ease-in-out infinite alternate}@keyframes v14stink{to{transform:translateY(-16px);opacity:.16}}';
 document.head.append(css);
 // Show the optional quest after the player sees the mug; expose a simple QA probe.
 const oldSide=refreshSide;
