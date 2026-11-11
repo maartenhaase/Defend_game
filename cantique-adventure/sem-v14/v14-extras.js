@@ -130,8 +130,10 @@ function addItem(id,name,desc,room,x,y,w,h,action){
    fn:action,v14Item:id});
  return it;
 }
-addItem('v14_dogtreat','Hondenkoekjes','Een zakje hondensnoepjes van Maartens bureau. Geschikt voor honden.', 'maarten',660,423,82,76,'v14TakeTreat');
+addItem('v14_dogtreat','Hondenkoekjes','Een zakje hondensnoepjes van Maartens bureau. Geschikt voor honden.', 'maarten',754,443,82,76,'v14TakeTreat');
 addItem('v14_lensmug','Lensvormige mok','Een zwarte mok in de vorm van een telelens. Hij lijkt duur, maar is een dierbaar aandenken.',sceneOffice,345,369,65,64,'v14TakeMug');
+// Borre is actually drawn near x=190, y=543; make the visible dog clickable, not just a remote hotspot.
+scenes[sceneOffice].hot.unshift({id:'v14_borre_sprite',label:'Borre',rect:[174,523,158,116],at:[371,655],fn:'borre'});
 // These two use the original inventory system without placing a cup somewhere before brewing.
 itemMeta.v14_coffee=['Verse koffie','v13art_v14_coffee','Een verse kop koffie uit het koffiezetapparaat.'];
 const oldVisibility=V.isVisible;
