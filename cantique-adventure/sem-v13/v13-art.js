@@ -98,8 +98,15 @@ function makeRoom(which){
  const vg=c.createRadialGradient(470,340,90,470,340,660);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(5,16,21,.39)');rect(c,0,0,960,720,vg);
  const url=can.toDataURL('image/jpeg',.89);const key='bg_'+which;imagePaths[key]=url;const im=new Image();im.src=url;images[key]=im;
 }
-makeRoom('restroom');makeRoom('storage');
-V.repaintRestroom=()=>makeRoom('restroom');
+// Photographic interiors are local, repository-hosted assets.
+const photoRooms={};
+for(const id of ['restroom','storage']){
+ const im=new Image();im.decoding='async';im.src='./assets/'+id+'.webp';
+ photoRooms[id]=im;imagePaths['bg_'+id]=im.src;images['bg_'+id]=im;
+ im.onerror=()=>{console.warn('Photo could not be loaded:',id);makeRoom(id);};
+}
+V.repaintRestroom=()=>{};
+V.updateRestroom=()=>{};
 function makeProp(it){
  const [can,c]=canvas(190,155),id=it.id;
  c.save();
@@ -205,33 +212,135 @@ for(const [id,adj] of Object.entries(graph)){
 // Do NOT draw doors as rectangles, labels, glow frames or fake architectural features.
 // Existing photos remain intact. Navigation fallback is the separate location strip.
 function drawDoors(){}
-const crowdPortraits={};
+// Use the explicitly labeled photographic cutouts, never a made-up face.
+const actorKeys={
+ 'Sem':'sem_1','Maarten':'npc_maarten','Carmen':'npc_carmen_van_den_berg',
+ 'Sanne':'npc_sanne_lenferink','Jarno':'npc_jarno_gerritsen_mulkes',
+ 'Erik':'npc_erik','Marloes':'npc_marloes','Johanneke':'npc_johanneke',
+ 'Fenneke':'npc_fenneke','Coen':'npc_coen_vos','Dianne':'npc_dianne',
+ 'Jansje':'npc_jansie_van_dijk','Dirk-Jan':'npc_dirkjan_dokters',
+ 'Borre':'borre_dog','Xaviera':'npc_xaviera_pieter'
+};
+const actorImages={},actorUrls={},assetBank=window.V10_ASSETS||{};
+function tidyCutout(im){
+ // Remove the narrow stray horizontal cutout bars found in older sprite exports.
+ const w=im.naturalWidth,h=im.naturalHeight;if(!w||!h)return im;
+ const ca=document.createElement('canvas');ca.width=w;ca.height=h;
+ const cx=ca.getContext('2d',{willReadFrequently:true});cx.drawImage(im,0,0);
+ try{
+  const d=cx.getImageData(0,0,w,h),a=d.data,n=w*h,mask=new Uint8Array(n);
+  let clear=0;for(let i=0;i<n;i++){mask[i]=a[i*4+3]>90?1:0;if(!mask[i])clear++;}
+  if(clear<n*.015)return im;
+  const r=Math.max(2,Math.min(6,Math.round(Math.min(w,h)*.016))),stride=w+1;
+  const integral=(m)=>{const z=new Uint32Array((w+1)*(h+1));for(let y=0;y<h;y++){let sum=0;for(let x=0;x<w;x++){sum+=m[y*w+x];z[(y+1)*stride+x+1]=z[y*stride+x+1]+sum;}}return z;};
+  const count=(z,x1,y1,x2,y2)=>z[y2*stride+x2]-z[y1*stride+x2]-z[y2*stride+x1]+z[y1*stride+x1];
+  const z=integral(mask),core=new Uint8Array(n),size=(2*r+1)*(2*r+1);
+  for(let y=r;y<h-r;y++)for(let x=r;x<w-r;x++)if(count(z,x-r,y-r,x+r+1,y+r+1)===size)core[y*w+x]=1;
+  // Retain the main connected person, not isolated fragments of the old sheet.
+  const seen=new Uint8Array(n),queue=new Int32Array(n),best=new Uint8Array(n);
+  let bestSize=0;
+  for(let i=0;i<n;i++)if(core[i]&&!seen[i]){
+   let head=0,tail=0;queue[tail++]=i;seen[i]=1;
+   while(head<tail){const j=queue[head++],x=j%w;
+    for(const k of [x>0?j-1:-1,x<w-1?j+1:-1,j-w,j+w])if(k>=0&&k<n&&core[k]&&!seen[k]){seen[k]=1;queue[tail++]=k;}
+   }
+   if(tail>bestSize){bestSize=tail;best.fill(0);for(let k=0;k<tail;k++)best[queue[k]]=1;}
+  }
+  if(bestSize<n*.015)return im;
+  const zz=integral(best);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const p=(y*w+x)*4+3;
+   if(!count(zz,Math.max(0,x-r-1),Math.max(0,y-r-1),Math.min(w,x+r+2),Math.min(h,y+r+2)))a[p]=0;
+  }
+  cx.putImageData(d,0,0);return ca;
+ }catch(e){return im;}
+}
+function loadActor(name,key){
+ const src=assetBank[key];if(!src)return;
+ const im=new Image();actorImages[name]=im;actorUrls[name]=src;
+ im.onload=()=>{const cleaned=tidyCutout(im);actorImages[name]=cleaned;
+  if(cleaned!==im)try{actorUrls[name]=cleaned.toDataURL('image/png');}catch(e){}
+ };
+ im.src=src;
+}
+for(const [name,key] of Object.entries(actorKeys))loadActor(name,key);
+V.actorSource=name=>actorUrls[name]||null;
+V.actorFrames=Array.from({length:8},(_,i)=>assetBank['sem_'+(i+1)]).filter(Boolean);
+const roomCutting=new Image();roomCutting.src=assetBank.room_cutting||'';
+const roomReady=im=>im&&(im instanceof HTMLCanvasElement||(im.complete&&im.naturalWidth));
+function drawActor(name,x,y,h,flip=false){
+ const im=actorImages[name];if(!roomReady(im))return;
+ const iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height,w=h*iw/ih;
+ ctx.save();ctx.fillStyle='rgba(16,23,25,.17)';ctx.beginPath();ctx.ellipse(x,y,w*.3,5,0,0,Math.PI*2);ctx.fill();
+ if(flip){ctx.translate(x,y);ctx.scale(-1,1);ctx.drawImage(im,-w/2,-h,w,h);}
+ else ctx.drawImage(im,x-w/2,y-h,w,h);
+ ctx.restore();
+}
+function exitHot(id,label,rect,at){return {id,label,door:'hall',rect,at};}
+const wc=scenes.restroom;
+wc.name='Heren-wc';wc.sub='De echte toiletcrisis';wc.spawn=[300,666];
+wc.floor=[[90,718],[680,718],[600,630],[180,630],[105,660]];
+wc.npcs=[];wc.extra=[];
+wc.hot=[
+ exitHot('v13_wc_door','Terug naar de gang',[0,0,90,720],[108,666]),
+ {id:'v13_wc_coen',label:'Coen',fn:'v12Coen',rect:[590,278,255,359],at:[575,663]},
+ {id:'v13_wc_toilet',label:'Toilet',fn:'v12Flush',rect:[545,548,330,171],at:[560,668]},
+ {id:'v13_wc_mirror',label:'Spiegel',fn:'v12Mirror',rect:[168,105,194,190],at:[305,651]}
+];
+doorModels.restroom=[{dest:'hall',x:0,y:0,w:90,h:720,native:true}];
+const stor=scenes.storage;
+stor.name='Schoonmaakberghok';stor.sub='Schoonmaakmiddelen en gereedschap';stor.spawn=[168,669];
+stor.floor=[[90,719],[940,719],[885,600],[310,600],[115,638]];
+stor.npcs=[];stor.extra=[];
+stor.hot=stor.hot.filter(h=>!h.door&&!String(h.id).startsWith('v13_item_'));
+stor.hot.push(exitHot('v13_storage_exit','Terug naar de gang',[0,658,130,62],[145,666]));
+const positions={
+ v13_plunger:[815,385,58,170],v13_bucket:[511,574,66,74],v13_mop:[652,260,45,165],
+ v13_gloves:[121,231,68,55],v13_flash:[157,391,61,56],v13_cooler:[254,570,103,74],
+ v13_cloth:[30,303,70,55]
+};
+for(const it of V.items.filter(i=>i.scene==='storage')){
+ if(positions[it.id]){[it.x,it.y,it.w,it.h]=positions[it.id];}
+ stor.hot.push({id:'v13_item_'+it.id,label:it.name,rect:[it.x,it.y,it.w,it.h],
+ at:[Math.max(145,Math.min(875,it.x+it.w/2)),665],fn:'v13Pickup',v13Item:it.id});
+}
+doorModels.storage=[{dest:'hall',x:0,y:658,w:130,h:62,native:true}];
+function exitCue(){
+ ctx.save();ctx.fillStyle='rgba(16,28,32,.91)';ctx.strokeStyle='rgba(237,221,184,.75)';ctx.lineWidth=1.5;
+ ctx.beginPath();if(ctx.roundRect)ctx.roundRect(9,668,114,38,8);else ctx.rect(9,668,114,38);
+ ctx.fill();ctx.stroke();ctx.fillStyle='#f4e8ce';ctx.textAlign='center';ctx.font='bold 17px system-ui';
+ ctx.fillText('← Gang',66,693);ctx.restore();
+}
 const oldDrawWorld=drawWorld;
 drawWorld=function(t){
- if(s.scene==='hall'&&hallPhoto.complete&&hallPhoto.naturalWidth){
-  ctx.clearRect(0,0,960,720);ctx.drawImage(hallPhoto,0,0,960,720);
-  drawPlayer(t);
+ const sc=s.scene,custom= sc==='hall'||sc==='restroom'||sc==='storage'||(sc==='cutting'&&V.isKnown('gathering')&&roomReady(roomCutting));
+ const bg=sc==='hall'?hallPhoto:photoRooms[sc]||roomCutting;
+ if(custom&&roomReady(bg)){
+  ctx.clearRect(0,0,960,720);ctx.drawImage(bg,0,0,960,720);
+  if(sc==='restroom'&&!V.isKnown('gather_Coen'))drawActor('Coen',730,657,335);
+  if(sc==='cutting'){
+   // Depth-staggered places on the actual workshop floor, not on the table.
+   const slots=[[520,326,142],[592,326,142],[664,326,142],[736,324,138],
+    [93,581,179],[58,691,212],[872,548,163],[913,627,191],[803,691,211],[910,705,225]];
+   const gathered=V.gatherNames.filter(n=>V.isKnown('gather_'+n));
+   if(V.isKnown('secondClean'))gathered.push('Dianne');
+   const group=gathered.map((name,i)=>({name,pos:slots[i%slots.length]}));
+   group.sort((a,b)=>a.pos[1]-b.pos[1]).forEach(({name,pos})=>drawActor(name,...pos));
+   if(V.isKnown('showedKidney'))drawActor('Jansje',580,343,111);
+  }
  }else oldDrawWorld(t);
- // World assets retain their inventory IDs, real-world scale and clickable area.
  for(const it of V.items){
   if(it.scene!==s.scene||!V.isVisible(it))continue;
   const im=images['v13art_'+it.id];if(im?.naturalWidth){ctx.save();ctx.shadowColor='rgba(0,0,0,.25)';ctx.shadowBlur=8;ctx.drawImage(im,it.x,it.y,it.w,it.h);ctx.restore();}
  }
- if(s.scene==='cutting'&&V.isKnown('gathering')){
-  const gathered=V.gatherNames.filter(n=>V.isKnown('gather_'+n));
-  if(V.isKnown('secondClean'))gathered.push('Dianne');
-  gathered.forEach((name,i)=>{
-   const x=96+(i%5)*177,y=i<5?420:590;
-   ctx.save();
-   ctx.beginPath();ctx.ellipse(x,y+8,30,9,0,0,Math.PI*2);ctx.fillStyle='#0710138c';ctx.fill();
-   const g=ctx.createLinearGradient(x-25,y-100,x+25,y);g.addColorStop(0,'#314e58');g.addColorStop(1,'#131c24');
-   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-18,y-85);ctx.quadraticCurveTo(x,y-104,x+22,y-85);ctx.lineTo(x+30,y);ctx.lineTo(x-28,y);ctx.closePath();ctx.fill();
-   const face=crowdPortraits[name]||(crowdPortraits[name]=new Image());if(!face.src)face.src=portrait(name);if(face.complete&&face.naturalWidth){ctx.save();ctx.beginPath();ctx.arc(x,y-102,27,0,Math.PI*2);ctx.clip();ctx.drawImage(face,x-27,y-129,54,54);ctx.restore();}else{ctx.beginPath();ctx.arc(x,y-102,21,0,Math.PI*2);ctx.fillStyle='#b99d7f';ctx.fill();}
-   ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff2d1';ctx.fillText(name,x,y-5);ctx.restore();
-  });
+ if(custom&&roomReady(bg)){
+  drawPlayer(t);
+  if(sc==='storage')exitCue();
+  if((sc==='restroom'||sc==='storage')&&hover)drawGlowing(hover,t);
  }
  drawDoors();
 };
+V.photoAudit=()=>({hall:hallPhoto.naturalWidth||0,wc:photoRooms.restroom.naturalWidth||0,storage:photoRooms.storage.naturalWidth||0,actors:Object.keys(actorImages)});
 const previousHotspot=hotspotFound;
 hotspotFound=function(x,y){
  const sc=scenes[s.scene];if(sc){
