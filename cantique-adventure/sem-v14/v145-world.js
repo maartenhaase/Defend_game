@@ -146,7 +146,7 @@ for(const id of Object.keys(adj)){
  for(const [dest,rect] of physical)valid.set(dest,navHot(dest,rect,id));
  sc.hot=[...nonDoors,...valid.values(),{
   id:'v145_routes',label:'Bekijk de routes',fn:'v145Routes',
-  rect:[785,650,175,70],at:[747,628]
+  rect:[785,650,175,70],at:sc.spawn?sc.spawn.slice():[470,642]
  }];
  sc.v145Destinations=G[id].slice();
  if(V.doorModels)V.doorModels[id]=Array.from(valid.values()).map(h=>({dest:h.door,x:h.rect[0],y:h.rect[1],w:h.rect[2],h:h.rect[3],native:true}));
