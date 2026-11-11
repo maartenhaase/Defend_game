@@ -1,4 +1,4 @@
-# SEM in Cantique V14 — De lensmok van Rob
+# SEM in Cantique V14.3 — De lensmok van Rob
 
 **Spelen (mobiel of desktop):** https://maartenhaase.github.io/Defend_game/cantique-adventure/sem-v14/
 
@@ -20,3 +20,19 @@ De V14-startpagina voegt, na de bestaande V11- en V13-modules, `v14-extras.js` t
 
 ## Controle
 JavaScript syntactisch gecontroleerd. De nieuwe puzzel is met een DOM/canvas-mock op itemregistratie, eerst afleiden, oppakken, verkooppoging (€0 zonder geldtoevoeging), koffiezetapparaat, beide wc-staten en aanwezigheid van alle traan- en wc-sprites gecontroleerd. **Niet** geverifieerd in een echte iPhone/Safari-sessie of als live gedeployde GitHub Pages-pagina. De sprites zijn transparante in-game canvas-tekeningen, niet extern gefotografeerde objecten.
+
+
+## V14.3 — Fotorealistische correctie van Marloes’ werkplek (11 november 2026)
+
+- De oude samengestelde achtergrond met Marloes klein **onder** haar bureau is in de game vervangen door `assets/marloes-desk.webp`. Marloes zit nu zichtbaar **aan** haar bureau; alleen Borre bevindt zich eronder.
+- **Tweede echte speelruimte:** `underdesk`, met een eigen fotorealistische achtergrond (`assets/under-desk.webp`), eigen Borre-hotspot en een werkende terugweg naar Marloes’ bureau. De bestaande routes naar werkvloer en vouwruimte blijven behouden.
+- In de bureauscène is de lensmok op een zichtbare plaats op het bureaublad onder de monitor gezet. De hotspot en het getekende voorwerp delen exact dezelfde coördinaten.
+- **Aanklikbug opgelost:** V13 onderschepte nieuwe V14-inventarisvoorwerpen met een onjuist `v13_item_`-prefix en maakte ze daardoor niet klikbaar. V14.3 gebruikt het juiste `v14_item_`-prefix. Dit herstelt ook de hondenkoekjes op Maartens tafel.
+- Voor de Nierstraal-verhaallijn ligt de beschadigde energienier voortaan bij Borre in de onder-bureauscène. De hoofdmissie blijft daardoor bereikbaar.
+- De nieuwe achtergrond heeft geen leesbare schermaanduidingen; de werkplek is opgeruimd. De oude dubbele personen- en honden-cutouts zijn in deze twee scènes uitgeschakeld.
+- De nieuwe scène wordt ook verwerkt in de locatiegrafiek, de navigatiehotspots, de diagnostiek en het opslaan van voortgang (veilige terugval naar `borreoffice` bij een opgeslagen `underdesk`-positie).
+- Aan de loader toegevoegd als laatste script: `v14-office-fix.js?v=143`. Eerdere V14-save blijft bestaan.
+
+**Speel:** https://maartenhaase.github.io/Defend_game/cantique-adventure/sem-v14/?v=143
+
+**Technische controle:** de JavaScript-module is syntactisch gecontroleerd en met een DOM/canvas-mock getest op hoofd- en onder-bureauscène, object-coördinaten, lensmokhit, Borre-hit, routegrafiek, sprite-rendering zonder oude overlays en veilige locatieopslag. Een echte iPhone/Safari-speeltest en daadwerkelijke GitHub Pages-beeldcontrole zijn nog niet uitgevoerd.
