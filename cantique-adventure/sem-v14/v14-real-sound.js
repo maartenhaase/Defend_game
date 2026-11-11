@@ -5,7 +5,8 @@
 (function(){
 'use strict';
 const A=window.CANTIQUE_AUDIO={version:'14.4',events:[],failures:[],sources:{}};
-if(!window.CANTIQUE_V13||!window.scenes||!window.actions)return;
+if(!window.CANTIQUE_V13||typeof scenes==='undefined'||typeof actions==='undefined')return;
+window.CANTIQUE_V13.version='14.4';
 const SFXJ='https://sfxjar.com/audio/';
 const MIX='https://assets.mixkit.co/active_storage/sfx/';
 const mk=id=>MIX+id+'/'+id+'-preview.mp3';
@@ -73,7 +74,6 @@ function fade(a,to,ms=420,stopOnZero=false){
  if(!a)return;
  const from=Number(a.volume)||0,begin=performance.now();
  function next(t){
-  if(!a.isConnected&&false)return;
   const k=clamp((t-begin)/ms,0,1);
   try{a.volume=clamp(from+(to-from)*k,0,1)}catch(e){}
   if(k<1)requestAnimationFrame(next);
@@ -182,7 +182,12 @@ travel=function(id){
  A.transition=id;A.previous=s.scene;
  const before=s.scene;
  const result=prevTravel(id);
- if(s.scene!==before)setRoom(s.scene);
+ if(s.scene!==before){
+  setRoom(s.scene);
+  if(s.scene==='restroom'&&!window.CANTIQUE_V13.isKnown('toiletDone')){
+   one('belly',.33,6500,0,2400);one('flatulence2',.46,15000,0,2700);
+  }
+ }
  A.transition='';A.previous='';
  return result;
 };
@@ -244,6 +249,12 @@ document.addEventListener('click',e=>{
   if(/print|snijtafel|kerkbode/.test(label))one('newsPaper',.23,1700,0,1200);
  }
 },{passive:true});
+// Sparse recorded bathroom sounds only while Coen is still struggling, never in other rooms.
+setInterval(()=>{
+ if(document.hidden||!audioUnlocked||!isEnabled()||s.scene!=='restroom'||window.CANTIQUE_V13.isKnown('toiletDone'))return;
+ one('belly',.25,8000,0,2200);
+ if(Math.random()<.48)one('flatulence2',.32,12500,0,2300);
+},19000);
 // Ambient samples must not continue in background tabs.
 document.addEventListener('visibilitychange',()=>{if(document.hidden)quiet();else if(audioUnlocked&&isEnabled())setRoom(s.scene,true)});
 window.addEventListener('pagehide',quiet);
