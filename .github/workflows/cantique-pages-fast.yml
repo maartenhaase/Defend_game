@@ -1,0 +1,76 @@
+name: Deploy Cantique Adventure fast
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cantique-adventure/**'
+      - '.github/workflows/cantique-pages-fast.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: cantique-pages-fast
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Restore previous full-site deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p _site /tmp/cantique-pages-base
+          # Last verified successful complete Pages build (including generated audio).
+          gh run download 43020205871 --repo "$GITHUB_REPOSITORY" --name github-pages --dir /tmp/cantique-pages-base
+          test -s /tmp/cantique-pages-base/artifact.tar
+          tar -xf /tmp/cantique-pages-base/artifact.tar -C _site
+          # Replace ONLY the Cantique folder with current repo assets.
+          rm -rf _site/cantique-adventure
+          cp -a cantique-adventure _site/cantique-adventure
+          touch _site/.nojekyll
+          test -s _site/index.html
+          test -s _site/cantique-adventure/sem-v15/index.html
+          test -s _site/cantique-adventure/sem-v14/v15-geometry.js
+          test -s _site/cantique-adventure/sem-v14/v15-render.js
+          test -s _site/cantique-adventure/sem-v14/v15-sprites.js
+          test -s _site/cantique-adventure/sem-v14/assets/v15_sem_idle_right.webp
+          test -s _site/handpan-studio/samples/A3.mp3
+          test -s _site/warehouse95/speech/fdr.mp3
+          echo 'Cantique V15 and previous complete site checked'
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify V15 responds live
+        run: |
+          set -e
+          URL='https://maartenhaase.github.io/Defend_game/cantique-adventure/sem-v15/index.html'
+          for i in 1 2 3 4 5 6; do
+            if curl -fLsS --max-time 12 "$URL" | grep -q 'SEM in Cantique V15'; then
+              echo 'Cantique V15 is accessible over HTTPS'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Cantique V15 still unreachable' >&2
+          exit 1
