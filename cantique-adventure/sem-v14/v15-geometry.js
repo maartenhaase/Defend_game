@@ -42,10 +42,10 @@ for(const sc of Object.values(scenes)){
 const placements={
  breakroom:{
   break_coffee:[[55,384,117,106],[233,647]],
-  break_cans:[[281,415,100,80],[385,637]],
+  break_cans:[[291,407,92,62],[385,637]],
   break_beer:[[390,272,125,290],[583,644]],
-  break_water:[[170,427,137,94],[383,638]],
-  break_cloth:[[285,466,85,80],[435,639]],
+  break_water:[[164,421,119,90],[383,638]],
+  break_cloth:[[286,476,81,74],[435,639]],
   break_dirk:[[531,272,105,80],[609,638]]
  },
  print:{
