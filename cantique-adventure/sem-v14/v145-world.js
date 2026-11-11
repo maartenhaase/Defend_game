@@ -16,7 +16,7 @@ const art={
  print:'v145_press_hub.webp',
  press_rear:'v145_press_rear.webp',
  breakroom:'v145_kitchen_hub.webp',
- office:'v145_shared_office.webp'
+ shared_office:'v145_shared_office.webp'
 };
 const photos={};
 for(const [id,file] of Object.entries(art)){
@@ -32,18 +32,36 @@ const additions={
  canteen_hub:['Kantinehoek','Lange houten tafel, groene stoelen en de doorgang naar de aparte werkplek.'],
  packing_workroom:['Aparte werkplek','Inpaktafel en computers; achter de hoek ligt de berging.'],
  storage_hub:['Magazijn en stellingen','Papier, folie en dozen. Verderop staan de drukmachines.'],
- press_rear:['Achter de drukpersen','Van achter de grote printers kijk je terug richting de werkvloer.']
+ press_rear:['Achter de drukpersen','Van achter de grote printers kijk je terug richting de werkvloer.'],
+ shared_office:['Gezamenlijk kantoor tegenover het toilet','Een apart, groter kantoor aan de overzijde van de centrale gang.']
 };
 for(const [id,[name,sub]] of Object.entries(additions)){
  scenes[id]={name,sub,bg:id,spawn:[470,642],floor:[[12,715],[947,715],[906,466],[690,413],[300,413],[51,472]],hot:[],npcs:[],extra:[]};
 }
-scenes.office.name='Gezamenlijk kantoor';
-scenes.office.sub='De werkplekken tegenover de wc, met ramen en meerdere bureaus.';
-scenes.office.spawn=[350,630];
-scenes.office.floor=[[20,717],[947,717],[915,425],[720,397],[280,412],[30,471]];
-// Marloes belongs at her own desk, never a second duplicate in the shared office.
-scenes.office.npcs=(scenes.office.npcs||[]).filter(n=>n.id!=='marloes');
-scenes.office.hot=(scenes.office.hot||[]).filter(h=>h.fn!=='marloes'&&h.id!=='office_mar');
+// Restore the ORIGINAL opening room (V11/V12). From the reception the player
+// enters this shared desk overview, with Johanneke, Marloes and Sem's workspace.
+// The newer photograph belongs to ANOTHER office, opposite the toilet.
+scenes.office.name='Gezamenlijke werkvloer · Johanneke, Marloes en Sem';
+scenes.office.sub='Je ziet de bureaus van Johanneke, Marloes en Sem. Klik om dichterbij te kijken.';
+scenes.office.spawn=[760,620];
+scenes.office.floor=[[300,716],[950,716],[880,467],[805,377],[700,338],[620,432],[420,520]];
+// Retain every original workstation NPC and original interaction from the old room.
+// Convert the two close-up points into true zoom entries; Sem's original door remains.
+const marloesOverview=scenes.office.hot.find(h=>h.id==='office_mar');
+if(marloesOverview){delete marloesOverview.fn;marloesOverview.door='borreoffice';marloesOverview.label='Inzoomen op Marloes’ bureau';}
+const johannekeOverview=scenes.office.hot.find(h=>h.id==='office_jo');
+if(johannekeOverview){delete johannekeOverview.fn;johannekeOverview.door='johanneke_desk';johannekeOverview.label='Inzoomen op Johannekes bureau';}
+const semOverview=scenes.office.hot.find(h=>h.id==='office_sem');
+if(semOverview){semOverview.label='Inzoomen op Sems bureau';}
+scenes.johanneke_desk={
+ name:'Bij Johannekes bureau',
+ sub:'Een close-up van Johannekes werkplek. Praat met haar over de productie.',
+ bg:'office',spawn:[310,647],floor:[[15,715],[945,715],[880,547],[70,547]],
+ hot:[
+  {id:'v145_jo_zoom_talk',label:'Praat met Johanneke',fn:'johanneke',rect:[296,175,391,414],at:[570,621]},
+  {id:'v145_jo_zoom_back',label:'Uitzoomen naar de gezamenlijke werkvloer',door:'office',rect:[0,524,174,193],at:[230,640]}
+ ],npcs:[{id:'johanneke',name:'Johanneke',at:[502,575],kind:'desk',portrait:'johanneke_wierbos',full:'johanneke',scale:1.45,interact:'johanneke'}],extra:[]
+};
 scenes.breakroom.name='Keuken';
 scenes.breakroom.sub='Zwarte kastjes, spoelbak en het koffiezetapparaat.';
 scenes.breakroom.spawn=[540,640];
@@ -52,33 +70,38 @@ scenes.print.name='Drukkerij — voorkant';
 scenes.print.sub='De productiemachines en de doorgang naar de achterzijde.';
 scenes.print.spawn=[470,650];
 scenes.print.floor=[[20,715],[950,715],[896,479],[670,410],[330,410],[63,476]];
+// V12's original traversable world is the base; the photo hubs are extensions,
+// not a wholesale replacement. Every old edge is retained unless the physical
+// entrance to its room has genuinely moved (none in this restoration).
 const adj={
  outside:['reception'],
- reception:['outside','reception_right','hall','central_hub'],
- reception_right:['reception','meeting'],
- hall:['reception','central_hub','office','restroom','storage','maarten','marthijn','sem','borreoffice','managers'],
- office:['hall','sem','managers','borreoffice'],
- sem:['office','hall'],
+ reception:['outside','office','reception_right','central_hub','hall'],
+ office:['reception','sem','managers','borreoffice','hall','print','johanneke_desk'],
+ sem:['office'],
  managers:['office','jarno_sanne','meeting','hall'],
  jarno_sanne:['managers','machine2'],
- meeting:['reception_right','managers'],
- borreoffice:['office','underdesk','folding','hall'],
+ meeting:['managers','hall','reception_right'],
+ borreoffice:['office','folding','underdesk'],
+ hall:['office','meeting','breakroom','restroom','storage','marthijn','maarten','print','reception','central_hub','shared_office'],
+ breakroom:['hall','folding','central_hub'],
+ restroom:['hall'],
+ storage:['hall','print'],
+ marthijn:['hall'],
+ maarten:['hall','cabinet'],
+ cabinet:['maarten'],
+ print:['hall','office','storage','machine2','central_hub','storage_hub','press_rear','folding'],
+ machine2:['print','jarno_sanne','cutting'],
+ cutting:['machine2','folding'],
+ folding:['cutting','breakroom','borreoffice','print'],
  underdesk:['borreoffice'],
+ johanneke_desk:['office'],
+ reception_right:['reception','meeting'],
  central_hub:['reception','hall','canteen_hub','breakroom','print'],
  canteen_hub:['central_hub','packing_workroom'],
  packing_workroom:['canteen_hub','storage_hub'],
  storage_hub:['packing_workroom','print'],
- print:['central_hub','storage_hub','press_rear','machine2','storage','folding'],
  press_rear:['print'],
- breakroom:['central_hub'],
- restroom:['hall'],
- storage:['hall','print'],
- maarten:['hall','cabinet'],
- marthijn:['hall'],
- cabinet:['maarten'],
- machine2:['print','jarno_sanne','cutting'],
- cutting:['machine2','folding'],
- folding:['cutting','borreoffice','print']
+ shared_office:['hall']
 };
 for(const [id,list] of Object.entries(adj))if(!scenes[id])throw Error('World node not present: '+id);
 for(const [id,list] of Object.entries(adj))for(const dest of list)if(!adj[dest]?.includes(id))throw Error('Non-reciprocal: '+id+' -> '+dest);
@@ -86,7 +109,8 @@ for(const id of Object.keys(G))delete G[id];
 for(const [id,list] of Object.entries(adj))G[id]=list.slice();
 const routeLabels={
  outside:'Buiten',reception:'Entree en balie',reception_right:'Glazen vergaderdeur',
- hall:'Centrale gang',office:'Gezamenlijk kantoor',sem:'Sems werkplek',
+ hall:'Centrale gang',office:'Gezamenlijke bureaus',sem:'Sems bureau',
+ johanneke_desk:'Johannekes bureau (zoom)',shared_office:'Kantoor tegenover de wc',
  managers:'Management',jarno_sanne:'Sanne en Jarno',meeting:'Vergaderruimte',
  borreoffice:'Marloes’ werkplek',underdesk:'Onder Marloes’ bureau',
  central_hub:'Werkvloer bij trap',canteen_hub:'Kantinetafel',
@@ -122,7 +146,7 @@ const portals={
  breakroom:[
   ['central_hub',[723,167,227,400]]
  ],
- office:[
+ shared_office:[
   ['hall',[796,149,156,403]]
  ]
 };
@@ -228,6 +252,23 @@ function paintPhotoRoom(id,t){
  ctx.restore();
 }
 drawWorld=function(t){
+ if(s.scene==='johanneke_desk'){
+  const src=images.bg_office;
+  ctx.save();ctx.clearRect(0,0,960,720);
+  if(loaded(src)){
+   // Close-up of Johanneke's ORIGINAL desk in the shared office overview,
+   // distinct from the overview image: crop and zoom, not reuse as another room.
+   const iw=src.naturalWidth,ih=src.naturalHeight;
+   ctx.drawImage(src,Math.floor(iw*.30),Math.floor(ih*.29),
+    Math.floor(iw*.46),Math.floor(ih*.53),0,0,960,720);
+  }else{
+   ctx.fillStyle='#293943';ctx.fillRect(0,0,960,720);
+  }
+  for(const npc of scenes.johanneke_desk.npcs||[])if(typeof drawNPC==='function')drawNPC(npc,t);
+  if(typeof drawPlayer==='function')drawPlayer(t);
+  ctx.restore();
+  drawLabel();return;
+ }
  if(isPhoto(s.scene)){paintPhotoRoom(s.scene,t);drawLabel();return;}
  previousDraw(t);drawLabel();
 };
