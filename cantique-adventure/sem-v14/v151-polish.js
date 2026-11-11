@@ -51,7 +51,7 @@ if(!(room('print').npcs||[]).some(n=>n.id==='rineke'))
  room('print').npcs.push({id:'rineke',name:'Rineke',at:[758,646],
   kind:'v151Portrait',full:'rineke_boers',scale:1,interact:'v151Rineke'});
 addHot('print',{id:'v151_rineke',label:'Praat met Rineke',fn:'v151Rineke',
- rect:[665,330,181,305],at:[702,645]});
+ rect:[660,400,153,235],at:[702,645]});
 actions.v151Rineke=()=>{
  say('Rineke','Die drukmachines hebben vandaag meer kuren dan wij deadlines.',[
   {t:'Waar vind ik onderdelen voor de printers?',f:()=>say('Rineke','Kijk bij de grote snijmachine. Er liggen soms losse machineonderdelen.',[{t:'Bedankt!',f:closeDialog}])},
@@ -100,6 +100,17 @@ drawPlayer=function(t){
  const zoom=Math.min(1.95,Math.max(1.40,1.62+(s.y-455)/650));
  ctx.save();ctx.translate(s.x,s.y);ctx.scale(zoom,zoom);
  ctx.translate(-s.x,-s.y);oldPlayer(t);ctx.restore();
+};
+// Readable clue: the photo note must not lose clicks to the old
+// over-sized science-fiction appliance rectangle underneath it.
+const originalHotspot=hotspotFound;
+hotspotFound=function(x,y){
+ if(s.scene==='breakroom'){
+  const h=room('breakroom').hot.find(v=>v.id==='break_dirk');
+  const r=h?.rect;
+  if(r&&x>=r[0]&&x<=r[0]+r[2]&&y>=r[1]&&y<=r[1]+r[3])return h;
+ }
+ return originalHotspot(x,y);
 };
 // Two-step repair: investigate, fetch the EXISTING gear from machine2,
 // select it from inventory, then use it on the opened printer.
