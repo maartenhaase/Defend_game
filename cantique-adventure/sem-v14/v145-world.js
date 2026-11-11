@@ -265,8 +265,8 @@ drawWorld=function(t){
    // Close-up of Johanneke's ORIGINAL desk in the shared office overview,
    // distinct from the overview image: crop and zoom, not reuse as another room.
    const iw=src.naturalWidth,ih=src.naturalHeight;
-   ctx.drawImage(src,Math.floor(iw*.30),Math.floor(ih*.29),
-    Math.floor(iw*.46),Math.floor(ih*.53),0,0,960,720);
+   ctx.drawImage(src,Math.floor(iw*.30),Math.floor(ih*.27),
+    Math.floor(iw*.48),Math.floor(ih*.48),0,0,960,720);
   }else{
    ctx.fillStyle='#293943';ctx.fillRect(0,0,960,720);
   }
