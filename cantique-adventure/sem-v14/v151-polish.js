@@ -41,6 +41,7 @@ for(const n of room('print').npcs||[])if(n.id==='fenneke'){
 for(const n of room('breakroom').npcs||[]) n.v15Hidden=false;
 // One separate, clickable woman in the kitchen. Use her verified labeled portrait,
 // not an unrelated colleague's body or a baked-in figure from a screenshot.
+room('breakroom').npcs ||= [];
 if(!(room('breakroom').npcs||[]).some(n=>n.id==='dianne')) {
  room('breakroom').npcs.push({id:'dianne',name:'Dianne',at:[466,644],
   kind:'v151Portrait',full:'dianne',scale:1,interact:'v13Dianne'});
