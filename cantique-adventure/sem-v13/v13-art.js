@@ -193,6 +193,12 @@ hall.extra=[];
 hall.hot=cleanHallDoors.map((d,i)=>({id:'v13hall_'+i,label:d.label,door:d.dest,rect:d.rect,at:d.at}));
 const warning=V.items.find(a=>a.id==='v13_warning');
 if(warning)warning.scene='print';
+// Preserve the actual office exit in the photograph, but reroute it to the
+// shared workplace instead of the old, visually incompatible corridor.
+for(const id of ['marthijn','maarten']){
+ const room=scenes[id];if(!room)continue;
+ for(const h of room.hot){if(h.door==='hall'){h.door='office';h.label='Terug naar de werkvloer';}}
+}
 const doorModels={};
 for(const [id,adj] of Object.entries(graph)){
  const scene=scenes[id];if(!scene)continue;
