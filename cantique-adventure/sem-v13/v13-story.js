@@ -1,7 +1,7 @@
-/* SEM IN CANTIQUE V13 — sciencefiction quest engine. In-world events are fiction. */
+/* SEM IN CANTIQUE V13.2 — sciencefiction quest engine. In-world events are fiction. */
 (function(){
 'use strict';
-const V=window.CANTIQUE_V13={version:'13.1',items:[],gatherNames:['Maarten','Carmen','Sanne','Jarno','Erik','Marloes','Johanneke','Fenneke','Coen'],known:{}};
+const V=window.CANTIQUE_V13={version:'13.2',items:[],gatherNames:['Maarten','Carmen','Sanne','Jarno','Erik','Marloes','Johanneke','Fenneke','Coen'],known:{}};
 const F=k=>!!s.flags['v13_'+k], S=(k,val=true)=>{s.flags['v13_'+k]=val;save();return val};
 const clean=raw=>String(raw||'').replace(/\b(godverdomme|verdomme|godsamme|tering|fokking|fucking|kut|shit|jezus)\b/gi,'verdorie').replace(/\b(achterlijke idioot|mafkees)\b/gi,'vreemde snuiter');
 const prevSay=say;
@@ -40,17 +40,50 @@ function quiz(title,questions,finish){
 }
 function sequence(title,frames,onEnd){
  closeDialog();modal='v13cut';const box=$('minigame');box.hidden=false;let step=0;
+ const actor=(name,cl='')=>'<img class="v13photoactor '+cl+'" src="'+escapeHtml(V.actorSource?.(name)||portrait(name)||'')+'" alt="'+escapeHtml(name)+'">';
+ const prop=(key,cl='')=>'<img class="v13cinema-prop '+cl+'" src="'+escapeHtml(imagePaths[key]||'')+'" alt="">';
+ const backdrop=key=>{
+  const source=window.V10_ASSETS?.[key]||imagePaths['bg_'+s.scene]||'';
+  return source?'<img class="v13cinema-bg" src="'+escapeHtml(source)+'" alt="">':'';
+ };
+ const dog=(carry=false)=>'<div class="v13dog-photo-run">'+actor('Borre','v13dog-photo')+(carry?prop('v13art_v13_clean','v13carried-kidney'):'')+'</div>';
  function visual(){
-  const photo=name=>escapeHtml(portrait(name));
-  if(title==='Een oprecht compliment')return '<div class="v13scene-hug"><div class="v13floor"></div><div class="v13actor v13left"><img src="'+photo('Sem')+'" alt="Sem"></div><div class="v13actor v13right"><img src="'+photo('Dirk-Jan')+'" alt="Dirk-Jan"></div></div>';
-  if(title==='Een onverwacht happy end')return '<div class="v13scene-dance"><div class="v13tabletop"></div><div class="v13dancer"><img src="'+photo('Jansje')+'" alt="Jansje"></div><span class="v13party v13party-a"></span><span class="v13party v13party-b"></span><span class="v13dog"></span></div>';
-  if(title==='Dianne poetst de straalkop'||title==='De laatste poetsbeurt')return '<div class="v13scene-clean"><div class="v13cleaner"><img src="'+photo('Dianne')+'" alt="Dianne"></div><span class="v13device"></span><span class="v13cloth"></span></div>';
-  return '<span class="v13beam"></span><span class="v13orb"></span><span class="v13dog"></span><span class="v13spark a"></span><span class="v13spark b"></span>';
+  if(title==='Een oprecht compliment')return backdrop('room_office')+
+   '<div class="v13photo-hug">'+actor('Sem','v13photo-sem')+actor('Dirk-Jan','v13photo-dirk')+'</div>';
+  if(title==='Dianne poetst de straalkop'||title==='De laatste poetsbeurt')return backdrop('room_breakroom')+
+   actor('Dianne','v13photo-cleaner')+prop('v13art_v13_blaster','v13clean-device')+prop('v13art_v13_cloth','v13clean-cloth')+'<span class="v13glow-clean"></span>';
+  if(title==='Een onverwacht happy end'){
+   if(step===0)return backdrop('room_borreoffice')+dog(false)+prop('v13art_v13_yellow','v13yellow-toy');
+   if(step===1)return backdrop('room_borreoffice')+actor('Marloes','v13photo-center')+dog(false);
+   return backdrop('room_cutting')+actor('Jansje','v13photo-dance')+
+    '<span class="v13party v13party-a"></span><span class="v13party v13party-b"></span><span class="v13party v13party-c"></span>';
+  }
+  if(title==='De eerste Nierstraal'){
+   return backdrop('room_cutting')+actor('Sem','v13photo-sem-beam')+
+    prop('v13art_v13_blaster','v13machine-head')+
+    (step>0?'<span class="v13energy-ring"></span><span class="v13beam"></span><span class="v13spark a"></span><span class="v13spark b"></span>':'')+
+    (step>=3&&step<4?prop('v13art_v13_clean','v13float-kidney'):'')+(step===4?dog(true):'');
+  }
+  if(title==='De Nierstraal 3000 — Finale'){
+   const crowd=V.gatherNames.filter(n=>V.isKnown('gather_'+n)).map((n,i)=>'<img class="v13cinema-crowd" style="left:'+(5+i*10)+'%" src="'+escapeHtml(V.actorSource?.(n)||portrait(n)||'')+'" alt="'+escapeHtml(n)+'">').join('');
+   return backdrop('room_cutting')+crowd+actor('Jansje','v13photo-jansje-beam')+
+    '<span class="v13energy-ring"></span><span class="v13beam"></span><span class="v13spark a"></span><span class="v13spark b"></span>'+
+    prop(step===1?'v13art_v13_yellow':'v13art_v13_clean','v13float-kidney');
+  }
+  if(title==='De energienier herstellen')return backdrop('room_breakroom')+actor('Sem','v13photo-sem-beam')+
+   prop(step<3?'v13art_v13_chewed':'v13art_v13_clean','v13float-kidney')+
+   '<span class="v13energy-ring"></span><span class="v13beam"></span><span class="v13spark a"></span>';
+  return '<span class="v13beam"></span><span class="v13orb"></span>';
  }
+ let timer=null;
+ const stopFrames=()=>{if(timer){clearInterval(timer);timer=null;}};
  const render=()=>{
-  const f=frames[step],kind=title==='Een oprecht compliment'?'hug':title==='Een onverwacht happy end'?'dance':'beam';
-  box.innerHTML='<div class="v13cinema"><div class="v13cinema-stage v13-stage-'+kind+'" data-step="'+step+'">'+visual()+'</div><small>SEM IN CANTIQUE · FICTIEVE SCIENCEFICTION</small><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(f)+'</p><button class="primary v13next">'+(step===frames.length-1?'Afronden':'Verder · '+(step+1)+'/'+frames.length)+'</button></div>';
-  box.querySelector('.v13next').onclick=()=>{if(++step===frames.length){closeMini();onEnd?.();}else render()};
+  stopFrames();
+  const f=frames[step];
+  box.innerHTML='<div class="v13cinema"><div class="v13cinema-stage v13-photo-stage" data-step="'+step+'">'+visual()+'</div><small>SEM IN CANTIQUE · FICTIEVE SCIENCEFICTION</small><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(f)+'</p><button class="primary v13next">'+(step===frames.length-1?'Afronden':'Verder · '+(step+1)+'/'+frames.length)+'</button></div>';
+  const sem=box.querySelector('.v13photo-sem'),cycle=V.actorFrames||[];
+  if(sem&&cycle.length>1&&step===1){let i=0;timer=setInterval(()=>{if(!sem.isConnected||modal!=='v13cut'){stopFrames();return;}sem.src=cycle[i++%cycle.length];},120);}
+  box.querySelector('.v13next').onclick=()=>{if(++step===frames.length){stopFrames();closeMini();onEnd?.();}else render()};
  };
  render();
 }
@@ -255,17 +288,37 @@ wrap('xaviera',(old)=>{
  talk('Xaviera','Ik sta even buiten. Hier kun je tenminste rustig nadenken.',options);
 });
 function miniWink(){
- const pattern=['Links','Rechts','Links','Beide'];let i=0;
- const show=()=>panel('Carmens knipoogcode','Carmen toont: links — rechts — links — beide. Herhaal nu stap '+(i+1)+' van 4.',[['Links',()=>press('Links')],['Rechts',()=>press('Rechts')],['Beide',()=>press('Beide')]]);
- const press=v=>{if(v!==pattern[i]){i=0;sound('wrong');toast('De code klopt niet. Opnieuw proberen.');show();return;}i++;if(i===4){closeMini();done('carmenWink',20,'Carmens knipoogcode ontcijferd');reply('Carmen','Hier, twintig euro. Ik krijg toch genoeg geld van mijn vader.');}else show();};
- show();
+ const pattern=['Links','Rechts','Links','Rechts'];let i=0;
+ const box=$('minigame'),normal=V.actorSource?.('Carmen')||portrait('Carmen'),wink=window.V10_ASSETS?.npc_carmen_wink||normal;
+ const press=v=>{
+  if(v!==pattern[i]){i=0;sound('wrong');toast('De code klopt niet. Bekijk Carmens knipoogjes nog eens.');showGuess();return;}
+  if(++i===pattern.length){closeMini();done('carmenWink',20,'Carmens knipoogcode ontcijferd');reply('Carmen','Hier, twintig euro. Ik krijg toch genoeg geld van mijn vader.');}
+  else showGuess();
+ };
+ const showGuess=()=>panel('Carmens knipoogcode','Welke kant knipoogde Carmen bij stap '+(i+1)+' van '+pattern.length+'?',[['Links',()=>press('Links')],['Rechts',()=>press('Rechts')],['Opnieuw kijken',showDemo]]);
+ function showDemo(){
+  closeDialog();modal='v13game';box.hidden=false;
+  box.innerHTML='<div class="v13panel"><h3>Kijk goed naar Carmen</h3><div class="v13wink-photo"><img alt="Carmen" src="'+escapeHtml(normal)+'"></div><p class="v13wink-instruction">Onthoud vier knipoogjes.</p><button class="secondary v13exit">Stoppen</button></div>';
+  box.querySelector('.v13exit').onclick=closeMini;
+  const im=box.querySelector('.v13wink-photo img'),label=box.querySelector('.v13wink-instruction');
+  let frame=0;
+  const pulse=()=>{
+   if(!im.isConnected||modal!=='v13game')return;
+   if(frame>=pattern.length){im.src=normal;im.style.transform='none';label.textContent='Onthouden?';setTimeout(()=>{if(im.isConnected&&modal==='v13game')showGuess();},500);return;}
+   im.src=wink;im.style.transform=pattern[frame]==='Rechts'?'scaleX(-1)':'none';
+   label.textContent='Knipoog '+(frame+1)+' van '+pattern.length;
+   setTimeout(()=>{if(!im.isConnected||modal!=='v13game')return;im.src=normal;im.style.transform='none';frame++;setTimeout(pulse,550);},700);
+  };
+  setTimeout(pulse,600);
+ }
+ showDemo();
 }
 wrap('carmen',(old)=>{
  const opts=[];
  if(!F('carmenWink'))opts.push({t:'Ik wil je knipoogvolgorde raden.',f:miniWink});
  if(F('gathering')&&!F('gather_Carmen'))opts.push({t:'Ga je mee naar de snijtafel?',f:()=>V.invite('Carmen')});
  opts.push({t:'Vertel eens over je ontwerp.',f:()=>{closeDialog();old?.();}});
- talk('Carmen','Carmen knipoogt: links, rechts, links, beide. Er zit een patroon in.',opts);
+ talk('Carmen','Carmen glimlacht geheimzinnig. In haar knipoogjes zit een code.',opts);
 });
 wrap('sanne',(old)=>{
  const opts=[];
