@@ -82,7 +82,7 @@ const adj={
  jarno_sanne:['managers','machine2'],
  meeting:['managers','hall','reception_right'],
  borreoffice:['office','folding','underdesk'],
- hall:['office','meeting','breakroom','restroom','storage','marthijn','maarten','print','reception','central_hub','shared_office'],
+ hall:['office','meeting','managers','breakroom','restroom','storage','marthijn','maarten','print','reception','central_hub','shared_office'],
  breakroom:['hall','folding','central_hub'],
  restroom:['hall'],
  storage:['hall','print'],
