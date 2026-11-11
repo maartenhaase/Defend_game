@@ -41,12 +41,12 @@ for(const sc of Object.values(scenes)){
 }
 const placements={
  breakroom:{
-  break_coffee:[[75,410,126,140],[237,647]],
-  break_cans:[[425,480,115,85],[485,637]],
-  break_beer:[[519,326,131,217],[648,644]],
-  break_water:[[250,480,139,116],[391,638]],
-  break_cloth:[[382,513,80,76],[445,639]],
-  break_dirk:[[671,399,117,103],[670,638]]
+  break_coffee:[[55,384,117,106],[233,647]],
+  break_cans:[[281,415,100,80],[385,637]],
+  break_beer:[[390,272,125,290],[583,644]],
+  break_water:[[170,427,137,94],[383,638]],
+  break_cloth:[[285,466,85,80],[435,639]],
+  break_dirk:[[531,272,105,80],[609,638]]
  },
  print:{
   print_fen:[[515,445,132,189],[520,645]],
@@ -55,8 +55,8 @@ const placements={
   print_note4:[[674,397,82,74],[646,643]]
  },
  borreoffice:{
-  v14_marloes_seated:[[132,205,247,300],[394,634]],
-  v14_item_v14_lensmug:[[708,374,68,75],[697,637]]
+  v14_marloes_seated:[[150,202,267,345],[444,634]],
+  v14_item_v14_lensmug:[[700,243,96,101],[697,637]]
  }
 };
 for(const [id,dict] of Object.entries(placements)){
@@ -66,7 +66,7 @@ for(const [id,dict] of Object.entries(placements)){
  }
 }
 const mug=V.items.find(x=>x.id==='v14_lensmug');
-if(mug)Object.assign(mug,{scene:'borreoffice',x:708,y:377,w:67,h:70});
+if(mug)Object.assign(mug,{scene:'borreoffice',x:705,y:254,w:85,h:92});
 const places={print:[[496,659,.72],[614,670,.65]],folding:[[645,637,.72],[792,632,.67]],central_hub:[[470,658,.74]],shared_office:[[545,643,.74]]};
 for(const [room,pts] of Object.entries(places)){
  (scenes[room]?.npcs||[]).forEach((n,i)=>{if(pts[i]){n.at=pts[i].slice(0,2);n.scale=pts[i][2];}});
