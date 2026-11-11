@@ -16,17 +16,20 @@ const labeledFaces={
  'Xaviera':'xaviera_pieter','Dirk-Jan':'dirkjan_dokters','Dirkjan':'dirkjan_dokters',
  'Rineke':'rineke_boers','Timo':'timo_reukema'
 };
-const unconfirmed=['Erik','Marthijn'];
+const unconfirmed=['Marthijn'];
+const erikSrc=window.V10_ASSETS?.npc_erik;
+if(erikSrc){const im=new Image();im.onload=()=>{try{const ca=document.createElement('canvas');ca.width=256;ca.height=256;const c=ca.getContext('2d'),w=im.naturalWidth,h=im.naturalHeight;const d=Math.min(w*.75,h*.29);c.drawImage(im,(w-d)/2,0,d,d,0,0,256,256);imagePaths.portrait_erik=ca.toDataURL('image/png');}catch(e){}};im.src=erikSrc;}
 const oldPortrait=portrait;
 const neutralPortrait=name=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#2d3e49"/><stop offset="1" stop-color="#101b24"/></linearGradient></defs><rect width="320" height="320" fill="url(#g)"/><circle cx="160" cy="106" r="56" fill="#637781"/><path d="M43 294Q52 181 160 181Q271 181 280 294" fill="#4c5c68"/><text x="160" y="309" text-anchor="middle" fill="#ecdfc3" font-family="sans-serif" font-size="24">'+String(name).replace(/[<>&]/g,'')+'</text></svg>');
 portrait=function(name){
+ if(name==='Erik'&&erikSrc)return imagePaths.portrait_erik||V.actorSource?.('Erik')||erikSrc;
  const id=labeledFaces[name];
  if(id&&imagePaths['portrait_'+id])return imagePaths['portrait_'+id];
  if(name==='Maarten'&&imagePaths['full_maarten'])return imagePaths['full_maarten'];
  if(imagePaths['portrait_'+String(name).toLowerCase()])return imagePaths['portrait_'+String(name).toLowerCase()];
  return neutralPortrait(name);
 };
-V.portraitAudit={labeled:Object.keys(labeledFaces),unconfirmed,missing:Object.entries(labeledFaces).filter(([,id])=>!imagePaths['portrait_'+id]).map(([name])=>name)};
+V.portraitAudit={labeled:[...Object.keys(labeledFaces),'Erik'],unconfirmed,missing:Object.entries(labeledFaces).filter(([,id])=>!imagePaths['portrait_'+id]).map(([name])=>name)};
 const oldToast=toast;
 toast=function(text){return oldToast(String(text).replace(/\b(godverdomme|verdomme|godsamme|tering|fokking|fucking|kut|shit|jezus)\b/gi,'verdorie'));};
 const oldNote=note;note=function(text){return oldNote(String(text).replace(/\b(godverdomme|verdomme|godsamme|tering|fokking|fucking|kut|shit|jezus)\b/gi,'verdorie'));};
