@@ -70,6 +70,12 @@ scenes.print.name='Drukkerij — voorkant';
 scenes.print.sub='De productiemachines en de doorgang naar de achterzijde.';
 scenes.print.spawn=[470,650];
 scenes.print.floor=[[20,715],[950,715],[896,479],[670,410],[330,410],[63,476]];
+// The earlier V13 graphics layer redirected these two original office exits
+// to the shared workplace; undo that visual-only rewrite, preserving the actual
+// V12 corridor door and its tap target in both rooms.
+for(const id of ['maarten','marthijn'])for(const h of scenes[id].hot||[]){
+ if(h.door==='office'&&(h.id==='maarten_hall'||h.id==='marth_hall'||/terug naar de werkvloer/i.test(h.label||''))){h.door='hall';h.label='Terug naar de centrale gang';}
+}
 // V12's original traversable world is the base; the photo hubs are extensions,
 // not a wholesale replacement. Every old edge is retained unless the physical
 // entrance to its room has genuinely moved (none in this restoration).
@@ -283,12 +289,17 @@ V.worldAudit=()=>{
  const all=Object.keys(scenes),noConnections=all.filter(id=>!G[id]?.length);
  const inaccessible=all.filter(id=>!reachable('reception').includes(id));
  const broken=Object.entries(G).flatMap(([id,list])=>list.filter(dest=>!G[dest]?.includes(id)).map(dest=>id+' > '+dest));
+ const originalEdges={reception:['outside','office'],office:['reception','sem','managers','borreoffice','hall','print'],
+ managers:['office','jarno_sanne','meeting'],meeting:['managers','hall'],hall:['office','meeting','breakroom','restroom','storage','marthijn','maarten','print'],
+ breakroom:['hall','folding'],print:['hall','office','storage','machine2'],marthijn:['hall'],maarten:['hall','cabinet'],
+ jarno_sanne:['managers','machine2'],storage:['hall','print'],cutting:['machine2','folding'],folding:['cutting','breakroom','borreoffice']};
+ const missingLegacyLinks=Object.entries(originalEdges).flatMap(([id,list])=>list.filter(to=>!G[id]?.includes(to)).map(to=>id+' > '+to));
  const photosUsed=Object.entries(art),duplicatePhotos=photosUsed.filter(([id,src],i)=>photosUsed.findIndex(x=>x[1]===src)!==i).map(x=>x[0]);
  const missingDoorHot=Object.entries(G).flatMap(([id,list])=>list.filter(dest=>!(scenes[id]?.hot||[]).some(h=>h.door===dest)&&!(scenes[id]?.hot||[]).some(h=>h.id==='v145_routes')).map(dest=>id+' > '+dest));
  return {version:V.version,rooms:all.length,photoRooms:photosUsed.length,photoAssets:art,
   missingAssets:Object.entries(photos).filter(([id,im])=>im.complete&&!im.naturalWidth).map(([id])=>id),
   loadedAssets:Object.entries(photos).filter(([id,im])=>loaded(im)).map(([id])=>id),
-  inaccessible,noConnections,broken,duplicatePhotos,missingDoorHot,
+  inaccessible,noConnections,broken,missingLegacyLinks,duplicatePhotos,missingDoorHot,
   portalLinks:Object.values(portals).reduce((total,arr)=>total+arr.length,0),
   underDeskOnlyBorre:(scenes.underdesk.npcs||[]).every(x=>x.name!=='Marloes')};
 };
