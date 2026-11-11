@@ -189,53 +189,47 @@ canvas?.addEventListener('pointerdown',()=>{if(s.scene==='press_rear'&&!printerR
 // The inside of the print machine is drawn as a separate scene overlay, not a
 // giant floating object icon. Its gears and damage are highlighted subtly.
 function gear(x,y,r,broken,t){
- ctx.save();ctx.translate(x,y);ctx.rotate(broken?-.05:Math.sin(t/1200)*.03);
- ctx.fillStyle='#89959a';ctx.strokeStyle='#c3c7c4';ctx.lineWidth=3;
- ctx.beginPath();
- for(let i=0;i<48;i++){const a=i*Math.PI/24;
-   const rr=(i%4<2?r*.85:r)*(broken&&i>4&&i<10?.58:1);
-   const xx=Math.cos(a)*rr,yy=Math.sin(a)*rr;
-   if(!i)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);
+ ctx.save();ctx.translate(x,y);ctx.rotate(broken?-.06:Math.sin(t/1200)*.01);
+ ctx.shadowColor='#000b';ctx.shadowBlur=4;ctx.fillStyle='#9da7ad';
+ ctx.strokeStyle='#d4d6ce';ctx.lineWidth=1.8;ctx.beginPath();
+ for(let i=0;i<48;i++){
+  const a=i*Math.PI/24;
+  const notch=broken&&i>=4&&i<=10?.56:1;
+  const rr=(i%4<2?r*.85:r)*notch;
+  if(i===0)ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);
+  else ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);
  }
  ctx.closePath();ctx.fill();ctx.stroke();
- ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(0,0,r*.36,0,7);ctx.fill();
- ctx.globalCompositeOperation='source-over';ctx.strokeStyle='#455056';ctx.lineWidth=2;
- ctx.beginPath();ctx.arc(0,0,r*.37,0,7);ctx.stroke();ctx.restore();
+ // Never use destination-out on the main canvas: it would erase the real photo.
+ ctx.shadowBlur=0;ctx.fillStyle='#172126';ctx.beginPath();ctx.arc(0,0,r*.34,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#6a7477';ctx.lineWidth=2;ctx.stroke();ctx.restore();
 }
 function drawPrinter(t){
- const fixed=printerRepaired(),shudder=fixed?0:Math.sin(t/63)*1.2;
- const x=538+shudder,y=380,w=270,h=183;
+ // Keep the real photographic printer, open inspection compartment and machines.
+ // Only the interactive broken gear is a separate animated prop.
+ const fixed=printerRepaired(),shudder=fixed?0:Math.sin(t/140)*.9;
+ const x=620+shudder,y=548;
  ctx.save();
- ctx.shadowColor='#000b';ctx.shadowBlur=12;
- ctx.fillStyle='#171f24';ctx.strokeStyle='#bac4c6';ctx.lineWidth=10;
- ctx.beginPath();ctx.roundRect(x,y,w,h,5);ctx.fill();ctx.stroke();
- ctx.shadowBlur=0;
- const g=ctx.createLinearGradient(x,y,x+w,y+h);
- g.addColorStop(0,'#253038');g.addColorStop(.55,'#111a1f');g.addColorStop(1,'#36444a');
- ctx.fillStyle=g;ctx.fillRect(x+10,y+8,w-20,h-16);
- ctx.fillStyle='#656d6e';ctx.fillRect(x+14,y+42,240,13);
- ctx.fillRect(x+14,y+147,240,11);
- ctx.save();ctx.beginPath();ctx.rect(x+10,y+10,w-20,h-20);ctx.clip();
- gear(x+95,y+103,48,!fixed,t);gear(x+163,y+85,32,false,t);
- ctx.restore();
- // Side hinge and open maintenance flap rest on the machine, not in mid-air.
- ctx.fillStyle='#b7bab4';ctx.strokeStyle='#4c5558';ctx.lineWidth=5;
- ctx.beginPath();ctx.moveTo(x,y+h);ctx.lineTo(x+w,y+h);
- ctx.lineTo(x+w+34,y+h+57);ctx.lineTo(x-20,y+h+57);ctx.closePath();
- ctx.fill();ctx.stroke();
  if(!fixed){
-  const phase=.45+.28*Math.sin(t/450);
-  ctx.strokeStyle='rgba(247,209,135,'+phase+')';ctx.lineWidth=4;
-  ctx.beginPath();ctx.arc(x+96,y+101,62,.2,2.45);ctx.stroke();
-  ctx.beginPath();ctx.arc(x+159,y+86,48,3.2,5.4);ctx.stroke();
+  ctx.shadowColor='rgba(255,205,118,.46)';ctx.shadowBlur=13;
+ }
+ gear(x,y,23,!fixed,t);
+ if(!fixed){
+  ctx.strokeStyle='rgba(255,220,143,'+(.23+.16*Math.sin(t/475))+')';
+  ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(x,y,31,-.2,1.7);ctx.stroke();
  }
  ctx.restore();
 }
+const cleanerPhotoPatch=new Image();
+cleanerPhotoPatch.decoding='async';
+cleanerPhotoPatch.src='./assets/v152_press_no_mechanic_patch.webp';
 const oldWorld=drawWorld;
 drawWorld=function(t){
  oldWorld(t);
  if(s.scene==='press_rear'){
-   ctx.save();drawPrinter(t);
+   ctx.save();
+   if(ready(cleanerPhotoPatch))ctx.drawImage(cleanerPhotoPatch,596,260,67,107);
+   drawPrinter(t);
    // Johanneke is independent of the photographic room. Reuse the existing
    // correctly attributed full-body sprite, not a baked-in mechanic.
    const jo=imageGet('full_johanneke');
