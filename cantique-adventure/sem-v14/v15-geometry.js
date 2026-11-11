@@ -12,7 +12,7 @@ const V15=window.CANTIQUE_V15={version:'15.0',objects:[],routes:{},npcManifest:[
 const photos=new Set(['reception_right','central_hub','canteen_hub','packing_workroom','storage_hub','print','press_rear','breakroom','shared_office']);
 const portals={
  reception_right:[['reception',[0,286,116,334],'← Balie'],['meeting',[335,180,176,366],'Vergaderruimte']],
- central_hub:[['reception',[0,300,115,315],'← Receptie'],['canteen_hub',[237,330,200,250],'Kantine'],['breakroom',[774,225,177,340],'Keuken →'],['print',[484,346,153,228],'Drukkerij']],
+ central_hub:[['reception',[0,510,150,192],'← Receptie'],['canteen_hub',[40,350,300,208],'Kantine ←'],['breakroom',[772,280,180,318],'Keuken →'],['print',[462,329,199,274],'Drukkerij ↑']],
  canteen_hub:[['central_hub',[0,332,132,313],'← Werkvloer'],['packing_workroom',[810,322,149,309],'Werkplek →']],
  packing_workroom:[['canteen_hub',[0,260,155,355],'← Kantine'],['storage_hub',[807,310,152,313],'Berging →']],
  storage_hub:[['packing_workroom',[0,330,148,299],'← Werkplek'],['print',[810,296,149,331],'Drukkerij →']],
