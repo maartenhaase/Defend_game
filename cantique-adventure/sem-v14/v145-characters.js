@@ -5,13 +5,13 @@ const V=window.CANTIQUE_V13;if(!V)throw Error('Cantique 14.5 world must load fir
 const F=V.isKnown,S=V.setKnown;
 const k='v145_marloes',asset='./assets/v145_marloes_sprite.webp';
 const sprite=new Image();sprite.decoding='async';sprite.src=asset;
-const background=new Image();background.src='./assets/marloes-desk.webp';
+const background=new Image();background.src='./assets/v145_marloes_desk_clean.webp';
 const live=im=>!!im&&im.complete&&im.naturalWidth>0;
 let criedAt=0,relievedAt=0;
 const desk=scenes.borreoffice;
 desk.npcs=(desk.npcs||[]).filter(x=>x.name!=='Marloes');
 desk.hot=(desk.hot||[]).map(h=>{
- if(h.fn==='marloes'){h.rect=[293,138,320,455];h.at=[330,620];}
+ if(h.fn==='marloes'){h.rect=[58,164,320,455];h.at=[340,620];}
  return h;
 });
 function mood(t){
@@ -78,7 +78,7 @@ function drawTear(x,y,phase,a){
 function renderMarloes(t){
  if(!live(sprite))return;
  const now=t||0,mode=mood(now);
- const sw=264,sh=433,sx=309,sy=155;
+ const sw=257,sh=423,sx=104,sy=172;
  const bob=mode==='crying'?Math.sin(now/150)*2.4:Math.sin(now/1150)*1.6;
  ctx.save();
  ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=8;ctx.shadowOffsetY=5;
@@ -143,12 +143,29 @@ drawWorld=function(t){
  const now=Number(t)||0;
  ctx.save();
  if(s.scene==='borreoffice'){
-  // Paint our real independent sprite over the photographed desk scene.
-  // The character is always drawn separately and receives its own state changes.
+  // Remove the old baked-in Marloes completely: this is a DIFFERENT, real
+  // person-free photographic background, committed as a separate WebP asset.
+  if(live(background)){
+   ctx.clearRect(0,0,960,720);
+   ctx.drawImage(background,0,0,960,720);
+   // The original photographed lens-shaped mug has to disappear on pickup,
+   // independently of its interactive game-sprite.
+   if(F('v14_mugTaken')&&!F('v14_comforted')){
+    ctx.save();
+    ctx.filter='blur(10px)';
+    ctx.drawImage(background,592,344,116,156,704,353,118,157);
+    ctx.restore();
+   }
+  }
   renderMarloes(now);
   const mug=V.items.find(it=>it.id==='v14_lensmug');
-  if(mug&&V.isVisible(mug)&&live(images['v13art_v14_lensmug']))
+  if(mug&&(V.isVisible(mug)||F('v14_comforted'))&&live(images['v13art_v14_lensmug']))
    ctx.drawImage(images['v13art_v14_lensmug'],mug.x,mug.y,mug.w,mug.h);
+  if(typeof drawPlayer==='function')drawPlayer(now);
+  ctx.save();ctx.fillStyle='rgba(12,24,28,.9)';ctx.strokeStyle='rgba(236,211,160,.82)';
+  ctx.lineWidth=1.7;ctx.beginPath();ctx.roundRect(793,657,157,44,8);
+  ctx.fill();ctx.stroke();ctx.fillStyle='#fff1c8';ctx.textAlign='center';
+  ctx.font='bold 18px system-ui';ctx.fillText('🧭 Routes',871,686);ctx.restore();
  }
  if(s.scene==='restroom'&&!F('toiletDone')){
   const im=id=>images['v13art_'+id];
