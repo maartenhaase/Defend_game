@@ -1,0 +1,43 @@
+name: Cantique V15.1 browser regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cantique-adventure/**'
+      - '.github/workflows/cantique-v151-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks and required assets
+        run: |
+          node --check cantique-adventure/sem-v14/v151-polish.js
+          node --check cantique-adventure/sem-v14/v15-sprites.js
+          test -s cantique-adventure/sem-v15/index.html
+          test -s cantique-adventure/sem-v14/assets/v15_kitchen_empty.webp
+          test -s cantique-adventure/sem-v14/assets/v15_sem_idle_right.webp
+          grep -q 'v151-polish.js' cantique-adventure/sem-v15/index.html
+      - name: Install headless Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Start game and test real browser
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/cantique-http.log 2>&1 &
+          sleep 2
+          node cantique-adventure/tests/v151-browser-smoke.cjs
+      - name: Upload visual verification screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cantique-v151-scene-audit
+          path: screenshots/
+          if-no-files-found: ignore
