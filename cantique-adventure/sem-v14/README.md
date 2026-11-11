@@ -74,12 +74,20 @@ De bestaande gameplay, fotorealistische scènes, inventaris, saves en toegangsco
 | print | v145_press_hub.webp | Bestaande printmissie op nieuwe drukkerijfoto |
 | press_rear | v145_press_rear.webp | Tweede werkelijk andere kijkrichting drukkerij |
 | breakroom | v145_kitchen_hub.webp | Bestaande keuken met koffie- en waterinteracties |
-| office | v145_shared_office.webp | Gezamenlijk kantoor tegenover WC |
+| office | oorspronkelijke bg_office | **Oorspronkelijke gezamenlijke werkvloer met Johanneke, Marloes en Sem**. Klik op hun werkplekken om in te zoomen. | 
+| johanneke_desk | close-up/crop van bg_office | Inzoomen op Johanneke zonder dezelfde foto als tweede losse kamer te hergebruiken. |
+| shared_office | v145_shared_office.webp | Aparte nieuwe kantoorruimte tegenover de WC. |
 | borreoffice | v145_marloes_desk_clean.webp | **Nieuwe personenvrije** bureaufoto, met losse NPC en afzonderlijke lensmok |
 
 **Borre** blijft alleen in de aparte onder-bureau-scène (\`underdesk\`). De foto \`marloes-desk.webp\` uit V14.3 blijft in de repo voor eerdere versies, maar V14.5 schildert in de live gameplay de nieuwe lege achtergrond eroverheen. Het losse \`v145_marloes_sprite.webp\` wordt getekend, en hoofdbeweging, verbazing, wenkbrauwen, mond en tranen reageren op de puzzelstatus. Dit is één geanimeerde basisafbeelding met live emotie-overlays, **nog geen volwaardig uitgewerkte frame-by-frame full-body animatiesheet**.
 
 De nieuwe persoonsvrije bureaufoto is momenteel geoptimaliseerd tot **384 × 288 pixels** om de upload in GitHub compact te houden. Hij verschijnt vergroot in de 960 × 720-scène; een hogere resolutie is een mogelijke kwaliteitsverbetering.
+
+### Herstel van de oorspronkelijke kantoorindeling
+
+Vanaf `reception` ga je weer rechtstreeks naar de ORIGINELE `office`-werkvloer met Johanneke, Marloes en de doorkijk naar Sems bureau. De klikzones `office_jo`, `office_mar` en `office_sem` leiden naar respectievelijk `johanneke_desk`, `borreoffice` en `sem`. Elk heeft een logische terugweg (uitzoomen). De nieuwe panorama-foto `v145_shared_office.webp` staat uitsluitend in **`shared_office` tegenover de WC** en vervangt het oude `office`-beeld niet.
+
+De originele V12-verbindingen zijn in de graaf hersteld, inclusief receptie ↔ werkvloer, werkvloer ↔ drukkerij, gang ↔ vergaderruimte en de kantooruitgangen van Maarten en Marthijn. Het automatische auditrapport kan nu ook alle verplichte oude verbindingen controleren via `window.CANTIQUE_V13.worldAudit().missingLegacyLinks`.
 
 ### Navigatie
 
