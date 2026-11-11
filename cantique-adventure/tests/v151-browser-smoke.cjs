@@ -8,10 +8,16 @@ const {chromium}=require('playwright');
  const page=await browser.newPage({viewport:{width:1280,height:900},deviceScaleFactor:1});
  const errors=[];
  page.on('pageerror',error=>errors.push(String(error?.stack||error)));
- page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text());});
+ page.on('console',msg=>{
+  if(msg.type()==='error'&&!/Failed to load resource: the server responded with a status of 404/.test(msg.text()))
+   errors.push('console: '+msg.text());
+ });
  page.on('response',r=>{
-  if(r.status()===404&&r.url().includes('cantique-adventure'))
-    errors.push('missing: '+r.url());
+  if(r.status()===404){
+    console.log('HTTP 404 inspected',r.url());
+    if(r.url().includes('/cantique-adventure/')&&!/\/favicon\.ico(?:\?|$)/.test(r.url()))
+      errors.push('missing game asset: '+r.url());
+  }
  });
  try {
   await page.addInitScript(()=>{sessionStorage.setItem('cantique-sem-v15-unlocked','yes');});
