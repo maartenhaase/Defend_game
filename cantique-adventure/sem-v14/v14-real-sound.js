@@ -57,12 +57,18 @@ const getSettings=()=>{try{
  return {ambience:Math.max(0,Math.min(1,Number(p.ambience??.42))),foley:Math.max(0,Math.min(1,Number(p.foley??.75)))};
 }catch(e){return {ambience:.42,foley:.75}}};
 let settings=getSettings();
-const PLAYERS=Object.create(null);
+const FALLBACK={paperSlide:'paper',paperMove:'newsPaper',paperStaple:'stapler',scissorCut:'paper',typing:'keyboard',typingFast:'keyboard',mechanicalRoll:'pressRoom'};
 function make(key,loop=false){
  const src=C[key];if(!src)return null;
  const a=new Audio(src.url);a.preload=loop?'auto':'metadata';a.loop=loop;
  a.playsInline=true;
- a.addEventListener('error',()=>{if(!A.failures.includes(key))A.failures.push(key);}, {once:true});
+ a.addEventListener('error',()=>{
+  if(!A.failures.includes(key))A.failures.push(key);
+  const fallback=FALLBACK[key];
+  if(fallback&&C[fallback]){
+   try{a.src=C[fallback].url;a.load();if(audioUnlocked&&isEnabled()&&!document.hidden&&(!loop||ambient.some(e=>e.audio===a)))safePlay(a)}catch(e){}
+  }
+ }, {once:true});
  return a;
 }
 function safePlay(a){
@@ -171,7 +177,7 @@ sound=function(type){
   const id=String(A.transition||'');
   if(id==='underdesk'||(s.scene==='borreoffice'&&A.previous==='underdesk'))one('zip',.19,300,0,1100);
   else if(id==='restroom'||A.previous==='restroom')one('doorSliding',.35,330,0,3400);
-  else one('doorA',.43,300,0,1200);
+  else one('doorOffice',.40,300,0,1500);
  }else if(type==='tap')one('click',.15,165,0,900);
  else if(type==='money')one('drawer',.2,600,0,1200);
  else if(type==='wrong')one('paperCrumple',.19,420,0,800);
