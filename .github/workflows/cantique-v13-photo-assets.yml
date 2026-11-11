@@ -1,0 +1,38 @@
+name: Cantique V13 photographic room assets
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/cantique-v13-photo-assets.yml'
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch freely licensed reference photographs
+        run: |
+          set -euo pipefail
+          mkdir -p cantique-adventure/sem-v13/assets
+          curl --fail --location --retry 3 --user-agent 'Mozilla/5.0' 'https://images.pexels.com/photos/7534184/pexels-photo-7534184.jpeg?auto=compress&cs=tinysrgb&w=1440' -o /tmp/restroom.jpg
+          curl --fail --location --retry 3 --user-agent 'Mozilla/5.0' 'https://images.pexels.com/photos/7108400/pexels-photo-7108400.jpeg?auto=compress&cs=tinysrgb&w=1440' -o /tmp/storage.jpg
+          python -m pip install Pillow
+          python - <<'PY'
+          from PIL import Image, ImageOps
+          from pathlib import Path
+          target=Path('cantique-adventure/sem-v13/assets')
+          for name in ['restroom','storage']:
+              im=Image.open('/tmp/'+name+'.jpg').convert('RGB')
+              im=ImageOps.fit(im,(1280,960),Image.Resampling.LANCZOS,centering=(.5,.64 if name=='storage' else .5))
+              im.save(target/(name+'.webp'),'WEBP',quality=88)
+          PY
+      - name: Store local game assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cantique-adventure/sem-v13/assets
+          git diff --cached --quiet || git commit -m 'Add local photographic WC and storage backgrounds'
+          git push origin HEAD:main
