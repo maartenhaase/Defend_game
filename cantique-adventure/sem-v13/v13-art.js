@@ -145,70 +145,73 @@ for(const name of ['v13_damaged','v13_cleaned','v13_yellowkidney','v13_powder','
 }
 if(imagePaths.prop_dure_telelens){imagePaths.v13art_v13_lens=imagePaths.prop_dure_telelens;images.v13art_v13_lens=images.prop_dure_telelens||images.v13art_v13_lens;}
 if(imagePaths.prop_laptoptas){imagePaths.v13art_v13_bag=imagePaths.prop_laptoptas;images.v13art_v13_bag=images.prop_laptoptas||images.v13art_v13_bag;}
+// Replace the entire central-hall scene with a single photographic backdrop.
+// All visible exits are actual doors inside this image, never drawn on top.
+const hallPhoto=new Image();
+hallPhoto.decoding='async';
+hallPhoto.src=window.CANTIQUE_HALL_PHOTO;
+imagePaths.bg_hall=window.CANTIQUE_HALL_PHOTO;
+images.bg_hall=hallPhoto;
+const hallConnections=['restroom','storage','breakroom','cutting','office'];
+const oldHall=(graph.hall||[]).slice();
+const connect=(a,b)=>{
+ if(!graph[a]||!graph[b])return;
+ if(!graph[a].includes(b))graph[a].push(b);
+ if(!graph[b].includes(a))graph[b].push(a);
+};
+const disconnect=(a,b)=>{
+ if(graph[a])graph[a]=graph[a].filter(x=>x!==b);
+ if(graph[b])graph[b]=graph[b].filter(x=>x!==a);
+};
+// Route rooms without a pictured hall doorway through the shared office/workshop.
+for(const x of oldHall)if(!hallConnections.includes(x))disconnect('hall',x);
+for(const x of hallConnections)connect('hall',x);
+connect('office','maarten');
+connect('office','marthijn');
+connect('office','print');
+const cleanHallDoors=[
+ {dest:'restroom',label:'WC',rect:[17,12,170,640],at:[202,664]},
+ {dest:'storage',label:'Berghok',rect:[224,88,82,570],at:[312,622]},
+ {dest:'breakroom',label:'Keuken',rect:[344,179,49,428],at:[404,559]},
+ {dest:'office',label:'Werkvloer',rect:[416,218,205,290],at:[510,512]},
+ {dest:'cutting',label:'Snijtafel',rect:[817,0,143,692],at:[782,668]}
+];
+const hall=scenes.hall;
+hall.name='Centrale gang';
+hall.sub='WC · Berghok · Keuken · Werkvloer · Snijtafel';
+hall.spawn=[500,650];
+hall.floor=[[192,718],[802,718],[730,610],[628,511],[411,511],[335,625]];
+hall.npcs=[];
+hall.extra=[];
+hall.hot=cleanHallDoors.map((d,i)=>({id:'v13hall_'+i,label:d.label,door:d.dest,rect:d.rect,at:d.at}));
+const warning=V.items.find(a=>a.id==='v13_warning');
+if(warning)warning.scene='print';
 const doorModels={};
 for(const [id,adj] of Object.entries(graph)){
  const scene=scenes[id];if(!scene)continue;
- doorModels[id]=[];
- const amount=adj.filter(x=>scenes[x]).length;
- adj.filter(x=>scenes[x]).forEach((dest,i)=>{
-  const existing=scene.hot.find(h=>h.door===dest);
-  if(existing){
-   // Reuse the photo's existing doorway; don't paint a second false door on top.
-   const [x,y,w,h]=existing.rect;
-   doorModels[id].push({x,y,w,h,dest,native:true});
-  }else{
-   // Only graph connections not pictured in the old room get a new painted opening.
-   const w=amount<=4?108:Math.max(72,Math.floor(815/amount));
-   const x=48+i*((860-w)/(Math.max(1,amount-1))),y=amount>5?106:107,h=amount>5?185:216;
-   const hit={id:'v13door_'+id+'_'+dest,label:'Deur naar '+scenes[dest].name,rect:[x,y,w,h],at:[Math.min(900,Math.max(85,x+w/2)),550],door:dest};
-   scene.hot.push(hit);doorModels[id].push({x,y,w,h,dest,native:false});
-  }
+ if(id==='hall'){
+  doorModels[id]=cleanHallDoors.map(d=>({dest:d.dest,x:d.rect[0],y:d.rect[1],w:d.rect[2],h:d.rect[3],native:true}));
+  continue;
+ }
+ // Remove stale or duplicate route hotspots, including all invented overlay doors.
+ const seen=new Set();
+ scene.hot=scene.hot.filter(h=>{
+  if(!h.door)return !String(h.id).startsWith('v13door_');
+  if(!adj.includes(h.door)||seen.has(h.door))return false;
+  seen.add(h.door);return true;
  });
+ doorModels[id]=scene.hot.filter(h=>h.door).map(h=>({dest:h.door,x:h.rect[0],y:h.rect[1],w:h.rect[2],h:h.rect[3],native:true}));
 }
-function drawDoors(){
- (doorModels[s.scene]||[]).forEach(({x,y,w,h,dest,native})=>{
-  ctx.save();
-  const label=scenes[dest].name.replace(/^(De |Het |Een )/,'');
-  if(native){
-   // Soft corner markers preserve the original photographic doorway.
-   ctx.lineWidth=4;ctx.strokeStyle='rgba(245,219,164,.68)';
-   const x1=Math.max(2,x+3),y1=Math.max(3,y+4),w1=Math.min(955-x1,w-6),h1=Math.min(710-y1,h-10);
-   if(w1>18&&h1>30){
-    const k=Math.min(31,w1*.25,h1*.2);
-    ctx.beginPath();
-    ctx.moveTo(x1,y1+k);ctx.lineTo(x1,y1);ctx.lineTo(x1+k,y1);
-    ctx.moveTo(x1+w1-k,y1);ctx.lineTo(x1+w1,y1);ctx.lineTo(x1+w1,y1+k);
-    ctx.moveTo(x1,y1+h1-k);ctx.lineTo(x1,y1+h1);ctx.lineTo(x1+k,y1+h1);
-    ctx.moveTo(x1+w1-k,y1+h1);ctx.lineTo(x1+w1,y1+h1);ctx.lineTo(x1+w1,y1+h1-k);
-    ctx.stroke();
-   }
-   const tx=Math.max(15,Math.min(940,x+w/2)),ty=Math.max(45,Math.min(690,y+h-11));
-   ctx.font='600 12px system-ui';ctx.textAlign='center';
-   const out=label.length>21?label.slice(0,21)+'…':label;
-   const tw=Math.max(78,Math.min(240,out.length*7.4+20));
-   ctx.fillStyle='#0c2028d9';ctx.fillRect(tx-tw/2,ty-18,tw,26);
-   ctx.fillStyle='#f9e5bd';ctx.fillText(out,tx,ty);
-  }else{
-   ctx.globalAlpha=.93;
-   const g=ctx.createLinearGradient(x,y,x+w,y+h);
-   g.addColorStop(0,'#b7bdba');g.addColorStop(.15,'#2d4047');g.addColorStop(.65,'#16272e');g.addColorStop(1,'#71817e');
-   ctx.fillStyle='#0c1618b8';ctx.fillRect(x-6,y-6,w+12,h+13);
-   ctx.fillStyle=g;ctx.fillRect(x,y,w,h);
-   ctx.fillStyle='#1f343c';ctx.fillRect(x+8,y+10,w-16,h-20);
-   ctx.fillStyle='#667c85';ctx.fillRect(x+14,y+16,w-28,h*.48);
-   ctx.fillStyle='#26383d';ctx.fillRect(x+14,y+h*.58,w-28,h*.3);
-   ctx.beginPath();ctx.ellipse(x+w*.8,y+h*.58,Math.max(4,w*.045),6,0,0,Math.PI*2);ctx.fillStyle='#e5d19a';ctx.fill();
-   ctx.font='600 '+(w<90?'10':'12')+'px system-ui';ctx.textAlign='center';
-   ctx.fillStyle='#142126d9';ctx.fillRect(x-4,y+h+9,w+8,29);
-   ctx.fillStyle='#f0e4c6';ctx.fillText(label.length>15?label.slice(0,15)+'…':label,x+w/2,y+h+27);
-  }
-  ctx.restore();
- });
-}
+// Do NOT draw doors as rectangles, labels, glow frames or fake architectural features.
+// Existing photos remain intact. Navigation fallback is the separate location strip.
+function drawDoors(){}
 const crowdPortraits={};
 const oldDrawWorld=drawWorld;
 drawWorld=function(t){
- oldDrawWorld(t);
+ if(s.scene==='hall'&&hallPhoto.complete&&hallPhoto.naturalWidth){
+  ctx.clearRect(0,0,960,720);ctx.drawImage(hallPhoto,0,0,960,720);
+  drawPlayer(t);
+ }else oldDrawWorld(t);
  // World assets retain their inventory IDs, real-world scale and clickable area.
  for(const it of V.items){
   if(it.scene!==s.scene||!V.isVisible(it))continue;
