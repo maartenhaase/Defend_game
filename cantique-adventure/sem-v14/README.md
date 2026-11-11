@@ -36,3 +36,21 @@ JavaScript syntactisch gecontroleerd. De nieuwe puzzel is met een DOM/canvas-moc
 **Speel:** https://maartenhaase.github.io/Defend_game/cantique-adventure/sem-v14/?v=143
 
 **Technische controle:** de JavaScript-module is syntactisch gecontroleerd en met een DOM/canvas-mock getest op hoofd- en onder-bureauscène, object-coördinaten, lensmokhit, Borre-hit, routegrafiek, sprite-rendering zonder oude overlays en veilige locatieopslag. Een echte iPhone/Safari-speeltest en daadwerkelijke GitHub Pages-beeldcontrole zijn nog niet uitgevoerd.
+
+
+## V14.4 — Sounddesign uitsluitend met echte geluidsopnames (11 november 2026)
+
+De bestaande gameplay, fotorealistische scènes, inventaris, saves en toegangscode zijn ongewijzigd. De uitbreiding staat in \`v14-real-sound.js\`, dat NA de V14.3-bureaucorrectie wordt geladen.
+
+- **Drukkerij, snijtafel en machines**: echte industriële werkplaatsopname met machinegedreun en een extra echte mechanische projectoropname als roterend motorgeluid. **Let op**: dit is een geluidscompositie voor de sfeer van een drukkerij, geen opname van de Cantique-drukpers zelf.
+- **Kantoorruimtes**: zachte echte computer-ventilatorgeluiden en toetsenbordgetik; onder het bureau vooral ventilatorgeruis.
+- **Keuken**: koelkastgeluid en een koffiegrinder wanneer je koffie zet.
+- **Deuren en navigatie**: afzonderlijke deur- en schuifdeur-opnames, bij de onder-bureauroute een zacht ritselgeluid.
+- **Coens wc**: opgenomen geborrel en winderigheid bij het binnengaan en praten, af en toe tijdens de verstopping; doorspoelgeluid bij interactie met een schoongemaakt toilet.
+- **Handelingen**: echte papier-, laatje-, nietmachine-, muisklik-, typ-, ritsel- en ritsgeluiden passend bij de voorwerpen.
+- **Borre**: spaarzaam hondengeluid bij interactie.
+- **Nieuw:** de knop **🔉 Sfeer** met twee afzonderlijke schuifregelaars (achtergrond / handelingen); instellingen worden lokaal bewaard. Het bestaande geluid-aan/uit blijft leidend. Browsers spelen pas geluid nadat de speler zelf op Speel of Geluid tikt.
+
+**Bronnen/licentie:** opnamen worden extern opgehaald van [SFX Jar](https://sfxjar.com/free-to-use/) (BigSoundBank en Kenney, hier geselecteerde bestanden gemarkeerd **CC0 1.0**) en [Mixkit Free Sound Effects](https://mixkit.co/free-sound-effects/) ([Mixkit SFX Free License](https://mixkit.co/license/modal/sfxFree/)). De bronlocaties en gebruikte sample-URL's staan als overzicht in \`window.CANTIQUE_AUDIO.sources\` in de spelconsole. Omdat de MP3's vanaf de bronwebsites worden gestreamd, **is internet noodzakelijk**, en bestanden kunnen niet werken als de externe site hotlinking beperkt of de URL verandert. Er is geen fysieke audio bundel in de repository opgeslagen.
+
+**Tests:** de nieuwe JS-module en integratie zijn syntactisch gecontroleerd. Echte geluidsweergave, streaming, geluidsmix en iPhone/Safari moeten nog live getest worden. Het spel bevat bewust geen nieuw geprogrammeerde synth-/beepvervangers voor de geselecteerde geluiden.
