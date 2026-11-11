@@ -178,6 +178,16 @@ hotspotFound=function(x,y){
  if(x>=785&&y>=650&&y<=720){
   const h=scenes[s.scene]?.hot?.find(h=>h.id==='v145_routes');if(h)return h;
  }
+ // Puzzle actions and pickups beat broad passageway hitboxes on the new photos.
+ // Without this, the kitchen doorway eclipsed the beer/fridge interaction.
+ if(isPhoto(s.scene)){
+  const room=scenes[s.scene];
+  for(let i=room.hot.length-1;i>=0;i--){
+   const h=room.hot[i];if(h.door||h.id==='v145_routes')continue;
+   const r=h.rect;if(!r)continue;
+   if(x>=r[0]&&x<=r[0]+r[2]&&y>=r[1]&&y<=r[1]+r[3])return h;
+  }
+ }
  return previousHotspot(x,y);
 };
 // The prior code draws the old room first. For the nine unique rooms, replace
