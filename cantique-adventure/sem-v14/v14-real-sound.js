@@ -96,7 +96,9 @@ function roomGroup(id){
  if(['outside'].includes(id))return 'outside';
  if(id==='restroom')return 'wc';
  if(id==='breakroom')return 'kitchen';
- if(['print','machine2','cutting','storage','folding','jarno_sanne'].includes(id))return 'press';
+ if(['print','press_rear','central_hub','storage_hub','packing_workroom','machine2','cutting','storage','folding','jarno_sanne'].includes(id))return 'press';
+ if(id==='canteen_hub')return 'kitchen';
+ if(id==='reception_right')return 'hall';
  if(id==='hall')return 'hall';
  if(id==='underdesk')return 'under';
  return 'office';
