@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#11191c">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<title>SEM in Cantique V14.4 — toegang</title>
+<title>SEM in Cantique V14.5 — toegang</title>
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
@@ -83,7 +83,7 @@ button:active{background:#f4d99c}
       // Copy V13 progress on first visit, but keep V14 progress independent. 
       try{if(!localStorage.getItem('cantique_sem_game_v14')){const prior=localStorage.getItem('cantique_sem_game_v13');if(prior)localStorage.setItem('cantique_sem_game_v14',prior);}}catch(e){}
       const rawHtml=parts.join('').replace(/cantique_sem_game_v10/g,'cantique_sem_game_v14').replace(/href="manifest.webmanifest"/g,'href="../sem-v11/manifest.webmanifest"').replace(/href="icon-192.png"/g,'href="../sem-v11/icon.svg"').replace(/register\('\.\/sw\.js'\)/g,"register('../sem-v11/sw.js')");
-      const extra='<script src="../sem-v11/v12-core.js"></'+'script><script src="../sem-v11/v12-compat.js"></'+'script><script src="../sem-v13/v13-story.js"></'+'script><script src="../sem-v13/hall-photo.js"></'+'script><script src="./v14-art-base.js"></'+'script><script src="../sem-v13/v13-finish.js"></'+'script><script src="./v14-extras.js"></'+'script><script src="./v14-office-fix.js?v=143"></'+'script>'+'<script src="./v14-real-sound.js?v=144"></'+'script>';
+      const extra='<script src="../sem-v11/v12-core.js"></'+'script><script src="../sem-v11/v12-compat.js"></'+'script><script src="../sem-v13/v13-story.js"></'+'script><script src="../sem-v13/hall-photo.js"></'+'script><script src="./v14-art-base.js"></'+'script><script src="../sem-v13/v13-finish.js"></'+'script><script src="./v14-extras.js"></'+'script><script src="./v14-office-fix.js?v=143"></'+'script>'+'<script src="./v14-real-sound.js?v=144"></'+'script>'+'<script src="./v145-world.js?v=1451"></'+'script>';
       const html=rawHtml.replace(/<\/body>\s*<\/html>\s*$/i,extra+'</body></html>');
       if(!html.includes('SEM in Cantique')||!html.includes('</html>'))throw new Error('Onvolledige spelbestanden');
       document.open();
