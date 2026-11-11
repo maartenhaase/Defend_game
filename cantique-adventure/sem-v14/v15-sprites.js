@@ -50,26 +50,10 @@ const mug=V.items.find(x=>x.id==='v14_lensmug');
 if(mug)Object.assign(mug,{scene:'borreoffice',x:705,y:254,w:85,h:92});
 const hotMug=scenes.borreoffice.hot.find(h=>h.id==='v14_item_v14_lensmug');
 if(hotMug){hotMug.rect=[701,250,97,105];hotMug.at=[670,627];}
-const photoProps={
- packing_workroom:[
-  ['tape_box',154,488,129,96,'Verpakkingsdoos en tape'],
-  ['bubble_wrap',319,514,103,83,'Noppenfolie']
- ],
- storage_hub:[
-  ['vinyl_roll',183,518,138,105,'Rollen materiaal'],
-  ['bubble_wrap',548,527,105,89,'Verpakkingsfolie']
- ],
- print:[
-  ['brochures',162,500,116,103,'Gedrukte brochures'],
-  ['vinyl_roll',36,508,115,86,'Papierrollen']
- ],
- restroom:[
-  ['plunger',663,491,82,111,'Ontstopper'],
-  ['toilet_roll',586,600,80,70,'WC-rol'],
-  ['dirty_tissue',777,630,78,60,'Vies WC-papier'],
-  ['dirty_floor',589,617,182,65,'Vieze vloer']
- ]
-};
+// V15.1: Only original, quest-backed props may be interactive.
+ // The previous arbitrary paper rolls, tape boxes and WC props covered the photo
+ // and led to dead-end clicks. Preserve story item sprites from V.items instead.
+const photoProps={packing_workroom:[],storage_hub:[],print:[],restroom:[]};
 const messages={
  tape_box:'Hier ligt een doos met verpakkingstape. Handig voor het inpakwerk.',
  bubble_wrap:'Noppenfolie. Bij Cantique wordt zelfs het kleinste pakket zorgvuldig beschermd.',
@@ -182,13 +166,10 @@ function paintPhoto(room,t){
  for(const n of scenes[room]?.npcs||[])if(!n.v15Hidden&&typeof drawNPC==='function')drawNPC(n,t);
  if(room==='breakroom'){
   // The machine, sink and microwave are IN the photo; never overlay giant cartoons.
-  halo(94,433,57,t);
   if(!F('cansPicked')&&!F('cansDone')&&!(typeof has==='function'&&has('cans')))
    draw(pic('v15_glow_beer_cans'),286,422,105,85,t);
   // Dirkjan's paper is a separate collectible-looking object on the wall.
   draw(pic('v15_glow_note'),547,275,62,71,t);
-  halo(235,469,42,t);
-  halo(305,500,34,t);
  }
  const props=photoProps[room]||[];
  for(const [name,x,y,w,h] of props){
