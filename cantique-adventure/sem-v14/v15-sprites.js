@@ -16,7 +16,7 @@ const sources={
  underdesk:'v15_underdesk',
  breakroom:'v15_kitchen_empty',
  canteen_hub:'v15_canteen',
- central_hub:'v15_central',
+ central_hub:'v15_central_alt',
  packing_workroom:'v15_packing',
  storage_hub:'v15_storage',
  print:'v15_press'
@@ -179,7 +179,7 @@ function paintPhoto(room,t){
  if(room==='breakroom'){
   // The machine, sink and microwave are IN the photo; never overlay giant cartoons.
   halo(94,433,57,t);
-  if(!F('cansTaken')&&!(typeof has==='function'&&has('cans')))
+  if(!F('cansPicked')&&!F('cansDone')&&!(typeof has==='function'&&has('cans')))
    draw(pic('v15_glow_beer_cans'),286,422,105,85,t);
   // Dirkjan's paper is a separate collectible-looking object on the wall.
   draw(pic('v15_glow_note'),547,275,62,71,t);
@@ -187,7 +187,11 @@ function paintPhoto(room,t){
   halo(305,500,34,t);
  }
  const props=photoProps[room]||[];
- for(const [name,x,y,w,h] of props)draw(pic('v15_glow_'+name),x,y,w,h,t);
+ for(const [name,x,y,w,h] of props){
+  if(room==='print'&&name==='brochures'&&(F('proofPicked')||F('proofDone')))continue;
+  if(room==='restroom'&&F('toiletDone'))continue;
+  draw(pic('v15_glow_'+name),x,y,w,h,t);
+ }
  for(const it of V.items){
   if(it.scene!==room||!V.isVisible(it))continue;
   const old=Fetched('v13art_'+it.id);
