@@ -5,6 +5,9 @@
 const V=window.CANTIQUE_V13;
 if(!V)throw Error('V14 requires V13');
 V.version='14.0';
+document.title='SEM in Cantique V14 — De lensmok van Rob';
+for(const n of document.querySelectorAll('#splash h1, .logo strong'))n.textContent='SEM IN CANTIQUE · V14';
+const splashBadge=document.querySelector('#splash .eyebrow');if(splashBadge)splashBadge.textContent='V14 · De lensmok van Rob';
 const F=V.isKnown, S=V.setKnown;
 const sceneOffice='borreoffice';
 const el=id=>document.getElementById(id);
@@ -194,10 +197,10 @@ actions.marloes=function(...args){
   if(has('v14_coffee'))choices.push({t:'Hier, een warme kop koffie. En het spijt me.',f:()=>{
     remove('v14_coffee');if(has('v14_lensmug'))remove('v14_lensmug');
     S('v14_comforted');note('Sem troost Marloes met koffie en geeft de onverkoopbare lensmok terug.');syncUI();
-    vignette('Het aandenken van Rob','Marloes droogt haar tranen en neemt de koffie aan. Sem legt de lensmok weer op haar bureau. Ze glimlacht voorzichtig.',()=>say('Marloes','Dank je, Sem. Rob was mijn broer. Die mok is voor mij onvervangbaar. Ik ben blij dat hij terug is.',[{t:'Dat begrijp ik. Sorry.',f:closeDialog}]),'happy');
+    vignette('Het aandenken van Rob','Marloes droogt haar tranen en neemt de koffie aan. Sem legt de lensmok weer op haar bureau. Ze glimlacht voorzichtig.',()=>say('Marloes','Dank je, Sem. Die mok is vroeger van mijn broer Rob geweest. Voor mij is hij onvervangbaar. Ik ben blij dat hij terug is.',[{t:'Dat begrijp ik. Sorry.',f:closeDialog}]),'happy');
   }});
   if(!has('v14_coffee'))choices.push({t:'Hoe kan ik het goedmaken?',f:()=>say('Marloes','Ik moet even bijkomen. Misschien helpt een kop warme koffie uit het apparaat in de keuken.',[{t:'Ik ga koffie halen.',f:closeDialog}])});
-  return say('Marloes','Mijn lensmok is weg... Die was van mijn broer Rob. Dat is een van de weinige herinneringen die ik aan hem heb.',[...choices,{t:'Ik kom zo terug.',f:closeDialog}]);
+  return say('Marloes','Mijn lensmok is weg... Die was van mijn broer Rob. Daarom betekent die mok zoveel voor me.',[...choices,{t:'Ik kom zo terug.',f:closeDialog}]);
  }
  if(F('v14_comforted'))return say('Marloes','Dank je voor de koffie, Sem. En vooral voor het terugbrengen van Robs mok. Laat hem alsjeblieft staan.',[{t:'Dat beloof ik.',f:closeDialog}]);
  return oldMarloes?.(...args);
