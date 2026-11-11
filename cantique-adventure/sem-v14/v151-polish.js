@@ -35,7 +35,7 @@ place('print','print_fen',[440,330,156,304],[483,645]);
 place('print','print_note4',[680,344,104,82],[696,645]);
 // Keep the existing Fenneke interaction; relocate the physical figure to it.
 for(const n of room('print').npcs||[])if(n.id==='fenneke'){
- n.at=[478,649];n.scale=1.35;n.v15Hidden=false;
+ n.at=[478,649];n.scale=.88;n.v15Hidden=false;
 }
 // The older geometry deliberately hid ALL kitchen people, including Dianne.
 for(const n of room('breakroom').npcs||[]) n.v15Hidden=false;
@@ -88,7 +88,7 @@ drawNPC=function(n,t){
  if(n?.kind==='v151Portrait'){portraitActor(n,t);return;}
  if(s.scene==='print'&&n?.id==='fenneke'){
    // The old V15 override multiplied a 150px figure by only .72.
-   const [x,y]=n.at;ctx.save();ctx.translate(x,y);ctx.scale(1.32,1.32);
+   const [x,y]=n.at;ctx.save();ctx.translate(x,y);ctx.scale(1.22,1.22);
    ctx.translate(-x,-y);beforeNPC(n,t);ctx.restore();return;
  }
  beforeNPC(n,t);
@@ -97,7 +97,7 @@ drawNPC=function(n,t){
 const oldPlayer=drawPlayer;
 drawPlayer=function(t){
  if(!started||s.scene==='cabinet')return oldPlayer(t);
- const zoom=Math.min(1.63,Math.max(1.16,1.30+(s.y-455)/850));
+ const zoom=Math.min(1.95,Math.max(1.40,1.62+(s.y-455)/650));
  ctx.save();ctx.translate(s.x,s.y);ctx.scale(zoom,zoom);
  ctx.translate(-s.x,-s.y);oldPlayer(t);ctx.restore();
 };
