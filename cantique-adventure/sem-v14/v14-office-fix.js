@@ -5,6 +5,9 @@
 'use strict';
 const V=window.CANTIQUE_V13;
 if(!V||!scenes.borreoffice)throw Error('Cantique V14 game modules were not loaded');
+V.version='14.3';
+document.title='SEM in Cantique V14.3 — Marloes’ werkplek';
+const titleBadge=document.querySelector('#splash .eyebrow');if(titleBadge)titleBadge.textContent='V14.3 · De lensmok van Rob';
 const F=V.isKnown;
 const deskId='borreoffice',underId='underdesk';
 const desk=scenes[deskId];
