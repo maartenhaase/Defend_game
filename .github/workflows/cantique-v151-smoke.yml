@@ -25,10 +25,11 @@ jobs:
           test -s cantique-adventure/sem-v14/assets/v15_kitchen_empty.webp
           test -s cantique-adventure/sem-v14/assets/v15_sem_idle_right.webp
           grep -q 'v151-polish.js' cantique-adventure/sem-v15/index.html
-      - name: Install headless Chromium
+      - name: Use runner's preinstalled browser (no apt downloads)
         run: |
           npm install --no-save playwright
-          npx playwright install chromium --with-deps
+          which google-chrome || which chromium || which chromium-browser
+          google-chrome --version || true
       - name: Start game and test real browser
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/cantique-http.log 2>&1 &
