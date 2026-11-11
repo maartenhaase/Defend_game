@@ -53,8 +53,8 @@ const {chromium}=require('playwright');
   if(!fixed.flag||!fixed.gearConsumed)throw Error('Gear puzzle failed: '+JSON.stringify(fixed));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.CANTIQUE_V15?.v151Audit,{timeout:90000});
-  const preserved=await page.evaluate(()=>window.CANTIQUE_V13.isKnown('v151PrinterFixed'));
-  if(!preserved)throw Error('Gear repair was not saved and reloaded');
+  const preserved=await page.evaluate(()=>{const wasLoaded=load();return {wasLoaded,gearFixed:window.CANTIQUE_V13.isKnown('v151PrinterFixed')};});
+  if(!preserved.wasLoaded||!preserved.gearFixed)throw Error('Gear repair did not survive localStorage reload: '+JSON.stringify(preserved));
   if(errors.length)throw Error('Browser errors:\n'+errors.join('\n'));
   console.log(JSON.stringify({result:'PASS',version:report.version,rooms:report.audit.rooms,
    screenshots:scenesToSee,gear:fixed,savePersistence:preserved,errors},null,2));
