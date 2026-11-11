@@ -10,10 +10,15 @@ const img=id=>images[id]||(typeof imageGet==='function'?imageGet(id):null);
 const ok=im=>im&&im.complete&&im.naturalWidth>0;
 const V15=window.CANTIQUE_V15={version:'15.0',objects:[],routes:{},npcManifest:[]};
 const photos=new Set(['reception_right','central_hub','canteen_hub','packing_workroom','storage_hub','print','press_rear','breakroom','shared_office']);
+// Restore folding as a true tabletop CLOSE-UP from the canteen, not another
+// nearly-identical fake cantine location. Do not remove any original route.
+if(!G.folding.includes('canteen_hub'))G.folding.push('canteen_hub');
+if(!G.canteen_hub.includes('folding'))G.canteen_hub.push('folding');
 const portals={
  reception_right:[['reception',[0,286,116,334],'← Balie'],['meeting',[335,180,176,366],'Vergaderruimte']],
  central_hub:[['reception',[0,510,150,192],'← Receptie'],['canteen_hub',[40,350,300,208],'Kantine ←'],['breakroom',[772,280,180,318],'Keuken →'],['print',[462,329,199,274],'Drukkerij ↑']],
- canteen_hub:[['central_hub',[0,332,132,313],'← Werkvloer'],['packing_workroom',[810,322,149,309],'Werkplek →']],
+ canteen_hub:[['central_hub',[0,332,132,313],'← Werkvloer'],['packing_workroom',[810,322,149,309],'Werkplek →'],['folding',[400,455,204,129],'Vouwtafel ↓']],
+ folding:[['canteen_hub',[0,531,149,173],'← Uitzoomen']],
  packing_workroom:[['canteen_hub',[0,260,155,355],'← Kantine'],['storage_hub',[807,310,152,313],'Berging →']],
  storage_hub:[['packing_workroom',[0,330,148,299],'← Werkplek'],['print',[810,296,149,331],'Drukkerij →']],
  print:[['central_hub',[416,282,140,267],'Entree'],['press_rear',[819,333,141,289],'Achterkant →'],['storage_hub',[0,344,144,296],'← Berging']],
@@ -40,6 +45,7 @@ for(const sc of Object.values(scenes)){
  sc.hot.push({id:'v15_map',label:'Bekijk de routes',fn:'v15Map',rect:mapRect.slice(),at:sc.spawn?.slice()||[430,650]});
 }
 const placements={
+ folding:{v13_jansje:[[74,300,210,286],[280,643]]},
  breakroom:{
   break_coffee:[[55,384,117,106],[233,647]],
   break_cans:[[291,407,92,62],[385,637]],
