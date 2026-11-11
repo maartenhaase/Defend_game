@@ -54,3 +54,45 @@ De bestaande gameplay, fotorealistische scènes, inventaris, saves en toegangsco
 **Bronnen/licentie:** opnamen worden extern opgehaald van [SFX Jar](https://sfxjar.com/free-to-use/) (BigSoundBank en Kenney, hier geselecteerde bestanden gemarkeerd **CC0 1.0**) en [Mixkit Free Sound Effects](https://mixkit.co/free-sound-effects/) ([Mixkit SFX Free License](https://mixkit.co/license/modal/sfxFree/)). De bronlocaties en gebruikte sample-URL's staan als overzicht in \`window.CANTIQUE_AUDIO.sources\` in de spelconsole. Omdat de MP3's vanaf de bronwebsites worden gestreamd, **is internet noodzakelijk**, en bestanden kunnen niet werken als de externe site hotlinking beperkt of de URL verandert. Er is geen fysieke audio bundel in de repository opgeslagen.
 
 **Tests:** de nieuwe JS-module en integratie zijn syntactisch gecontroleerd. Echte geluidsweergave, streaming, geluidsmix en iPhone/Safari moeten nog live getest worden. Het spel bevat bewust geen nieuw geprogrammeerde synth-/beepvervangers voor de geselecteerde geluiden.
+
+
+## V14.5 — Fotorealistische Cantique-hubs en losse Marloes (11 november 2026)
+
+**Actieve game:** https://maartenhaase.github.io/Defend_game/cantique-adventure/sem-v14/?v=1452
+
+**Code:** \`v145-world.js\` (9 nieuwe uniek gefotografeerde ruimtes, graph, hotspots, 1-stapsplattegrond) en \`v145-characters.js\` (losse Marloes-sprite, emotie-overlays, wc-papier/vloer-sprites). Beide zijn na V14.4 opgenomen in \`index.html\`. Oude onderdelen blijven in dezelfde volgorde staan.
+
+### Nieuw toegewezen foto-assets
+
+| In-game kamer | Uniek beeld | Functie |
+| --- | --- | --- |
+| reception_right | v145_reception_right.webp | Vanuit receptie rechts door glazen deur naar meeting |
+| central_hub | v145_central_hub.webp | Centrale werkvloer/trap, naar keuken/kantine/drukkerij |
+| canteen_hub | v145_canteen_hub.webp | Groene stoelen, lange tafel |
+| packing_workroom | v145_packing_workroom.webp | Aparte werkplek/inpakruimte |
+| storage_hub | v145_storage_hub.webp | Stellingen en magazijn |
+| print | v145_press_hub.webp | Bestaande printmissie op nieuwe drukkerijfoto |
+| press_rear | v145_press_rear.webp | Tweede werkelijk andere kijkrichting drukkerij |
+| breakroom | v145_kitchen_hub.webp | Bestaande keuken met koffie- en waterinteracties |
+| office | v145_shared_office.webp | Gezamenlijk kantoor tegenover WC |
+| borreoffice | v145_marloes_desk_clean.webp | **Nieuwe personenvrije** bureaufoto, met losse NPC en afzonderlijke lensmok |
+
+**Borre** blijft alleen in de aparte onder-bureau-scène (\`underdesk\`). De foto \`marloes-desk.webp\` uit V14.3 blijft in de repo voor eerdere versies, maar V14.5 schildert in de live gameplay de nieuwe lege achtergrond eroverheen. Het losse \`v145_marloes_sprite.webp\` wordt getekend, en hoofdbeweging, verbazing, wenkbrauwen, mond en tranen reageren op de puzzelstatus. Dit is één geanimeerde basisafbeelding met live emotie-overlays, **nog geen volwaardig uitgewerkte frame-by-frame full-body animatiesheet**.
+
+De nieuwe persoonsvrije bureaufoto is momenteel geoptimaliseerd tot **384 × 288 pixels** om de upload in GitHub compact te houden. Hij verschijnt vergroot in de 960 × 720-scène; een hogere resolutie is een mogelijke kwaliteitsverbetering.
+
+### Navigatie
+
+- Alle 26 scènes hebben verbindingen via één bijgewerkte \`CANTIQUE_V12.graph\`.
+- De kaartknop **🧭 Routes** geeft uitsluitend DIRECT aangrenzende ruimtes, nooit teleportatie naar afgesloten plekken.
+- Nieuw gereconstrueerde route: receptie → centrale werkvloer → kantinehoek → inpakwerkplek → magazijn → drukkerij → achterzijde printers.
+- Receptie rechts → glazen deur → vergaderruimte.
+- Werkvloer → keuken; gang → gezamenlijk kantoor tegenover WC; kantoor → Marloes; bureau → Borre.
+- De bestaande verhaalobjecten en hotspots blijven aanwezig en krijgen voorrang boven overlappende deuropeningen.
+- De routeknop is gekoppeld aan een valide loopdoel in elke kamer.
+
+### Testinformatie en beperkingen
+
+**Getest met programmatische DOM/canvas-mocks:** JavaScript-syntaxis, 26 kamers, wederkerige verbindingen, bereikbaarheid vanaf receptie, dubbele nieuwe fotobestanden, registratie van vrijstaande Marloes-sprite, aanklikbare routekaart, wc-sprites en karakterweergave in verschillende missiestaten.
+
+**Nog niet live getest:** daadwerkelijke klikzones onder alle camera/zoominstellingen, beeldkwaliteit/schaal op echte iPhone Safari en Android, streaming van externe geluidsfragmenten, volledig van begin tot eind doorspelen en frame-by-frame animaties van alle NPC's. Een syntactische of logische test is geen bewijs van een volledige iPhone-playtest. De bovengenoemde foto-/spelbestanden zijn wél in de GitHub-hoofdbranch opgenomen.
