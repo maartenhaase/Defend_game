@@ -51,9 +51,15 @@ const {chromium}=require('playwright');
    return {flag:window.CANTIQUE_V13.isKnown('v151PrinterFixed'),gearConsumed:!has('v13_gear')};
   });
   if(!fixed.flag||!fixed.gearConsumed)throw Error('Gear puzzle failed: '+JSON.stringify(fixed));
+  const rawBefore=await page.evaluate(()=>{
+   const raw=localStorage.getItem('cantique_sem_game_v15');
+   return {rawPresent:!!raw,rawFlag:raw?JSON.parse(raw)?.flags?.v13_v151PrinterFixed:null,
+           rawScene:raw?JSON.parse(raw)?.scene:null,keys:Object.keys(localStorage)};
+  });
+  console.log('SAVE DIAG before reload',JSON.stringify(rawBefore));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.CANTIQUE_V15?.v151Audit,{timeout:90000});
-  const preserved=await page.evaluate(()=>{const wasLoaded=load();return {wasLoaded,gearFixed:window.CANTIQUE_V13.isKnown('v151PrinterFixed')};});
+  const preserved=await page.evaluate(()=>{const wasLoaded=load();const raw=localStorage.getItem('cantique_sem_game_v15');return {wasLoaded,gearFixed:window.CANTIQUE_V13.isKnown('v151PrinterFixed'),savedFlag:raw?JSON.parse(raw)?.flags?.v13_v151PrinterFixed:null,savedScene:raw?JSON.parse(raw)?.scene:null};});
   if(!preserved.wasLoaded||!preserved.gearFixed)throw Error('Gear repair did not survive localStorage reload: '+JSON.stringify(preserved));
   if(errors.length)throw Error('Browser errors:\n'+errors.join('\n'));
   console.log(JSON.stringify({result:'PASS',version:report.version,rooms:report.audit.rooms,
