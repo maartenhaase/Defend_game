@@ -230,7 +230,7 @@ function v10Extraction(){
    return;
  }
  if(kills<v.quota){endGame('DOEL NIET GEHAALD');return;}
- gameState.shortBattleWithdrawn=true;
+ gameState.shortBattleWithdrawn=false; // Timed survival is the intended objective, not a failed retreat.
  gameState.message='EXTRACTIE · SECTOR VEILIG';gameState.messageT=1.5;
  gameState.eventCursor=gameState.events.length;
  gameState.infantry.forEach(function(e){e.alive=false;});
