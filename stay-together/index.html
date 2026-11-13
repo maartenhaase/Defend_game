@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#152b31">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>De Druppelwachters · Stay Together</title>
+<style>
+:root{font-family:ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fffbea;background:#102b30;--cream:#fff2cb;--gold:#f8ce72;--mint:#a4ebd7;--dark:#142d33}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}button{font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer}button:focus-visible{outline:3px solid white;outline-offset:3px}
+#app{position:fixed;inset:0;overflow:hidden;background:#173a39;isolation:isolate}#game{position:absolute;width:100%;height:100%;display:block;touch-action:none}#app:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(4,18,22,.44),transparent 27%,transparent 73%,rgba(6,22,25,.5))}
+.hud{position:absolute;z-index:2;left:max(15px,env(safe-area-inset-left));right:max(15px,env(safe-area-inset-right));top:max(13px,env(safe-area-inset-top));pointer-events:none;display:grid;gap:9px}
+.topline{display:flex;align-items:center;gap:9px}.level-chip,.stat-chip,.glass-button,.hint-pill{background:rgba(17,44,46,.75);border:1.5px solid rgba(255,245,208,.24);box-shadow:0 4px 18px #0c1b2050,inset 0 1px #ffffff1c;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.level-chip{border-radius:17px;padding:8px 12px;min-width:0;flex:1}.level-chip small{display:block;color:#c0e4d5;font-size:9px;font-weight:900;letter-spacing:1.8px;text-transform:uppercase}.level-chip strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.glass-button{pointer-events:auto;color:var(--cream);font-size:18px;font-weight:900;border-radius:15px;min-width:44px;height:44px}
+.progress{width:100%;height:9px;border-radius:40px;overflow:hidden;background:#123336cb;border:1px solid #ffffff59;box-shadow:inset 0 2px 5px #0007}.progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8adbb5,#e2f7be,#fff4b4);border-radius:40px;transition:width .15s}
+.stats{display:flex;gap:7px}.stat-chip{padding:8px 10px;border-radius:13px;font-size:12px;font-weight:900;flex:1;text-align:center;white-space:nowrap}.stat-chip b{font-size:14px}.stat-chip span{color:#c8e2d6}.magic-panel{background:rgba(16,47,52,.7);border:1px solid #e1ffff44;border-radius:15px;padding:8px 11px;box-shadow:0 5px 18px #0003;display:flex;align-items:center;gap:10px;backdrop-filter:blur(8px)}.magic-panel label{font-size:11px;font-weight:850;white-space:nowrap}.magic-track{height:11px;flex:1;background:#051d2ac9;border-radius:20px;overflow:hidden;border:1px solid #92caca7a}.magic-track>span{display:block;height:100%;width:100%;border-radius:16px;background:linear-gradient(90deg,#52bde1,#91e9f9,#e2fcff);box-shadow:0 0 12px #9bedf8;transition:width .1s}
+.bottom{position:absolute;z-index:2;left:12px;right:12px;bottom:max(19px,calc(env(safe-area-inset-bottom) + 10px));display:flex;align-items:center;justify-content:center;pointer-events:none}.hint-pill{max-width:370px;text-align:center;border-radius:25px;padding:9px 15px;color:#fff2ca;font-size:11px;font-weight:750;line-height:1.35;transition:opacity .25s}.hint-pill.hidden{opacity:0}
+.overlay{z-index:6;position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:max(18px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));overflow:auto;background:linear-gradient(170deg,rgba(7,33,37,.71),rgba(12,26,35,.90));backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.overlay.visible{display:flex}.panel{width:min(100%,430px);max-height:100%;overflow-y:auto;scrollbar-width:none;border:1.5px solid #ffe3a45c;border-radius:27px;padding:25px 22px 22px;background:linear-gradient(145deg,#244950f7,#132e36f8 72%);box-shadow:0 18px 56px #00121dba,inset 0 2px #ffffff18;text-align:center}.panel::-webkit-scrollbar{display:none}
+.eyebrow{display:block;color:#a7e8d4;text-transform:uppercase;letter-spacing:3px;font-weight:950;font-size:10px}.panel h1,.panel h2{font-family:Georgia,"Times New Roman",serif;font-weight:900;letter-spacing:-1.2px;text-shadow:0 3px 0 #122b357f;margin:8px 0 9px}.panel h1{font-size:clamp(40px,9.6vw,52px);line-height:.96;color:#ffdc8c}.panel h2{font-size:35px;color:#ffe2a3}.panel p{font-size:13px;line-height:1.6;color:#d8e7d9;margin:10px 0 17px}.panel .sub{color:#ffffffac;font-size:11px}.logo-blobs{display:flex;justify-content:center;gap:0;margin:0 0 17px;filter:drop-shadow(0 8px 6px #030e1270)}.blob-icon{display:inline-block;width:56px;height:49px;background:radial-gradient(circle at 30% 24%,#ffeb8c 0,#ffb22a 38%,#ff7821 82%);border-radius:47% 52% 47% 42%;position:relative;transform:rotate(-9deg);border:3px solid #b95122}.blob-icon:nth-child(2){transform:translateY(-10px) rotate(8deg);background:radial-gradient(circle at 25% 24%,#ffec99,#ffc73b 45%,#ef7a1f)}.blob-icon:nth-child(3){transform:rotate(12deg)}.blob-icon:before,.blob-icon:after{content:"";position:absolute;top:24px;width:5px;height:7px;border-radius:50%;background:#522b20}.blob-icon:before{left:18px}.blob-icon:after{left:32px}
+.cta,.secondary{display:block;width:100%;border:0;border-radius:17px;padding:14px 18px;min-height:49px;font-weight:950;letter-spacing:.3px}.cta{color:#4d2d21;background:linear-gradient(#fff1b8,#ffc95b);box-shadow:0 5px 0 #bc7c31,0 8px 18px #0019;text-shadow:0 1px #fff8}.cta:active{transform:translateY(3px);box-shadow:0 2px 0 #bc7c31}.secondary{color:#e1f9f1;background:#204e56;border:1px solid #7bb5af8a;margin-top:10px}.rowbuttons{display:flex;gap:9px}.rowbuttons>*{flex:1}.rowbuttons .cta,.rowbuttons .secondary{margin-top:0}
+.worlds{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0 17px}.world{background:#12323992;border:1px solid #bce7cc50;border-radius:14px;padding:10px 6px;min-height:69px;color:#eff9e6;text-align:left}.world strong{display:block;font-size:12px}.world small{display:block;color:#a5cfc3;font-size:10px;margin-top:3px}.world.locked{opacity:.5}.world.selected{border-color:#ffeaa5;background:#365348}
+.legend{display:flex;justify-content:space-around;gap:8px;font-size:10px;color:#d3eadb;margin:15px 0}.legend span{max-width:110px}.badge{display:inline-block;color:#ffdd90;border:1px solid #ffdf9566;padding:4px 9px;border-radius:99px;font-size:11px;margin-bottom:7px}
+.shopitem{display:flex;align-items:center;gap:11px;text-align:left;background:#143a41b8;border:1px solid #bcdfb846;border-radius:15px;padding:11px;margin:9px 0}.shopitem .emoji{font-size:24px;width:30px}.shopitem .info{flex:1;min-width:0}.shopitem strong{font-size:13px;display:block}.shopitem small{font-size:10px;color:#b8cec7}.shopitem button{border:0;border-radius:11px;padding:9px 11px;background:#f9d47e;color:#4e3421;font-weight:900;font-size:11px;min-width:67px}.shopitem button:disabled{opacity:.47}
+#toast{position:absolute;z-index:9;left:50%;transform:translateX(-50%) translateY(-12px);top:35%;max-width:90vw;min-width:190px;background:#173a44dd;border:1px solid #b1e8d5;color:#f4f3dd;border-radius:16px;padding:13px 17px;text-align:center;font-weight:850;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (min-width:650px){#app{max-width:500px;margin:0 auto;box-shadow:0 0 0 100vw #0c212a}.panel{padding:30px 27px}}
+@media (max-height:710px){.panel{padding:16px 18px}.panel h1{font-size:39px}.panel p{margin:7px 0 11px}.logo-blobs{margin-bottom:6px}.worlds{margin:8px 0;gap:5px}.world{min-height:53px;padding:6px}.legend{margin:9px 0}.eyebrow{font-size:9px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="game" aria-label="Speelveld: bestuur en genees de kleine oranje vrienden"></canvas>
+<div class="hud" id="hud">
+<div class="topline">
+ <div class="level-chip"><small id="worldLabel">DE DRUPPELWACHTERS</small><strong id="levelLabel">Een magisch avontuur</strong></div>
+ <button id="soundBtn" class="glass-button" aria-label="Geluid aan of uit">♫</button><button id="pauseBtn" class="glass-button" aria-label="Pauze">Ⅱ</button>
+</div>
+<div class="progress"><span id="progressFill"></span></div>
+<div class="stats"><div class="stat-chip">🧡 <b id="friends">6</b> <span>vrienden</span></div><div class="stat-chip">✦ <b id="score">0</b></div><div class="stat-chip">🪙 <b id="coins">0</b></div></div>
+<div class="magic-panel"><label>💧 MAGIE</label><div class="magic-track"><span id="magicFill"></span></div><strong id="magicText" style="font-size:11px">100%</strong></div>
+</div>
+<div class="bottom"><div class="hint-pill" id="hint">Houd je vinger op je vriendjes om ze te genezen • Sleep om te sturen</div></div>
+<div class="overlay visible" id="menu">
+ <div class="panel">
+  <span class="eyebrow">Een vrolijk magisch avontuur</span>
+  <h1>De Druppel-<br>wachters</h1>
+  <div class="logo-blobs" aria-hidden="true"><span class="blob-icon"></span><span class="blob-icon"></span><span class="blob-icon"></span></div>
+  <p>Een boze tovenaar heeft het bos betoverd. Bescherm je kleine oranje vrienden! <b>Sleep om ze te sturen, houd vast om genezend water te laten regenen.</b></p>
+  <span class="eyebrow" style="font-size:9px">Kies je wereld</span>
+  <div class="worlds" id="worlds"></div>
+  <button id="startBtn" class="cta">✦ Begin het avontuur</button>
+  <div class="rowbuttons" style="margin-top:13px"><button id="shopBtn" class="secondary">🪙 Magische winkel</button><button id="howBtn" class="secondary">? Uitleg</button></div>
+  <p class="sub">24 levels • 4 werelden • voortgang wordt op dit apparaat bewaard</p>
+ </div>
+</div>
+<div class="overlay" id="pauseOverlay"><div class="panel"><span class="eyebrow">Even uitrusten</span><h2>Gepauzeerd</h2><p>Je vrienden wachten op je. De tovenaar ook...</p><button class="cta" id="resumeBtn">▶ Speel verder</button><button class="secondary" id="pauseHome">⌂ Hoofdmenu</button></div></div>
+<div class="overlay" id="resultOverlay"><div class="panel"><span class="eyebrow" id="resultEyebrow">LEVEL VOLTOOID</span><h2 id="resultTitle">Wat goed!</h2><div class="logo-blobs" aria-hidden="true"><span class="blob-icon"></span><span class="blob-icon"></span><span class="blob-icon"></span></div><p id="resultText"></p><span class="badge" id="rewardText"></span><button class="cta" id="nextBtn">Volgend level</button><button class="secondary" id="retryBtn">↻ Nog een keer</button><button class="secondary" id="resultHome">⌂ Hoofdmenu</button></div></div>
+<div class="overlay" id="shopOverlay"><div class="panel"><span class="eyebrow">Versterk je toverkunst</span><h2>Magische winkel</h2><p>Verzamel gouden zonnekristallen tijdens je avontuur en koop upgrades.</p><span class="badge" id="shopCoins">🪙 0</span><div id="shopItems"></div><button class="secondary" id="shopClose">← Terug</button></div></div>
+<div class="overlay" id="helpOverlay"><div class="panel"><span class="eyebrow">Zo speel je</span><h2>Help de blobs!</h2><p><b>1.</b> Raak het speelveld aan en sleep naar links of rechts om de groep te sturen.<br><b>2.</b> Houd je vinger vlak bij je vriendjes: het blauwe magische water geneest ze.<br><b>3.</b> Ontwijk paarse toverspreuken en rode doornen. Pak de gele sterren voor extra munten.<br><b>4.</b> Magie komt terug zodra je loslaat. Breng minstens één vriend naar de finish!<br><b>5.</b> Dubbel tikken gebruikt een krachtige beschermpuls.</p><button id="helpClose" class="cta">Begrepen!</button></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+</div>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var canvas=$("game"),ctx=canvas.getContext("2d",{alpha:false});
+var W=390,H=750,S=1,dpr=1,clock=0,last=0,uiTimer=0,toastTimer=0;
+var STORAGE="druppelwachters-v1";
+var defaults={unlocked:1,best:1,coins:0,sound:true,upgrades:{heal:0,magic:0,friend:0,shield:0}};
+var save=JSON.parse(JSON.stringify(defaults));
+try{var stored=JSON.parse(localStorage.getItem(STORAGE)||"null");if(stored){save.unlocked=Math.max(1,Math.min(24,stored.unlocked||1));save.best=Math.max(1,stored.best||1);save.coins=Math.max(0,stored.coins||0);save.sound=stored.sound!==false;if(stored.upgrades){Object.keys(save.upgrades).forEach(function(k){save.upgrades[k]=Math.max(0,Math.min(4,stored.upgrades[k]||0));});}}}catch(e){}
+function persist(){try{localStorage.setItem(STORAGE,JSON.stringify(save));}catch(e){}}
+var pal=[
+ {name:"Het Fluisterbos",label:"Wereld 1 · Fluisterbos",top:"#a4d7c6",bottom:"#3b8566",grass:"#428b68",road:"#ebd6a1",tree:"#246f5d",leaf:"#77b775",shadow:"#26484e",fog:"#e3f5ce"},
+ {name:"Het Schemerwoud",label:"Wereld 2 · Schemerwoud",top:"#9da9cb",bottom:"#42617d",grass:"#446c79",road:"#c6b1c5",tree:"#304b72",leaf:"#8091b7",shadow:"#293d5c",fog:"#c8d0ff"},
+ {name:"De Gouden Vallei",label:"Wereld 3 · Gouden vallei",top:"#f3c78e",bottom:"#b96954",grass:"#b78158",road:"#f4d4a1",tree:"#916550",leaf:"#edb966",shadow:"#774b52",fog:"#f9e6ad"},
+ {name:"Het Sterrenrijk",label:"Wereld 4 · Sterrenrijk",top:"#535c9f",bottom:"#333d78",grass:"#454d8c",road:"#a9a5c9",tree:"#323b73",leaf:"#9b92cf",shadow:"#26335e",fog:"#b8d3fc"}
+];
+var picked=1,mode="menu",lv=1,world=0,g=null,press=false,pointer={x:190,y:520},audio=null,lastTap=0;
+var maxUp={heal:4,magic:4,friend:3,shield:3};
+var upgradeInfo=[
+ {id:"heal",name:"Zachte regen",desc:"Groter bereik en snellere genezing",emoji:"💧",base:45},
+ {id:"magic",name:"Diepe waterbron",desc:"Meer magische energie en sneller opladen",emoji:"✨",base:60},
+ {id:"friend",name:"Vrienden voor altijd",desc:"Een extra blob aan het begin",emoji:"🧡",base:75},
+ {id:"shield",name:"Sterrenmantel",desc:"Minder schade door donkere magie",emoji:"🛡️",base:85}
+];
+var rand=function(a,b){return a+Math.random()*(b-a);};
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
+var TAU=Math.PI*2;
+function size(){var r=canvas.getBoundingClientRect();W=Math.max(240,r.width);H=Math.max(420,r.height);S=clamp(Math.min(W/390,H/710),.73,1.38);dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);if(g){g.x=clamp(g.x,55*S,W-55*S);g.target=clamp(g.target,55*S,W-55*S);}}
+window.addEventListener("resize",size,{passive:true});size();
+function uiSound(kind){if(!save.sound)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==="suspended")audio.resume();var now=audio.currentTime;var o=audio.createOscillator(),v=audio.createGain();o.connect(v);v.connect(audio.destination);o.type=kind==="hit"?"triangle":"sine";var freq=kind==="hit"?160:kind==="win"?630:kind==="heal"?530:380;o.frequency.setValueAtTime(freq,now);o.frequency.exponentialRampToValueAtTime(kind==="hit"?70:freq*1.32,now+.13);v.gain.setValueAtTime(.0001,now);v.gain.exponentialRampToValueAtTime(kind==="win"?.11:.045,now+.018);v.gain.exponentialRampToValueAtTime(.0001,now+.25);o.start(now);o.stop(now+.26);}catch(e){}}
+function modal(id){["menu","pauseOverlay","resultOverlay","shopOverlay","helpOverlay"].forEach(function(key){$(key).classList.toggle("visible",key===id);});}
+function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");toastTimer=2.2;}
+function renderWorlds(){var html="";for(var i=0;i<4;i++){var first=i*6+1,open=first<=save.unlocked;html+='<button class="world '+(!open?"locked":picked>=first&&picked<first+6?"selected":"")+'" data-level="'+first+'" '+(!open?"disabled":"")+'><strong>'+(open?["🌿 ","🌙 ","☀️ ","🌌 "][i]:"🔒 ")+pal[i].name+'</strong><small>'+(open?"Levels "+first+"–"+(first+5):"Speel wereld "+i+" vrij")+'</small></button>';}$("worlds").innerHTML=html;Array.from($("worlds").querySelectorAll("button:not([disabled])")).forEach(function(b){b.onclick=function(){picked=+b.dataset.level;renderWorlds();};});$("startBtn").textContent=picked===save.unlocked&&picked>1?"▶ Verder vanaf level "+picked:"✦ Speel level "+picked;}
+function showMenu(){press=false;mode="menu";picked=Math.max(1,Math.min(24,save.unlocked));modal("menu");renderWorlds();$("pauseBtn").style.visibility="hidden";$("hud").style.opacity=".55";}
+function createGame(level){lv=clamp(level,1,24);world=Math.floor((lv-1)/6);var count=6+save.upgrades.friend;g={x:W/2,target:W/2,blobs:[],hazards:[],drops:[],particles:[],scroll:0,time:0,distance:0,length:28+(lv-1)*1.25,spawn:2.5,dropSpawn:2.8,magic:100+save.upgrades.magic*12,maxMagic:100+save.upgrades.magic*12,coins:0,score:0,combo:0,shake:0,healSound:0,end:false};for(var i=0;i<count;i++){var col=i%3,row=Math.floor(i/3);g.blobs.push({x:W/2+(col-1)*31*S,y:H*.69+row*26*S,ox:(col-1)*30*S,oy:row*25*S,hp:100,alive:true,phase:rand(0,TAU),scatter:0,flash:0});}press=false;pointer.x=W/2;pointer.y=H*.69;mode="playing";modal("");$("pauseBtn").style.visibility="visible";$("hud").style.opacity="1";$("hint").classList.remove("hidden");$("worldLabel").textContent=pal[world].label;$("levelLabel").textContent="Level "+lv+" van 24";updateHud();}
+function alive(){return g?g.blobs.filter(function(b){return b.alive;}).length:0;}
+function updateHud(){if(!g)return;$("friends").textContent=alive();$("score").textContent=Math.floor(g.score);$("coins").textContent=save.coins+" +"+g.coins;$("magicFill").style.width=(100*g.magic/g.maxMagic)+"%";$("magicText").textContent=Math.round(100*g.magic/g.maxMagic)+"%";$("progressFill").style.width=(100*clamp(g.distance/g.length,0,1))+"%";$("soundBtn").textContent=save.sound?"♫":"♪̸";}
+function emit(x,y,color,n,spd){if(!g)return;n=n||7;spd=spd||65;for(var i=0;i<n;i++){var a=rand(0,TAU),v=rand(spd*.3,spd);g.particles.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.35,.9),max:1,r:rand(1.5,4.2)*S,color:color});}if(g.particles.length>250)g.particles.splice(0,g.particles.length-250);}
+function damage(b,power){if(!b.alive)return;var dmg=power*(1-save.upgrades.shield*.16);b.hp-=dmg;b.flash=.65;b.scatter+=rand(-38,38)*S;emit(b.x,b.y,"#e9a2fa",9,95*S);g.shake=Math.max(g.shake,6*S);uiSound("hit");if(b.hp<=0){b.alive=false;emit(b.x,b.y,"#ffae40",22,115*S);g.score=Math.max(0,g.score-40);if(alive()===0)finish(false);}}
+function collect(d){d.dead=true;g.coins+=d.type==="star"?5:2;g.score+=30;g.magic=clamp(g.magic+8,0,g.maxMagic);emit(d.x,d.y,"#fff4a6",11,70*S);if(g.coins%20===0)uiSound("heal");}
+function spawnHazard(){var type=Math.random()<.32?"thorn":"spell";var lead=g.x+rand(-72,72)*S;var x=clamp(lead,36*S,W-36*S);g.hazards.push({type:type,x:x,y:-50*S,from:W/2+Math.sin(clock*1.4)*W*.24,speed:(type==="spell"?220:125)*S+lv*2.8,r:(type==="spell"?18:28)*S,hit:false,phase:rand(0,TAU)});}
+function spawnDrop(){g.drops.push({x:rand(42*S,W-42*S),y:-25*S,type:Math.random()<.65?"star":"drop",phase:rand(0,TAU),speed:150*S+lv*1.5,r:12*S});}
+function pulse(){if(mode!=="playing"||g.magic<30)return;g.magic-=30;g.blobs.forEach(function(b){if(b.alive){b.hp=clamp(b.hp+24+save.upgrades.heal*6,0,100);b.scatter*=.3;emit(b.x,b.y,"#c3ffff",8,110*S);}});g.hazards.forEach(function(h){if(Math.abs(h.y-H*.69)<175*S){h.hit=true;emit(h.x,h.y,"#e0c7ff",12,125*S);}});g.pulse=0.7;uiSound("win");toast("✦ Beschermpuls!");}
+function update(dt){if(!g)return;g.time+=dt;g.scroll+=dt*(100+world*12)*S;g.shake*=Math.max(0,1-dt*10);if(g.pulse)g.pulse=Math.max(0,g.pulse-dt);
+ if(mode!=="playing"){return;}
+ g.distance+=dt;g.x+=(g.target-g.x)*Math.min(1,dt*5.4);g.x=clamp(g.x,51*S,W-51*S);
+ var cy=H*.69;if(press&&g.magic>0){g.magic=Math.max(0,g.magic-dt*(22-save.upgrades.magic*2));g.healSound-=dt;if(g.healSound<=0){g.healSound=.47;uiSound("heal");}if(Math.random()<.92){g.particles.push({x:pointer.x+rand(-30,30)*S,y:pointer.y-rand(20,65)*S,vx:rand(-9,9)*S,vy:rand(65,120)*S,life:.6,max:.6,r:rand(2,4)*S,color:"#baf7fe"});}}
+ else g.magic=clamp(g.magic+dt*(12+save.upgrades.magic*3.5),0,g.maxMagic);
+ g.blobs.forEach(function(b,i){if(!b.alive)return;b.phase+=dt*4.5;var offX=b.ox+b.scatter,offY=b.oy;var tx=g.x+offX+Math.sin(g.time*2.3+i*.8)*4*S,ty=cy+offY+Math.cos(b.phase)*2.5*S;b.x+=(tx-b.x)*Math.min(1,dt*(i===0?6.2:3.5));b.y+=(ty-b.y)*Math.min(1,dt*4);b.scatter*=Math.max(0,1-dt*.65);b.flash=Math.max(0,b.flash-dt);
+  if(press&&g.magic>0.02){var rr=(64+save.upgrades.heal*13)*S,dx=b.x-pointer.x,dy=b.y-pointer.y;if(dx*dx+dy*dy<rr*rr){b.hp=clamp(b.hp+dt*(23+save.upgrades.heal*9),0,100);if(Math.random()<.20)emit(b.x+rand(-7,7)*S,b.y-11*S,"#c9faff",1,28*S);}}
+ });
+ g.spawn-=dt;if(g.spawn<=0){spawnHazard();g.spawn=Math.max(.77,rand(1.45,2.35)-lv*.028);}
+ g.dropSpawn-=dt;if(g.dropSpawn<=0){spawnDrop();g.dropSpawn=rand(2,3.2);}
+ g.hazards.forEach(function(h){h.y+=h.speed*dt;h.phase+=dt*4;if(h.hit)return;if(h.type==="spell"){if(h.y>cy-55*S&&h.y<cy+75*S){g.blobs.forEach(function(b){if(!b.alive)return;var dx=b.x-h.x,dy=b.y-h.y;if(dx*dx+dy*dy<Math.pow(29*S,2))damage(b,37);});if(h.y>cy+26*S)h.hit=true;}}
+ else if(Math.abs(h.y-cy)<29*S){g.blobs.forEach(function(b){if(!b.alive)return;if(Math.abs(b.x-h.x)<32*S&&Math.abs(b.y-h.y)<35*S)damage(b,33);});h.hit=true;}
+ });g.hazards=g.hazards.filter(function(h){return !h.hit&&h.y<H+65*S;});
+ g.drops.forEach(function(d){d.y+=d.speed*dt;d.phase+=dt*2.3;g.blobs.forEach(function(b){if(!b.alive||d.dead)return;var dx=b.x-d.x,dy=b.y-d.y;if(dx*dx+dy*dy<(27*S)*(27*S))collect(d);});});g.drops=g.drops.filter(function(d){return !d.dead&&d.y<H+30*S;});
+ g.particles.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*20*S;p.life-=dt;});g.particles=g.particles.filter(function(p){return p.life>0;});
+ g.score+=dt*2.5*alive();if(g.distance>=g.length)finish(true);
+ uiTimer-=dt;if(uiTimer<=0){updateHud();uiTimer=.1;}
+ if(g.time>8)$("hint").classList.add("hidden");
+}
+function finish(won){if(g.end)return;g.end=true;press=false;var survivors=alive(),prize=0;if(won){prize=12+survivors*8+world*7;g.coins+=prize;save.unlocked=Math.max(save.unlocked,Math.min(24,lv+1));save.best=Math.max(save.best,lv);uiSound("win");}
+ save.coins+=g.coins;persist();mode=won?"won":"lost";$("resultEyebrow").textContent=won?"LEVEL VOLTOOID":"O NEE...";$("resultTitle").textContent=won?survivors===g.blobs.length?"Iedereen is veilig!":"Goed gedaan!":"De magie was te sterk";$("resultText").textContent=won?survivors+" van de "+g.blobs.length+" vriendjes hebben de finish bereikt. Je hebt "+Math.floor(g.score)+" punten verzameld.":"Al je vriendjes zijn geraakt. Ontwijk de paarse spreuken, laat je magie opladen en probeer het nog eens.";$("rewardText").textContent=won?"🪙 +"+g.coins+" zonnekristallen":"🪙 +"+g.coins+" zonnekristallen";$("nextBtn").style.display=won?"block":"none";modal("resultOverlay");updateHud();}
+function playNext(){if(lv>=24){showMenu();toast("🌟 Alle vier de werelden uitgespeeld!");}else createGame(lv+1);}
+function gradient(x,y,r,c1,c2){var gr=ctx.createRadialGradient(x-r*.2,y-r*.3,0,x,y,r);gr.addColorStop(0,c1);gr.addColorStop(1,c2);return gr;}
+function ell(x,y,rx,ry,col){ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,TAU);ctx.fill();}
+function rounded(x,y,w,h,r,col){ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function curve(x,y,rx,ry,c){ell(x,y,rx,ry,c);}
+function rng(n){var v=Math.sin(n*127.17+93.1)*43758.5453;return v-Math.floor(v);}
+function drawTree(x,y,k,seed,p){ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+ ell(4,29,38,14,"#13282536");ctx.strokeStyle=p.shadow;ctx.lineWidth=12;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(0,15);ctx.quadraticCurveTo(-7,-23,3,-70);ctx.stroke();
+ for(var j=0;j<5;j++){var ax=(rng(seed+j*11)-.5)*55,ay=-63+(rng(seed+j*9+5)-.5)*44,rr=27+rng(seed+j*19)*12;ell(ax,ay,rr,rr*.86,gradient(ax-8,ay-8,rr*1.45,p.leaf,p.tree));}
+ for(var v=0;v<6;v++){var xx=(rng(seed+v*8+44)-.5)*62,yy=-90+(rng(seed+v*14+72)-.5)*54;ell(xx,yy,2.4,3.3,p.fog+"b8");}
+ ctx.restore();}
+function drawBackground(p){var bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,p.top);bg.addColorStop(.65,p.grass);bg.addColorStop(1,p.bottom);ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ // painterly translucent ground patches, tied to scroll position
+ for(var i=0;i<29;i++){var seed=i+world*400;var x=rng(seed+28)*W,y=((i*109+g.scroll*.32)%(H+190))-90;ell(x,y,(34+rng(seed+31)*75)*S,(18+rng(seed+60)*52)*S,i%3===0?"#fdf7c011":"#123f3f15");}
+ // winding sandy path
+ var pathX=function(y){return W*.5+Math.sin((y+g.scroll*.63)/195)*W*.085+Math.sin((y-g.scroll*.27)/390)*W*.033;};
+ ctx.beginPath();for(var a=-50;a<=H+60;a+=15){var xx=pathX(a);if(a===-50)ctx.moveTo(xx-W*.31,a);else ctx.lineTo(xx-W*.31,a);}for(var a2=H+60;a2>=-50;a2-=15){ctx.lineTo(pathX(a2)+W*.31,a2);}ctx.closePath();ctx.fillStyle=p.road;ctx.fill();
+ ctx.strokeStyle="#ffffff26";ctx.lineWidth=12*S;ctx.stroke();
+ ctx.beginPath();for(var j=-35;j<=H+40;j+=12){if(j===-35)ctx.moveTo(pathX(j)-W*.32,j);else ctx.lineTo(pathX(j)-W*.32,j);}ctx.strokeStyle=p.shadow+"44";ctx.lineWidth=5*S;ctx.stroke();
+ ctx.beginPath();for(var j2=-35;j2<=H+40;j2+=12){if(j2===-35)ctx.moveTo(pathX(j2)+W*.32,j2);else ctx.lineTo(pathX(j2)+W*.32,j2);}ctx.stroke();
+ for(var k=0;k<12;k++){var sy=((k*86+g.scroll*.94)%(H+130))-60;var cx=pathX(sy)+Math.sin(k*8.9)*W*.18;ell(cx,sy,(9+rng(k*5)*16)*S,5*S,"#96734b28");}
+ for(var t=0;t<13;t++){var ty=((t*120+g.scroll*.88)%(H+190))-80;drawTree((t%2===0?23:W-24)+Math.sin(t*8.13)*16*S,ty,(.75+rng(t+world*9)*.52)*S,t*71+world*25,p);}
+ for(var f=0;f<60;f++){var fy=((f*59+g.scroll*(.5+rng(f+4)))%(H+75))-40,fx=rng(f*9+world*3)*W;var near=(fx>pathX(fy)-W*.3&&fx<pathX(fy)+W*.3);if(near)continue;var rr=(1+rng(f+16)*2)*S;ell(fx,fy,rr,rr*.55,f%5===0?"#fef5ae":"#ffffff72");if(f%7===0){ctx.strokeStyle=p.tree+"9a";ctx.lineWidth=1.4*S;ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx-3*S,fy-8*S);ctx.stroke();}}
+ // warm atmospheric mist
+ var mist=ctx.createLinearGradient(0,0,0,H);mist.addColorStop(0,p.fog+"56");mist.addColorStop(.35,"#ffffff00");mist.addColorStop(1,"#06161a12");ctx.fillStyle=mist;ctx.fillRect(0,0,W,H);
+}
+function drawWizard(){var x=W/2+Math.sin(clock*.85)*W*.25,y=H*.22;ctx.save();ctx.translate(x,y);ctx.globalAlpha=.78;var halo=gradient(0,5,72*S,"#ac8bfc55","#9372eb00");ell(0,7,72*S,72*S,halo);ell(0,23*S,22*S,23*S,"#372855");ctx.fillStyle="#302449";ctx.beginPath();ctx.moveTo(-26*S,3*S);ctx.lineTo(-3*S,-45*S);ctx.quadraticCurveTo(8*S,-55*S,17*S,-48*S);ctx.lineTo(23*S,5*S);ctx.closePath();ctx.fill();ell(0,6*S,19*S,11*S,"#514077");ell(-7*S,12*S,3*S,4*S,"#fce4bc");ell(7*S,12*S,3*S,4*S,"#fce4bc");ctx.restore();}
+function drawBlob(b){if(!b.alive)return;var r=14*S;ctx.save();ctx.translate(b.x,b.y);var bounce=Math.sin(b.phase)*2*S;ctx.translate(0,bounce);var squash=1+Math.sin(b.phase)*.07;ctx.scale(1/squash,squash);
+ ell(1*S,13*S,18*S,6*S,"#3e402646");
+ var body=gradient(-4*S,-7*S,28*S,b.flash>0?"#ffe9f2":"#fff2a2",b.flash>0?"#f88abb":"#ff8e24");ell(0,0,r*1.26,r,body);
+ ctx.strokeStyle="#a95126";ctx.lineWidth=1.5*S;ctx.beginPath();ctx.ellipse(0,0,r*1.26,r,0,0,TAU);ctx.stroke();
+ ell(-6*S,-7*S,6*S,4*S,"#fff8cf8b");
+ var eyeY=2*S;ell(-5.5*S,eyeY,2.25*S,3.35*S,"#643320");ell(6*S,eyeY,2.25*S,3.35*S,"#643320");ell(-5.9*S,eyeY-1*S,.7*S,.9*S,"#fff");ell(5.7*S,eyeY-1*S,.7*S,.9*S,"#fff");
+ ctx.strokeStyle="#8a3f27";ctx.lineWidth=1.2*S;ctx.beginPath();ctx.arc(0,3.2*S,3.6*S,.22,Math.PI-.22);ctx.stroke();
+ if(b.hp<85){ctx.fillStyle="#13262f77";ctx.beginPath();ctx.roundRect(-14*S,-23*S,28*S,4*S,3*S);ctx.fill();ctx.fillStyle=b.hp>40?"#a7f6bf":"#f68e92";ctx.fillRect(-14*S,-23*S,28*S*b.hp/100,4*S);}
+ ctx.restore();}
+function drawSpell(h){if(h.type==="thorn"){ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.phase*.1);ell(0,11*S,29*S,11*S,"#643e5448");for(var i=0;i<6;i++){var a=i*TAU/6;ctx.fillStyle=i%2?"#5b3752":"#925575";ctx.beginPath();ctx.moveTo(Math.cos(a)*10*S,Math.sin(a)*10*S);ctx.lineTo(Math.cos(a+0.18)*28*S,Math.sin(a+0.18)*28*S);ctx.lineTo(Math.cos(a+0.5)*11*S,Math.sin(a+0.5)*11*S);ctx.closePath();ctx.fill();}ell(0,0,10*S,11*S,"#b875a3");ctx.restore();return;}
+ ctx.save();var glow=gradient(h.x,h.y,35*S,"#f1c3ffbb","#a66ae600");ell(h.x,h.y,35*S,35*S,glow);ctx.translate(h.x,h.y);ctx.rotate(h.phase*1.5);for(var j=0;j<7;j++){var a2=j*TAU/7;ell(Math.cos(a2)*15*S,Math.sin(a2)*15*S,5*S,5*S,"#cba2ff99");}ell(0,0,15*S,15*S,gradient(-3*S,-4*S,22*S,"#faedff","#7651c5"));ctx.restore();}
+function drawDrops(d){ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.phase)*.22);if(d.type==="star"){ctx.shadowColor="#fff3ae";ctx.shadowBlur=16*S;ctx.fillStyle="#ffe39a";ctx.beginPath();for(var i=0;i<10;i++){var a=-Math.PI/2+i*Math.PI/5,r=(i%2?6:13)*S;var xx=Math.cos(a)*r,yy=Math.sin(a)*r;if(i===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);}ctx.closePath();ctx.fill();}
+ else{ctx.shadowColor="#c8f8ff";ctx.shadowBlur=11*S;ctx.fillStyle="#a2edfe";ctx.beginPath();ctx.moveTo(0,-13*S);ctx.bezierCurveTo(11*S,-2*S,11*S,5*S,0,10*S);ctx.bezierCurveTo(-11*S,5*S,-11*S,-2*S,0,-13*S);ctx.fill();}ctx.restore();}
+function drawRain(){if(!press||g.magic<=0||mode!=="playing")return;var rr=(64+save.upgrades.heal*13)*S;var grad=gradient(pointer.x,pointer.y,rr,"#d0fbff65","#73d2f100");ell(pointer.x,pointer.y,rr,rr,grad);ctx.strokeStyle="#b9f8ff97";ctx.lineWidth=1.6*S;ctx.setLineDash([7*S,6*S]);ctx.beginPath();ctx.arc(pointer.x,pointer.y,rr,0,TAU);ctx.stroke();ctx.setLineDash([]);for(var i=0;i<13;i++){var a=i*2.399+clock*2.4;var x=pointer.x+Math.sin(a)*rr*.5,y=pointer.y+Math.cos(a)*rr*.6;ctx.strokeStyle="#c2f7ffe3";ctx.lineWidth=2*S;ctx.beginPath();ctx.moveTo(x,y-7*S);ctx.lineTo(x-2*S,y+5*S);ctx.stroke();}}
+function drawParticles(){g.particles.forEach(function(p){ctx.globalAlpha=clamp(p.life/p.max,0,1);ell(p.x,p.y,p.r,p.r,p.color);});ctx.globalAlpha=1;}
+function render(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.save();if(g&&g.shake&&mode==="playing")ctx.translate(rand(-g.shake,g.shake),rand(-g.shake,g.shake));var p=pal[world]||pal[0];drawBackground(p);drawWizard();if(g){g.drops.forEach(drawDrops);g.hazards.forEach(drawSpell);g.blobs.forEach(drawBlob);drawRain();drawParticles();if(g.pulse>0){var r=(1-g.pulse/.7)*145*S;ctx.strokeStyle="rgba(180,255,255,"+(g.pulse/.7*.75)+")";ctx.lineWidth=6*S;ctx.beginPath();ctx.arc(g.x,H*.7,r,0,TAU);ctx.stroke();}}ctx.restore();}
+function loop(tm){if(!last)last=tm;var dt=Math.min(.04,Math.max(0,(tm-last)/1000));last=tm;clock+=dt;if(g)update(dt);if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$("toast").classList.remove("show");}render();requestAnimationFrame(loop);}
+function pointerLocation(e){var r=canvas.getBoundingClientRect();pointer.x=clamp(e.clientX-r.left,0,W);pointer.y=clamp(e.clientY-r.top,0,H);if(g&&mode==="playing")g.target=clamp(pointer.x,52*S,W-52*S);}
+canvas.addEventListener("pointerdown",function(e){if(mode!=="playing")return;e.preventDefault();pointerLocation(e);try{canvas.setPointerCapture(e.pointerId);}catch(err){}var now=performance.now();if(now-lastTap<285){pulse();lastTap=0;}else lastTap=now;press=true;},{passive:false});
+canvas.addEventListener("pointermove",function(e){if(mode!=="playing"||!press)return;e.preventDefault();pointerLocation(e);},{passive:false});
+function release(){press=false;}canvas.addEventListener("pointerup",release);canvas.addEventListener("pointercancel",release);window.addEventListener("blur",function(){press=false;if(mode==="playing")pause();});
+window.addEventListener("keydown",function(e){if(mode!=="playing")return;var step=60*S;if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a"){g.target=clamp(g.target-step,52*S,W-52*S);e.preventDefault();}if(e.key==="ArrowRight"||e.key.toLowerCase()==="d"){g.target=clamp(g.target+step,52*S,W-52*S);e.preventDefault();}if(e.key===" "){press=true;pointer.x=g.x;pointer.y=H*.69;e.preventDefault();}if(e.key==="Escape")pause();});window.addEventListener("keyup",function(e){if(e.key===" ")press=false;});
+function pause(){if(mode!=="playing")return;press=false;mode="paused";modal("pauseOverlay");}
+$("pauseBtn").onclick=pause;$("soundBtn").onclick=function(){save.sound=!save.sound;persist();updateHud();if(save.sound)uiSound("heal");};
+$("startBtn").onclick=function(){createGame(picked);uiSound("heal");};$("resumeBtn").onclick=function(){mode="playing";modal("");};
+$("pauseHome").onclick=showMenu;$("resultHome").onclick=showMenu;$("retryBtn").onclick=function(){createGame(lv);};$("nextBtn").onclick=playNext;
+$("shopBtn").onclick=showShop;$("shopClose").onclick=function(){modal("menu");renderWorlds();};$("howBtn").onclick=function(){modal("helpOverlay");};$("helpClose").onclick=function(){modal("menu");};
+function shopCost(item){return item.base*(1+save.upgrades[item.id]);}
+function showShop(){mode="menu";$("shopCoins").textContent="🪙 "+save.coins;var html="";upgradeInfo.forEach(function(item){var level=save.upgrades[item.id],max=level>=maxUp[item.id],cost=shopCost(item);html+='<div class="shopitem"><div class="emoji">'+item.emoji+'</div><div class="info"><strong>'+item.name+' · '+level+'/'+maxUp[item.id]+'</strong><small>'+item.desc+'</small></div><button data-upgrade="'+item.id+'" '+(max||save.coins<cost?"disabled":"")+'>'+(max?"MAX":"🪙 "+cost)+'</button></div>';});$("shopItems").innerHTML=html;Array.from($("shopItems").querySelectorAll("button")).forEach(function(b){b.onclick=function(){var item=upgradeInfo.find(function(i){return i.id===b.dataset.upgrade;});var cost=shopCost(item);if(!item||save.coins<cost||save.upgrades[item.id]>=maxUp[item.id])return;save.coins-=cost;save.upgrades[item.id]++;persist();uiSound("win");showShop();};});modal("shopOverlay");}
+document.addEventListener("visibilitychange",function(){if(document.hidden&&mode==="playing")pause();});
+window.addEventListener("contextmenu",function(e){if(e.target===canvas)e.preventDefault();});
+createGame(1);showMenu();updateHud();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
