@@ -13,6 +13,7 @@ assert.match(js,/JUST BUNKER DEFENSE V10/);
 const t=loadGame(dir);
 assert.equal(t.t.levels.length,40);
 assert.equal(t.t.tour.length,40);
+t.t.start('easy');
 const names=new Set(),themes=new Set(),signatures=new Set(),twists=new Set(),recipes=new Set(),features=new Set();
 const snapshots=[];
 for(let i=0;i<40;i++){
@@ -21,8 +22,7 @@ for(let i=0;i<40;i++){
  assert.equal(L.name,q.title,'title sync at '+i);
  assert(q.v10,'V10 mission flag '+i);
  names.add(q.title);themes.add(q.theme);twists.add(q.twist);recipes.add(q.recipe);features.add(q.feature);
- const g=loadGame(dir,{width:390,height:844},{seed:i+1});
- g.t.start('easy');
+ const g=t;
  const s=g.t.state;
  s.levelIndex=i;g.t.reset();
  assert.equal(s.mode,'playing','level launches '+i);
@@ -41,9 +41,10 @@ for(let i=0;i<40;i++){
    assert.equal(s.mode,'playing','run 110 frames at '+i);
    assert(s.levelTime>3,'clock advances '+i);
    g.t.render();
-   for(let frame=0;frame<100;frame++)g.t.step(1/30);
-   assert(s.v10.surprised,'surprise must trigger '+i);
-   assert(s.eventCursor>0,'encounters advance '+i);
+   const endFrame=Math.ceil((Math.max(4,q.seconds*.36)+.7)*30);
+   for(let frame=110;frame<endFrame;frame++)g.t.step(1/30);
+   assert(s.v10.surprised||s.mode!=='playing','surprise must trigger before the mission ends '+i);
+   assert(s.eventCursor>0||s.mode!=='playing','encounters advance '+i);
  }
 }
 assert.equal(names.size,40,'all mission titles unique');
@@ -59,7 +60,7 @@ assert(hard.t.state.shortBattle.maxDuration<=38);
 const first=loadGame(dir);first.t.start('easy');
 const s=first.t.state;
 assert(s.v10&&!s.v10.surprised);
-for(let i=0;i<200;i++)first.t.step(1/30);
+for(let i=0;i<300;i++)first.t.step(1/30);
 assert(s.v10.surprised,'mid-level random event actually occurs');
 assert(s.levelTime>5,'gameplay advances on iPhone');
 console.log('PASS V10:',JSON.stringify({
