@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#152b31">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>De Druppelwachters · Stay Together</title>
@@ -187,6 +189,7 @@ function shopCost(item){return item.base*(1+save.upgrades[item.id]);}
 function showShop(){mode="menu";$("shopCoins").textContent="🪙 "+save.coins;var html="";upgradeInfo.forEach(function(item){var level=save.upgrades[item.id],max=level>=maxUp[item.id],cost=shopCost(item);html+='<div class="shopitem"><div class="emoji">'+item.emoji+'</div><div class="info"><strong>'+item.name+' · '+level+'/'+maxUp[item.id]+'</strong><small>'+item.desc+'</small></div><button data-upgrade="'+item.id+'" '+(max||save.coins<cost?"disabled":"")+'>'+(max?"MAX":"🪙 "+cost)+'</button></div>';});$("shopItems").innerHTML=html;Array.from($("shopItems").querySelectorAll("button")).forEach(function(b){b.onclick=function(){var item=upgradeInfo.find(function(i){return i.id===b.dataset.upgrade;});var cost=shopCost(item);if(!item||save.coins<cost||save.upgrades[item.id]>=maxUp[item.id])return;save.coins-=cost;save.upgrades[item.id]++;persist();uiSound("win");showShop();};});modal("shopOverlay");}
 document.addEventListener("visibilitychange",function(){if(document.hidden&&mode==="playing")pause();});
 window.addEventListener("contextmenu",function(e){if(e.target===canvas)e.preventDefault();});
+if(typeof navigator!=="undefined"&&"serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){});});}
 createGame(1);showMenu();updateHud();requestAnimationFrame(loop);
 })();
 </script>
