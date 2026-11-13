@@ -42,6 +42,10 @@ jobs:
           mkdir -p _site
           cp -a jbd_rebuild_v1/dist/. _site/
           cp -a jbd_web _site/jbd_web
+          test -s _site/jbd_web/v10/index.html
+          test -s _site/jbd_web/v10/game.js
+          node --check _site/jbd_web/v10/game.js
+          node _site/jbd_web/v10/v10_regression.cjs
           cp -a handpan-studio _site/handpan-studio
           cp -a acid-rhythm-lab _site/acid-rhythm-lab
           cp -a warehouse95 _site/warehouse95
