@@ -11,6 +11,7 @@ on:
       - "acid-rhythm-lab/**"
       - "warehouse95/**"
       - "cantique-adventure/**"
+      - "stay-together/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -45,6 +46,8 @@ jobs:
           cp -a acid-rhythm-lab _site/acid-rhythm-lab
           cp -a warehouse95 _site/warehouse95
           cp -a cantique-adventure _site/cantique-adventure
+          cp -a stay-together _site/stay-together
+          test -s _site/stay-together/index.html
           command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
           # Public-domain Wikimedia Commons speech excerpts, transcoded to MP3 for Safari.
           mkdir -p _site/warehouse95/speech
