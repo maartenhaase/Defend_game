@@ -1,0 +1,24 @@
+name: V10 Quickfire campaign tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'jbd_web/v10/**'
+      - '.github/workflows/v10-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    name: iPhone canvas and all 40 missions
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check V10 JavaScript
+        run: node --check jbd_web/v10/game.js
+      - name: Validate map geometry, enemies, speed, surprises, game rendering
+        run: node jbd_web/v10/v10_regression.cjs
