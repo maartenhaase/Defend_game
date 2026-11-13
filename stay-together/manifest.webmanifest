@@ -1,0 +1,20 @@
+{
+  "name": "De Druppelwachters — Stay Together",
+  "short_name": "Druppelwachters",
+  "description": "Een magisch avontuur met oranje vrienden",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#173a39",
+  "theme_color": "#152b31",
+  "lang": "nl",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
