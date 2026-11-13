@@ -48,6 +48,7 @@ jobs:
           cp -a cantique-adventure _site/cantique-adventure
           cp -a stay-together _site/stay-together
           test -s _site/stay-together/index.html
+          node _site/stay-together/smoke-test.cjs
           command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
           # Public-domain Wikimedia Commons speech excerpts, transcoded to MP3 for Safari.
           mkdir -p _site/warehouse95/speech
