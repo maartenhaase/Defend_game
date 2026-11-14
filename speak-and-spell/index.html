@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eb6d23">
+<title>Speak & Spell — Retro Sample Lab</title>
+<meta name="description" content="Retro robotstem-sampler voor Nederlands en Engels. Maak, beluister en download je eigen 16-bit WAV-samples.">
+<style>
+:root{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#fff4d5;background:#131a24;--orange:#f07b23;--bright:#ffda58;--deep:#a44015;--dark:#21232d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#303846,#111720 70%);min-height:100vh}button,input,textarea{font:inherit}button{cursor:pointer;touch-action:manipulation}
+.wrap{max-width:830px;margin:auto;padding:22px 14px 50px}.eyebrow{color:#febf76;font-size:11px;letter-spacing:3px;text-align:center;padding:7px}.title{text-align:center;font-weight:900;letter-spacing:-3px;font-size:clamp(34px,9vw,64px);line-height:1.05;margin:0 0 18px;text-shadow:0 3px #73330d}.title span{color:#ffc943}
+.shell{padding:24px 24px 25px;border:3px solid #fcaa49;border-bottom:10px solid #8f3911;border-radius:30px 30px 42px 42px;background:linear-gradient(140deg,#ff982d 0%,#e76a1e 43%,#c84d1b 100%);box-shadow:inset 3px 3px 2px #ffd06688,inset -6px -6px 14px #85380e99,0 16px 40px #0009;color:#3a180c;position:relative}
+.plate{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;color:#ffe7a8;font-size:12px;font-weight:900;letter-spacing:2px}.plate small{font-size:10px;color:#582008;background:#ffd55a;border-radius:3px;padding:5px 7px}.plate .dot{background:#de4828;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 2px #72251b}
+.screen{background:linear-gradient(180deg,#131f18,#233527);padding:17px;border:11px solid #563626;border-radius:14px;box-shadow:inset 0 2px 17px #000c,0 3px 1px #ffc65d88;color:#dcff8f}
+.statusrow{display:flex;justify-content:space-between;font-size:10px;letter-spacing:1px;color:#8aaa67}.statusrow span{display:inline-block}
+.display{min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(23px,6.5vw,44px);line-height:1.15;font-weight:900;letter-spacing:4px;overflow-wrap:anywhere;text-shadow:0 0 17px #aaff4a99}.screen canvas{width:100%;height:64px;display:block}
+.modebar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 10px}.modebar button,.langbar button{border:2px solid #a74b12;background:#ffd772;color:#5e2608;padding:12px 8px;border-radius:10px;font-weight:900;box-shadow:0 4px #842f0e}.modebar button.active,.langbar button.active{background:#642d1f;color:#ffe680;border-color:#ffda64;box-shadow:0 3px #85260e}
+.langbar{display:flex;gap:10px;margin-bottom:15px}.langbar button{flex:1}
+textarea{width:100%;resize:vertical;min-height:99px;padding:14px;background:#fff3c4;color:#362215;border:3px solid #b5531b;border-radius:12px;line-height:1.45;font-size:17px;outline:none}textarea:focus{border-color:#533016;box-shadow:0 0 0 3px #ffda6477}
+.examples{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 17px}.examples button{background:#f6be59;border:1px solid #a64c11;color:#64280b;border-radius:7px;padding:8px 10px;font-size:11px;font-weight:900}.examples button:active{transform:translateY(2px)}
+.controlbox{background:#56271936;border:2px solid #ffbd61aa;border-radius:15px;padding:17px 15px;color:#fff2cb}.rowhead{font-size:11px;letter-spacing:2px;color:#ffefaf;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.preset{display:flex;gap:7px;flex-wrap:wrap}.preset button{background:#7a351d;color:#ffdc88;padding:8px 10px;font-size:11px;border-radius:7px;border:1px solid #f6b25e}.preset button.selected{background:#ffdb6e;color:#64270d}
+.knobs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 21px;margin-top:17px}.knob label{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:1px;margin-bottom:8px}.knob output{color:#fff19b}input[type=range]{accent-color:#ffe063;width:100%;height:21px;cursor:pointer}
+.actions{display:grid;grid-template-columns:1.1fr .7fr 1.4fr;gap:8px;margin-top:20px}.actions button{border-radius:12px;border:2px solid #572415;padding:16px 5px;color:#50240c;background:linear-gradient(#fff0a0,#ffc655);font-size:12px;font-weight:900;box-shadow:0 5px #8b330e}.actions button.primary{background:linear-gradient(#c4ff99,#66bc53);color:#213f18}.actions button.export{background:linear-gradient(#fff4bf,#ffa820)}.actions button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
+.actions button:active{transform:translateY(3px);box-shadow:0 2px #8b330e}
+.info{color:#fff0c7;font-size:11px;display:flex;justify-content:space-between;gap:10px;margin:15px 2px 1px;line-height:1.5}
+.warn{min-height:27px;margin:10px 0 0;text-align:center;color:#ffe3ac;font-size:12px}
+.foot{color:#9eadbf;font:12px/1.6 system-ui,sans-serif;text-align:center;max-width:650px;margin:20px auto}.foot a{color:#ffd580}
+@media(max-width:550px){.wrap{padding:14px 9px 30px}.shell{padding:14px 13px 18px;border-radius:22px 22px 32px 32px}.screen{padding:10px;border-width:8px}.plate{letter-spacing:1px}.knobs{gap:13px}.rowhead{align-items:flex-start;gap:9px;flex-direction:column}.actions{grid-template-columns:1fr 1fr}.actions .export{grid-column:1 / -1}.display{min-height:55px}.actions button{padding:13px 4px}}
+</style>
+<script defer src="https://cdn.jsdelivr.net/gh/itinerarium/phoneme-synthesis@master/mespeak.js"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="eyebrow">1980s ROBOT VOICE · CUSTOM SAMPLE MACHINE</div>
+<h1 class="title">SPEAK <span>&</span> SPELL</h1>
+<main class="shell">
+<div class="plate"><span>RETRO SAMPLE LAB <span class="dot"></span></span><small>MK I · CHIP VOICE</small></div>
+<div class="screen">
+<div class="statusrow"><span id="langLabel">NL / DUTCH</span><span id="statusLabel">INITIALIZING...</span></div>
+<div class="display" id="display">HELLO!</div>
+<canvas id="wave" width="700" height="100" aria-label="Waveform"></canvas>
+<div class="statusrow"><span id="meta">22 kHz · MONO · 16-BIT</span><span>◎ SOUND READY</span></div>
+</div>
+<div class="modebar"><button id="modeSpeak" class="active">▶ SPEAK / SPREEK</button><button id="modeSpell">A · B · C / SPELL</button></div>
+<div class="langbar"><button id="langNl" class="active">🇳🇱 NEDERLANDS</button><button id="langEn">🇬🇧 ENGLISH</button></div>
+<textarea id="words" maxlength="200" spellcheck="false" aria-label="Tekst om uit te spreken">Welkom in de toekomst!</textarea>
+<div class="examples" id="examples"></div>
+<section class="controlbox">
+<div class="rowhead"><strong>VOICE PRESETS</strong><div class="preset"><button data-preset="classic" class="selected">CLASSIC</button><button data-preset="robot">ROBOT</button><button data-preset="lofi">LO-FI</button><button data-preset="clean">CLEAN</button></div></div>
+<div class="knobs">
+<div class="knob"><label for="pitch">PITCH <output id="pitchValue"></output></label><input id="pitch" type="range" min="1" max="99" value="62"></div>
+<div class="knob"><label for="speed">SPEED <output id="speedValue"></output></label><input id="speed" type="range" min="80" max="300" value="150"></div>
+<div class="knob"><label for="crush">CHIP / CRUSH <output id="crushValue"></output></label><input id="crush" type="range" min="0" max="100" value="67"></div>
+<div class="knob"><label for="tone">TONE <output id="toneValue"></output></label><input id="tone" type="range" min="0" max="100" value="57"></div>
+<div class="knob"><label for="tape">TAPE PITCH <output id="tapeValue"></output></label><input id="tape" type="range" min="-12" max="12" step="1" value="0"></div>
+<div class="knob"><label for="echo">ECHO <output id="echoValue"></output></label><input id="echo" type="range" min="0" max="70" value="10"></div>
+</div>
+</section>
+<div class="actions"><button id="play" class="primary" disabled>▶ GENEREER & SPEEL</button><button id="stop">■ STOP</button><button id="download" class="export" disabled>↓ DOWNLOAD .WAV</button></div>
+<div class="info"><span id="length">Nog geen sample gegenereerd</span><span>WAV · 16-BIT PCM · MONO</span></div>
+<div class="warn" id="message" role="status">Spraakengine wordt geladen…</div>
+</main>
+<p class="foot">Synthesizer geïnspireerd door het elektronische speelgoedgeluid uit de jaren 80. Dit is geen exacte emulatie van de originele Texas Instruments Speak & Spell. Spraaksynthese door <a href="https://www.masswerk.at/mespeak/" target="_blank" rel="noopener">meSpeak / eSpeak</a> (GPL-3.0). De audio wordt lokaal in je browser gemaakt; geen account nodig.</p>
+</div>
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const base='https://cdn.jsdelivr.net/gh/';
+const files=[
+base+'itinerarium/phoneme-synthesis@master/mespeak_config.json',
+base+'itinerarium/phoneme-synthesis@master/en.json',
+base+'btopro/mespeak@master/voices/nl.json'
+];
+const presets={
+classic:{pitch:62,speed:150,crush:67,tone:57,tape:0,echo:10},
+robot:{pitch:35,speed:135,crush:80,tone:39,tape:-2,echo:17},
+lofi:{pitch:72,speed:170,crush:92,tone:32,tape:0,echo:24},
+clean:{pitch:50,speed:165,crush:16,tone:90,tape:0,echo:0}
+};
+const examples={
+nl:['Welkom in de toekomst!','Dit is een test','De robot is wakker','Een, twee, drie!','Ik ben een computer'],
+en:['Welcome to the future!','The robot is alive','One, two, three','System overload','Make some noise!']
+};
+let lang='nl', mode='speak', ready=false, lastWav=null,lastData=null,lastRate=22050, audioCtx=null,activeSource=null,activeBlobUrl=null, generation=0;
+function status(msg,extra){$('message').textContent=msg;$('statusLabel').textContent=extra|| (ready?'READY':'LOADING');}
+function setLanguage(l){
+lang=l;$('langNl').classList.toggle('active',l==='nl');$('langEn').classList.toggle('active',l==='en');
+$('langLabel').textContent=l==='nl'?'NL / DUTCH':'EN / ENGLISH';
+$('words').value=examples[l][0];clearResult();buildExamples();updateDisplay();
+}
+function setMode(m){mode=m;$('modeSpeak').classList.toggle('active',m==='speak');$('modeSpell').classList.toggle('active',m==='spell');clearResult();updateDisplay();}
+function updateDisplay(){const t=$('words').value.trim();$('display').textContent=t ? t.toUpperCase().slice(0,52) : 'TYPE SOMETHING';}
+function buildExamples(){
+$('examples').replaceChildren();
+examples[lang].forEach(t=>{let b=document.createElement('button');b.textContent=t;b.addEventListener('click',()=>{$('words').value=t;clearResult();updateDisplay()});$('examples').append(b)});
+}
+function clearResult(){generation++;lastWav=null;lastData=null;$('download').disabled=true;$('length').textContent='Nog geen sample gegenereerd';drawWave(null);}
+function stopSound(){if(activeSource){try{activeSource.stop()}catch(e){}activeSource.disconnect();activeSource=null;}if(window.meSpeak&&meSpeak.stop)try{meSpeak.stop()}catch(e){}}
+function setPreset(name){
+const p=presets[name];for(const k of Object.keys(p)) $(k).value=p[k];
+document.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('selected',b.dataset.preset===name));refreshKnobs();clearResult();
+}
+function refreshKnobs(){for(const id of ['pitch','speed','crush','tone','tape','echo']){
+let v=Number($(id).value);$(''+id+'Value').textContent= id==='speed' ? v+' WPM' : id==='tape' ? (v>0?'+':'')+v+' ST' : v+'%';
+}}
+function wordsToSpeech(input){
+if(mode==='speak')return input;
+let chars=Array.from(input.normalize('NFC')).filter(x=>/[\p{L}\p{N}]/u.test(x));
+return chars.join(', ');
+}
+function unpackWav(raw){
+const a=raw instanceof ArrayBuffer?raw:raw.buffer?raw.buffer.slice(raw.byteOffset||0,(raw.byteOffset||0)+raw.byteLength):Uint8Array.from(raw).buffer;
+const dv=new DataView(a);const text=(o,n)=>String.fromCharCode(...new Uint8Array(a,o,n));
+if(dv.byteLength<44||text(0,4)!=='RIFF'||text(8,4)!=='WAVE')throw Error('Ongeldig spraakformaat');
+let pos=12,fmt=null,data=null;
+while(pos+8<=dv.byteLength){
+const type=text(pos,4),sz=dv.getUint32(pos+4,true),st=pos+8;
+if(type==='fmt '){fmt={format:dv.getUint16(st,true),channels:dv.getUint16(st+2,true),rate:dv.getUint32(st+4,true),bits:dv.getUint16(st+14,true)}}
+if(type==='data'){data={start:st,size:Math.min(sz,dv.byteLength-st)}}
+pos=st+sz+(sz%2);if(pos>dv.byteLength)break;
+}
+if(!fmt||!data||fmt.format!==1||![8,16].includes(fmt.bits))throw Error('Niet-ondersteund WAV-formaat');
+const bytes=fmt.bits/8,frames=Math.floor(data.size/(bytes*fmt.channels));const out=new Float32Array(frames);
+for(let i=0;i<frames;i++){
+let val=0;for(let c=0;c<fmt.channels;c++){const at=data.start+(i*fmt.channels+c)*bytes;
+val+=fmt.bits===8?(dv.getUint8(at)-128)/128:dv.getInt16(at,true)/32768;}
+out[i]=val/fmt.channels;
+}
+return {samples:out,rate:fmt.rate};
+}
+function processVoice(input,rate){
+let start=0,end=input.length;const threshold=.0027;
+while(start<end&&Math.abs(input[start])<threshold)start++;
+while(end>start&&Math.abs(input[end-1])<threshold)end--;
+start=Math.max(0,start-Math.round(rate*.013));
+end=Math.min(input.length,end+Math.round(rate*.07));
+if(end<=start)throw Error('Geen geluid gegenereerd');
+const crush=Number($('crush').value)/100,tone=Number($('tone').value)/100,echo=Number($('echo').value)/100,semi=Number($('tape').value);
+const step=Math.pow(2,semi/12);
+const hold=Math.max(1,Math.round(rate/(16000-Math.pow(crush,1.2)*12500)));
+const levels=Math.pow(2,Math.max(4,Math.round(13-crush*9)));
+const lowHz=900+tone*9000;
+const alpha=Math.exp(-2*Math.PI*lowHz/rate);
+const tail=Math.round(rate*(echo>0?.44:0.1));const len=Math.max(1,end-start+tail);
+let shaped=new Float32Array(len),lp=0,held=0;
+const drive=1.05+crush*1.8,scale=Math.tanh(drive),d=Math.max(1,Math.round(rate*.155));
+for(let i=0;i<len;i++){
+let sample=i<end-start?input[start+i]:0;
+sample=Math.tanh(sample*drive)/scale;
+lp=(1-alpha)*sample+alpha*lp;sample=lp;
+if(i%hold===0) held=Math.round(sample*levels)/levels;
+sample=(held||0);
+if(echo>0 && i>=d)sample+=shaped[i-d]*echo*.34;
+shaped[i]=Math.max(-1,Math.min(1,sample));
+}
+let length=Math.max(1,Math.round(shaped.length/step));
+let out=new Float32Array(length);let peak=0;
+for(let i=0;i<length;i++){
+let at=i*step,j=Math.floor(at),frac=at-j;
+out[i]=(shaped[j]||0)*(1-frac)+(shaped[j+1]||0)*frac;
+peak=Math.max(peak,Math.abs(out[i]));
+}
+const gain=peak>0?Math.min(2.8,.93/peak):1;const fade=Math.min(Math.floor(rate*.013),Math.floor(length/4));
+for(let i=0;i<length;i++){
+let envelope=1;
+if(i<fade)envelope=i/fade;
+if(i>=length-fade)envelope=Math.min(envelope,(length-i-1)/fade);
+out[i]=Math.max(-1,Math.min(1,out[i]*gain*envelope));
+}
+return out;
+}
+function wavEncode(samples,rate){
+const b=new ArrayBuffer(44+samples.length*2),v=new DataView(b);
+function st(p,s){for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))}
+st(0,'RIFF');v.setUint32(4,36+samples.length*2,true);st(8,'WAVE');st(12,'fmt ');
+v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);
+v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);st(36,'data');v.setUint32(40,samples.length*2,true);
+for(let i=0;i<samples.length;i++){const s=Math.max(-1,Math.min(1,samples[i]));v.setInt16(44+i*2,Math.round(s<0?s*32768:s*32767),true)}
+return new Blob([b],{type:'audio/wav'});
+}
+function drawWave(buffer){
+const canvas=$('wave'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+ctx.clearRect(0,0,w,h);ctx.strokeStyle='#587d54';ctx.lineWidth=1;
+ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
+if(!buffer){ctx.fillStyle='#527a50';ctx.font='14px monospace';ctx.fillText('> READY FOR INPUT',12,27);return;}
+const stride=Math.max(1,Math.ceil(buffer.length/w));ctx.strokeStyle='#dcff89';ctx.lineWidth=1.3;ctx.beginPath();
+for(let x=0;x<w;x++){
+let mi=1,ma=-1;for(let k=x*stride;k<(x+1)*stride&&k<buffer.length;k++){let s=buffer[k];if(s<mi)mi=s;if(s>ma)ma=s}
+const y1=h/2-mi*h*.42,y2=h/2-ma*h*.42;ctx.moveTo(x,y1);ctx.lineTo(x,y2);
+}ctx.stroke();
+}
+async function generate(){
+if(!ready){status('De spraakengine is nog niet klaar.','LOADING');return false;}
+const text=$('words').value.trim();if(!text){status('Typ eerst een woord of zin.','EMPTY');return false}
+stopSound();let my=++generation;status('Sample wordt gemaakt…','SYNTH');
+$('play').disabled=true;
+await new Promise(r=>setTimeout(r,25));
+try{
+const speech=wordsToSpeech(text);
+const out=meSpeak.speak(speech,{voice:lang==='nl'?'nl':'en/en',pitch:Number($('pitch').value),speed:Number($('speed').value),amplitude:100,wordgap:mode==='spell'?16:1,rawdata:true});
+if(!out)throw Error('Spraaksynthese gaf geen audio terug');
+const decoded=unpackWav(out);const processed=processVoice(decoded.samples,decoded.rate);
+if(my!==generation)return false;
+lastData=processed;lastRate=decoded.rate;lastWav=wavEncode(processed,decoded.rate);
+$('download').disabled=false;$('length').textContent=(processed.length/decoded.rate).toFixed(2)+' sec · '+(lastWav.size/1024).toFixed(0)+' KB';
+$('meta').textContent=(decoded.rate/1000).toFixed(1)+' kHz · MONO · 16-BIT';
+drawWave(processed);status('Sample gereed!','READY');return true;
+}catch(e){console.error(e);status('Fout: '+e.message,'ERROR');return false}
+finally{$('play').disabled=!ready;}
+}
+async function preview(){
+const ok=await generate();if(!ok)return;
+try{
+audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();
+const audio=audioCtx.createBuffer(1,lastData.length,lastRate);audio.copyToChannel(lastData,0);
+const source=audioCtx.createBufferSource();source.buffer=audio;source.connect(audioCtx.destination);activeSource=source;source.onended=()=>{if(activeSource===source)activeSource=null};source.start();
+status('Afspelen…','PLAYING');
+}catch(e){status('Afspelen mislukt: '+e.message,'ERROR')}
+}
+async function download(){
+if(!lastWav){if(!await generate())return;}
+const slug=$('words').value.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,36)||'sample';
+const file='speak-spell-'+lang+'-'+slug+'.wav';
+const url=URL.createObjectURL(lastWav);const a=document.createElement('a');a.href=url;a.download=file;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);status('WAV gedownload: '+file,'SAVED');
+}
+async function boot(){
+try{
+if(typeof meSpeak==='undefined')throw Error('De spraaksynthesizer kon niet laden. Controleer je verbinding.');
+status('Stemmen NL en EN laden…','LOADING');
+const data=await Promise.all(files.map(async u=>{const r=await fetch(u,{cache:'force-cache'});if(!r.ok)throw Error('Bestand niet gevonden ('+r.status+')');return r.json()}));
+meSpeak.loadConfig(data[0]);meSpeak.loadVoice(data[1]);meSpeak.loadVoice(data[2]);
+ready=true;$('play').disabled=false;status('Klaar. Typ iets en druk op PLAY.','READY');
+}catch(e){console.error(e);status('Laden mislukt: '+e.message+' · Herlaad de pagina.','ERROR');}
+}
+$('modeSpeak').addEventListener('click',()=>setMode('speak'));$('modeSpell').addEventListener('click',()=>setMode('spell'));
+$('langNl').addEventListener('click',()=>setLanguage('nl'));$('langEn').addEventListener('click',()=>setLanguage('en'));
+$('words').addEventListener('input',()=>{clearResult();updateDisplay()});
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>setPreset(b.dataset.preset)));
+document.querySelectorAll('.knob input').forEach(s=>s.addEventListener('input',()=>{refreshKnobs();clearResult()}));
+$('play').addEventListener('click',preview);$('stop').addEventListener('click',()=>{stopSound();status('Gestopt.','STOPPED')});
+$('download').addEventListener('click',download);
+buildExamples();refreshKnobs();updateDisplay();drawWave(null);window.addEventListener('load',boot);
+})();
+</script>
+</body>
+</html>
