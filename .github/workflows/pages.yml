@@ -152,5 +152,31 @@ jobs:
           echo 'Published V9.9.47 URL is not available'
           exit 1
 
+      - name: Verify Speak and Spell public URL and speech assets
+        run: |
+          URL='https://maartenhaase.github.io/Defend_game/speak-and-spell/index.html'
+          OK=0
+          for i in 1 2 3 4 5 6; do
+            CODE=$(curl -L -s -o /tmp/speak-and-spell-page.html -w '%{http_code}' "$URL" || true)
+            if [ "$CODE" = '200' ] && grep -q 'RETRO SAMPLE LAB' /tmp/speak-and-spell-page.html; then
+              OK=1
+              break
+            fi
+            echo "Speak and Spell not yet available (HTTP $CODE), attempt $i"
+            sleep 5
+          done
+          if [ "$OK" -ne 1 ]; then echo 'Speak and Spell public page check failed'; exit 1; fi
+          for asset in \
+            'https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak.js' \
+            'https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak_config.json' \
+            'https://cdn.jsdelivr.net/gh/mikolalysenko/mespeak@master/voices/en/en-us.json' \
+            'https://cdn.jsdelivr.net/gh/mikolalysenko/mespeak@master/voices/nl.json'
+          do
+            SIZE=$(curl -fL -sS --retry 2 --max-time 20 "$asset" | wc -c)
+            echo "Speech asset size: $SIZE bytes"
+            test "$SIZE" -gt 1000
+          done
+          echo 'Speak and Spell page and all speech assets verified over HTTPS'
+
 
 
