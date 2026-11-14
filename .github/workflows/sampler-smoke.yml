@@ -1,0 +1,33 @@
+name: Smoke test Speak and Spell WAV sampler
+on:
+  push:
+    paths:
+      - ".github/workflows/sampler-smoke.yml"
+      - "speak-and-spell/**"
+  workflow_dispatch:
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+      - name: Generate Dutch and English WAV in real browser
+        run: |
+          set -eo pipefail
+          google-chrome --version
+          google-chrome --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --virtual-time-budget=25000 --dump-dom 'https://maartenhaase.github.io/Defend_game/speak-and-spell/?selftest=1' > /tmp/speech-dom.html 2>/tmp/speech-chrome.log || true
+          python3 - <<'PY'
+          import html, re, json
+          s = open('/tmp/speech-dom.html', encoding='utf-8').read()
+          m = re.search(r'<pre id="selftest-result">([^<]+)</pre>', s)
+          if not m:
+              print('Missing test result. Tail of page:', s[-1000:])
+              print(open('/tmp/speech-chrome.log').read()[-800:])
+              raise SystemExit(1)
+          d = json.loads(html.unescape(m.group(1)))
+          print(json.dumps(d, indent=2))
+          assert d['status'] == 'PASS', 'Audio synthesis failed'
+          PY
