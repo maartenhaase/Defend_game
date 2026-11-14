@@ -67,12 +67,7 @@ textarea{width:100%;resize:vertical;min-height:99px;padding:14px;background:#fff
 (function(){
 'use strict';
 const $ = id => document.getElementById(id);
-const base='https://cdn.jsdelivr.net/gh/';
-const files=[
-base+'btopro/mespeak@master/mespeak_config.json',
-base+'mikolalysenko/mespeak@master/voices/en/en-us.json',
-base+'mikolalysenko/mespeak@master/voices/nl.json'
-];
+const files=['./assets/mespeak_config.json','./assets/en-us.json','./assets/nl.json'];
 const presets={
 classic:{pitch:62,speed:150,crush:67,tone:57,tape:0,echo:10},
 robot:{pitch:35,speed:135,crush:80,tone:39,tape:-2,echo:17},
@@ -230,6 +225,9 @@ const file='speak-spell-'+lang+'-'+slug+'.wav';
 const url=URL.createObjectURL(lastWav);const a=document.createElement('a');a.href=url;a.download=file;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);status('WAV gedownload: '+file,'SAVED');
 }
 async function boot(){
+const testing=new URLSearchParams(location.search).has('selftest');
+let testNode=null;
+if(testing){testNode=document.createElement('pre');testNode.id='selftest-result';testNode.textContent='BOOT STARTED';document.body.append(testNode);}
 try{
 if(typeof meSpeak==='undefined')throw Error('De spraaksynthesizer kon niet laden. Controleer je verbinding.');
 status('Stemmen NL en EN laden…','LOADING');
@@ -255,8 +253,8 @@ await loadResource('loadVoice',files[2]);
 if(!meSpeak.isConfigLoaded())throw Error('Spraakconfiguratie niet geladen');
 if(!meSpeak.isVoiceLoaded('nl')||!meSpeak.isVoiceLoaded('en/en-us'))throw Error('NL/EN-stem ontbreekt');
 ready=true;$('play').disabled=false;status('Klaar. Typ iets en druk op PLAY.','READY');
-if(new URLSearchParams(location.search).has('selftest')){
-  const result=document.createElement('pre');result.id='selftest-result';result.textContent='SELFTEST RUNNING';document.body.append(result);
+if(testing){
+  const result=testNode;result.textContent='SELFTEST RUNNING';
   const tests=[];
   for(const lng of ['nl','en']){
     setLanguage(lng);
@@ -268,7 +266,7 @@ if(new URLSearchParams(location.search).has('selftest')){
   }
   result.textContent=JSON.stringify({tests,configLoaded:meSpeak.isConfigLoaded?.(),status:tests.every(x=>x.ok&&x.bytes>1000)?'PASS':'FAIL'});
 }
-}catch(e){console.error(e);status('Laden mislukt: '+e.message+' · Herlaad de pagina.','ERROR');}
+}catch(e){console.error(e);status('Laden mislukt: '+e.message+' · Herlaad de pagina.','ERROR');if(testNode)testNode.textContent=JSON.stringify({status:'FAIL',phase:'BOOT',error:e.message,configLoaded:typeof meSpeak!=='undefined'&&meSpeak.isConfigLoaded?.()});}
 }
 $('modeSpeak').addEventListener('click',()=>setMode('speak'));$('modeSpell').addEventListener('click',()=>setMode('spell'));
 $('langNl').addEventListener('click',()=>setLanguage('nl'));$('langEn').addEventListener('click',()=>setLanguage('en'));
