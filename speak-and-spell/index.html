@@ -232,6 +232,19 @@ status('Stemmen NL en EN laden…','LOADING');
 const data=await Promise.all(files.map(async u=>{const r=await fetch(u,{cache:'force-cache'});if(!r.ok)throw Error('Bestand niet gevonden ('+r.status+')');return r.json()}));
 meSpeak.loadConfig(data[0]);meSpeak.loadVoice(data[1]);meSpeak.loadVoice(data[2]);
 ready=true;$('play').disabled=false;status('Klaar. Typ iets en druk op PLAY.','READY');
+if(new URLSearchParams(location.search).has('selftest')){
+  const result=document.createElement('pre');result.id='selftest-result';result.textContent='SELFTEST RUNNING';document.body.append(result);
+  const tests=[];
+  for(const lng of ['nl','en']){
+    setLanguage(lng);
+    const testText=lng==='nl'?'Hallo computer':'Hello computer';
+    $('words').value=testText;
+    const isLoaded=!!(meSpeak.isVoiceLoaded&&meSpeak.isVoiceLoaded(lng==='nl'?'nl':'en/en-us'));
+    const ok=await generate();
+    tests.push({lang:lng,voiceLoaded:isLoaded,ok,bytes:lastWav?.size||0,status:$('message').textContent});
+  }
+  result.textContent=JSON.stringify({tests,configLoaded:meSpeak.isConfigLoaded?.(),status:tests.every(x=>x.ok&&x.bytes>1000)?'PASS':'FAIL'});
+}
 }catch(e){console.error(e);status('Laden mislukt: '+e.message+' · Herlaad de pagina.','ERROR');}
 }
 $('modeSpeak').addEventListener('click',()=>setMode('speak'));$('modeSpell').addEventListener('click',()=>setMode('spell'));
