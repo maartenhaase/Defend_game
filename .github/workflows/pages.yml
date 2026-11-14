@@ -178,5 +178,26 @@ jobs:
           done
           echo 'Speak and Spell page and all speech assets verified over HTTPS'
 
-
-
+      - name: Setup Chrome browser for speech smoke test
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+      - name: Test actual Dutch and English WAV synthesis in browser
+        run: |
+          set -eo pipefail
+          google-chrome --version
+          google-chrome --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --virtual-time-budget=25000 --dump-dom 'https://maartenhaase.github.io/Defend_game/speak-and-spell/?selftest=1' > /tmp/sampler-dom.html 2>/tmp/sampler-browser.log || true
+          python3 - <<'PY'
+          import html, re, json
+          doc = open('/tmp/sampler-dom.html', encoding='utf-8').read()
+          match = re.search(r'<pre id="selftest-result">([^<]+)</pre>', doc)
+          if not match:
+            print('Browser did not report a synth result')
+            print(doc[-2000:])
+            raise SystemExit(1)
+          data = json.loads(html.unescape(match.group(1)))
+          print(json.dumps(data, indent=2))
+          assert data['status'] == 'PASS', 'Sample synthesis failed'
+          assert len(data['tests']) == 2
+          assert all(x['bytes'] > 1000 for x in data['tests'])
+          PY
