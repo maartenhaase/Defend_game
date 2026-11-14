@@ -233,25 +233,21 @@ if(typeof meSpeak==='undefined')throw Error('De spraaksynthesizer kon niet laden
 status('Stemmen NL en EN laden…','LOADING');
 // This browser build of meSpeak requires URL loading; passing parsed JSON objects
 // fails silently and leaves both the config and the voices uninitialized.
-async function loadResource(method,url){
-  return new Promise((resolve,reject)=>{
-    let complete=false;
-    const timeout=setTimeout(()=>done(false,'time-out bij '+method),20000);
-    function done(ok,reason){
-      if(complete)return;
-      complete=true;clearTimeout(timeout);
-      if(ok)resolve(reason);
-      else reject(Error(method+': '+(reason||'kan bestand niet laden')));
-    }
-    try{meSpeak[method](url,(success,message)=>done(success,message));}
-    catch(e){done(false,e.message)}
-  });
+async function awaitLoaded(check,label){
+  for(let i=0;i<200;i++){
+    if(check())return;
+    await new Promise(resolve=>setTimeout(resolve,80));
+  }
+  throw Error(label+' niet geladen');
 }
-await loadResource('loadConfig',files[0]);
-await loadResource('loadVoice',files[1]);
-await loadResource('loadVoice',files[2]);
-if(!meSpeak.isConfigLoaded())throw Error('Spraakconfiguratie niet geladen');
-if(!meSpeak.isVoiceLoaded('nl')||!meSpeak.isVoiceLoaded('en/en-us'))throw Error('NL/EN-stem ontbreekt');
+// v1.9 meSpeak browser's config loader doesn't invoke our callback, so poll
+// the engine's actual initialized state instead of waiting for a callback.
+meSpeak.loadConfig(files[0]);
+await awaitLoaded(()=>meSpeak.isConfigLoaded(),'Spraakconfiguratie');
+meSpeak.loadVoice(files[1]);
+await awaitLoaded(()=>meSpeak.isVoiceLoaded('en/en-us'),'Engelse stem');
+meSpeak.loadVoice(files[2]);
+await awaitLoaded(()=>meSpeak.isVoiceLoaded('nl'),'Nederlandse stem');
 ready=true;$('play').disabled=false;status('Klaar. Typ iets en druk op PLAY.','READY');
 if(testing){
   const result=testNode;result.textContent='SELFTEST RUNNING';
