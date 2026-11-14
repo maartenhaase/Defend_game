@@ -28,7 +28,7 @@ textarea{width:100%;resize:vertical;min-height:99px;padding:14px;background:#fff
 .foot{color:#9eadbf;font:12px/1.6 system-ui,sans-serif;text-align:center;max-width:650px;margin:20px auto}.foot a{color:#ffd580}
 @media(max-width:550px){.wrap{padding:14px 9px 30px}.shell{padding:14px 13px 18px;border-radius:22px 22px 32px 32px}.screen{padding:10px;border-width:8px}.plate{letter-spacing:1px}.knobs{gap:13px}.rowhead{align-items:flex-start;gap:9px;flex-direction:column}.actions{grid-template-columns:1fr 1fr}.actions .export{grid-column:1 / -1}.display{min-height:55px}.actions button{padding:13px 4px}}
 </style>
-<script defer src="https://cdn.jsdelivr.net/gh/itinerarium/phoneme-synthesis@master/mespeak.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -69,9 +69,9 @@ textarea{width:100%;resize:vertical;min-height:99px;padding:14px;background:#fff
 const $ = id => document.getElementById(id);
 const base='https://cdn.jsdelivr.net/gh/';
 const files=[
-base+'itinerarium/phoneme-synthesis@master/mespeak_config.json',
-base+'itinerarium/phoneme-synthesis@master/en.json',
-base+'btopro/mespeak@master/voices/nl.json'
+base+'btopro/mespeak@master/mespeak_config.json',
+base+'mikolalysenko/mespeak@master/voices/en/en-us.json',
+base+'mikolalysenko/mespeak@master/voices/nl.json'
 ];
 const presets={
 classic:{pitch:62,speed:150,crush:67,tone:57,tape:0,echo:10},
@@ -199,7 +199,7 @@ $('play').disabled=true;
 await new Promise(r=>setTimeout(r,25));
 try{
 const speech=wordsToSpeech(text);
-const out=meSpeak.speak(speech,{voice:lang==='nl'?'nl':'en/en',pitch:Number($('pitch').value),speed:Number($('speed').value),amplitude:100,wordgap:mode==='spell'?16:1,rawdata:true});
+const out=meSpeak.speak(speech,{voice:lang==='nl'?'nl':'en/en-us',pitch:Number($('pitch').value),speed:Number($('speed').value),amplitude:100,wordgap:mode==='spell'?16:1,rawdata:true});
 if(!out)throw Error('Spraaksynthese gaf geen audio terug');
 const decoded=unpackWav(out);const processed=processVoice(decoded.samples,decoded.rate);
 if(my!==generation)return false;
