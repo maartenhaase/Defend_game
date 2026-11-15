@@ -11919,6 +11919,19 @@ fireFlak9950=function(x,y){
  if(!Number.isFinite(x)||!Number.isFinite(y)){x=gameState.aim.x;y=gameState.aim.y;}
  f.cooldown=stats.reload;f.lastFire=gameState.time;
  var sx=gameState.bunker.x,sy=gameState.bunker.y-10;
+ // Aim slightly ahead of a moving target so the ONE slow shell actually hits.
+ // Target assist engages only when the player manually aims near a vehicle.
+ var best=null,bestD=28;
+ gameState.vehicles.forEach(function(v){
+  if(!v.alive||v.allied)return;
+  var d=Math.hypot(v.x-x,v.y-y);
+  if(d<bestD){best=v;bestD=d;}
+ });
+ if(best){
+  var flight=Math.hypot(best.x-sx,best.y-sy)/390;
+  x+=clamp(best.sideVel||0,-12,12)*Math.min(1.6,flight)*.32;
+  y+=clamp(best.currentSpeed||0,0,80)*Math.min(1.7,flight)*.86;
+ }
  f.shots.push({x:sx,y:sy,px:sx,py:sy,tx:clamp(x,20,W-20),
   ty:clamp(y,safeTop+55,H-safeBottom-65),delay:0,
   speed:390,active:true,smoke:0,
