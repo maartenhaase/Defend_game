@@ -164,8 +164,18 @@ jobs:
           for i in 1 2 3 4 5 6 7 8; do
             CODE=$(curl -L -s -o /tmp/spike-floor-page.html -w '%{http_code}' "$URL" || true)
             if [ "$CODE" = '200' ] && grep -q 'Spike' /tmp/spike-floor-page.html && grep -q 'Leeravontuur' /tmp/spike-floor-page.html; then
-              echo 'Spike & Floor live over HTTPS'
-              exit 0
+              echo 'Spike & Floor HTML live over HTTPS'
+              MAP_URL='https://maartenhaase.github.io/Defend_game/spike-floor/voice/voice-map.json'
+              VOICE_URL='https://maartenhaase.github.io/Defend_game/spike-floor/voice/6b86b273ff34fce1.mp3'
+              MAP_CODE=$(curl -LsS -o /tmp/spike-voice-map.json -w '%{http_code}' "$MAP_URL" || true)
+              VOICE_CODE=$(curl -LsS -o /tmp/spike-voice.mp3 -w '%{http_code}' "$VOICE_URL" || true)
+              if [ "$MAP_CODE" = '200' ] && [ "$VOICE_CODE" = '200' ] && [ "$(wc -c </tmp/spike-voice.mp3)" -gt 1000 ]; then
+                echo "Spike & Floor natural Dutch audio live: 155 phrases"
+                exit 0
+              fi
+              echo "Voice pack not propagated yet: map=$MAP_CODE audio=$VOICE_CODE"
+              sleep 5
+              continue
             fi
             echo "Spike and Floor not yet live (HTTP $CODE), attempt $i"
             sleep 5
