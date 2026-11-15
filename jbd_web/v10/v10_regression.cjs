@@ -89,12 +89,31 @@ console.log('PASS: 30 progressive missions, single slow vehicle in level 1, thre
  const unarmed=s.infantry.find(x=>x.v102Unarmed&&x.alive);
  if(unarmed)u.enemyFire(unarmed);
  assert.equal(s.enemyShots.length,bulletsBefore,'crew cannot fire any weapons');
+ assert.equal(h.ids.get('jbdLadderPanel925').style.display,'none',
+  'obsolete STRIKE/REINFORCEMENTS overlay is hidden on iPhone');
+ const fugitives=s.infantry.filter(x=>x.v102Unarmed&&x.alive);
+ assert(fugitives.every(x=>x.role==='medic'&&x.state==='panic'),
+  'evacuees reuse proper native sprite atlas and consistent running animation');
+ const prev=fugitives.map(x=>x.x);
+ for(let n=0;n<10;n++)u.step(1/30);
+ for(let k=0;k<fugitives.length;k++)
+  assert((fugitives[k].x-prev[k])*fugitives[k].v102ExitSide>=0,
+   'crew flees monotonically instead of switching direction');
+ const ammoBefore=s.primaryAmmo;
+ assert(u.fpsInput(car.x,car.y),'MG remains fireable during victory celebration');
+ assert(s.primaryAmmo<ammoBefore||s.fps9950.queued.length>0,
+  'gun really shoots during the five-second afterburn');
+ // Reproduce the screenshot's actual failure: one unrelated soldier
+ // sneaks into the game while the wreck countdown is on screen.
+ // Even then 0s must ALWAYS resolve to the results screen.
+ const intruder=u.spawnEnemy(185,190,'rifle',null,'vehicle');
+ assert(intruder.alive,'regression creates additional contact');
  // Don't rely on a guessed delay from the previous game update:
  // the actual victory hold must stay visible for >=5 game seconds.
  while(s.v102VictoryHold.elapsed<4.75)u.step(1/30);
  assert.equal(s.mode,'playing','result dialog cannot cover the burning wreck too early');
  for(let n=0;n<25&&s.mode==='playing';n++)u.step(1/30);
- assert.equal(s.mode,'shop','victory screen finally appears after 5 seconds');
+ assert.equal(s.mode,'shop','victory screen must appear at 0s even if extra enemies spawned');
  assert.equal(h.ids.get('deploy').disabled,false,'Next Map is clickable, not disabled by legacy shop');
  assert.equal(h.ids.get('shop').style.display,'none','no forced upgrade shop');
  let stopped=false;
@@ -105,5 +124,5 @@ console.log('PASS: 30 progressive missions, single slow vehicle in level 1, thre
  assert.equal(s.levelIndex,1,'Next Map really advances to map 2');
  assert.equal(s.mode,'playing','map 2 is playable after click');
  assert(s.map.v10RouteSignature.startsWith('ROAD-02'),'the right terrain is loaded');
- console.log('PASS: iPhone Next Map click, true wreck destruction, unarmed evacuation, and five-second burning pause.');
+ console.log('PASS V10.3: Next Map click, actual wreck, fluent native-sprite crew, shooting while burning, no support overlay, and a guaranteed result after 5s despite an intruder.');
 }
