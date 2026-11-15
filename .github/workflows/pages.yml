@@ -213,6 +213,20 @@ jobs:
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: stable
+      - name: Test full letter tracing in real browser
+        run: |
+          set -eo pipefail
+          google-chrome --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --virtual-time-budget=3500 --dump-dom 'https://maartenhaase.github.io/Defend_game/spike-floor/?traceTest=1' > /tmp/spike-trace-test.html 2>/tmp/spike-trace.log || true
+          python3 - <<'PY'
+          from pathlib import Path
+          page=Path('/tmp/spike-trace-test.html').read_text()
+          if 'PASS: half letter rejected, eraser works, missing crossbar rejected, full A approved' not in page:
+              print(page[-3500:])
+              print(Path('/tmp/spike-trace.log').read_text()[-800:])
+              raise SystemExit('Spike & Floor letter tracing regression FAILED')
+          print('PASS: letter tracing rejects half a letter and requires every stroke')
+          PY
+
       - name: Test actual Dutch and English WAV synthesis in browser
         run: |
           set -eo pipefail
