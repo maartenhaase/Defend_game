@@ -1,279 +1,308 @@
 
-/* =========================================================
-   JUST BUNKER DEFENSE V10 — SHORT-FORM CAMPAIGN
-   Forty authored missions; one map identity, encounter and
-   timed tactical surprise per mission. Original combat AI,
-   vehicles, audio, ballistics and touch controls are retained.
-   ========================================================= */
-var V10_MISSIONS=[
- // name | biome | terrain feature | road layout | encounter | surprise | seconds
- 'DENNENVAL|forest|dense_forest|dogleg|skirmish|flank|21',
- 'TWEE BRUGGEN|village|river_crossing|cross|scouts|smoke|22',
- 'DUINENSTORM|coast|beachhead|curve|rush|storm|23',
- 'SPOOR 9|industrial|rail_yard|cross|convoy|signal|25',
- 'WITTE PAS|snow|winter_road|dogleg|pincer|blizzard|24',
- 'VERLATEN POST|ruins|rubble_quarter|s|feint|eclipse|24',
- 'BRANDSTOFDEPOT|industrial|factory_belt|straight|rush|fire|26',
- 'NACHTPRAUW|coast|port|curve|ambush|flank|24',
- 'ZANDTRECHTER|desert|desert_ridge|s|scouts|dust|25',
- 'DE LAATSTE BOOM|forest|fortified_line|dogleg|laststand|shell|27',
- 'KERKPLEIN|village|urban_blocks|cross|crossfire|signal|24',
- 'DE GEHEIME WEG|suburb|hedgerow|s|feint|counter|25',
- 'MIST OVER ZEE|coast|coastal_fort|curve|airdrop|fog|26',
- 'ZWARTE KOOIMIJN|industrial|factory_belt|straight|armored|fire|26',
- 'MOTORBENDEN|desert|open_fields|dogleg|bikes|raid|22',
- 'SCHADUWOVERVAL|forest|dense_forest|s|pincer|eclipse|25',
- 'GESLOTEN SLUIS|village|bridge|cross|convoy|smoke|28',
- 'VERBRIJZELDE LAAN|ruins|urban_blocks|cross|crossfire|shell|27',
- 'BEVROREN SPOOR|snow|rail_yard|straight|scouts|blizzard|26',
- 'RADARSTORM|coast|airfield|straight|airdrop|signal|27',
- 'NOODSEIN|suburb|urban_blocks|cross|ambush|counter|27',
- 'IJZEREN VAL|industrial|fortified_line|dogleg|armored|fire|28',
- 'KLOOF VAN AS|desert|desert_ridge|curve|pincer|dust|27',
- 'VLIEGVELD X|coast|airfield|straight|airdrop|plane|27',
- 'ROOKGORDIJN|forest|hedgerow|s|feint|smoke|25',
- 'GEVAARLIJKE HAARSPLED|snow|winter_road|dogleg|bikes|raid|26',
- 'VIER HOEKEN|metropolis|urban_blocks|cross|crossfire|flank|29',
- 'GRANAATSTRAAT|ruins|rubble_quarter|cross|laststand|shell|30',
- 'STILLE KONVOOI|industrial|rail_yard|straight|convoy|eclipse|28',
- 'LAATSTE VEERPONT|coast|lagoon_causeway|curve|armored|fog|29',
- 'DUBBELE HINDERLAAG|forest|encirclement|s|pincer|counter|27',
- 'RODE ZON|desert|open_fields|curve|rush|dust|27',
- 'IJSPALEIS|snow|fortified_line|dogleg|laststand|blizzard|30',
- 'NACHTSHIFT|industrial|factory_belt|cross|crossfire|eclipse|30',
- 'BUNKER BIJ DE PIER|coast|cliff_battery|curve|armored|plane|31',
- 'NOORDERSTATION|metropolis|urban_blocks|cross|convoy|signal|30',
- 'BOSSEN VAN GLAS|forest|dense_forest|s|ambush|fire|28',
- 'STALEN CIRKEL|industrial|fortified_line|cross|laststand|shell|32',
- 'BASTION ZERO|ruins|ridge_fortress|dogleg|armored|counter|33',
- 'HET LAATSTE UUR|metropolis|urban_blocks|cross|finale|storm|34'
+/* =============================================================
+   JBD V10.1 — THE LONG ROAD (30 progressive levels)
+   This replaces the rushed V10 Quickfire progression entirely.
+   ============================================================= */
+var V10_WORLDS=[
+ 'RIVIERLAND','HET GROENE BOS','DE BERGROUTE','DE INDUSTRIEVALLEI','DE GROTE STAD'
+];
+/* Name | biome | feature | road shape | enemy count | enemy vehicles | surprise
+   Gradual journey through a single continent, without beach or ice maps.
+   A vehicle column is not a per-wave multiplier: level 1 has ONE vehicle. */
+var V10_ROAD=[
+ 'DE EERSTE WEG|village|open_fields|straight|0|1|none',
+ 'BOERDERIJPAD|village|hedgerow|curve|0|1|none',
+ 'HET HOOILAND|village|open_fields|curve|1|1|none',
+ 'OUDE BRUG|village|river_crossing|straight|2|1|none',
+ 'DORPSRAND|village|urban_blocks|cross|3|1|none',
+ 'BOSRAND|forest|hedgerow|curve|3|1|none',
+ 'DENNENWEG|forest|dense_forest|s|4|1|none',
+ 'HOUTKAMP|forest|dense_forest|dogleg|4|1|none',
+ 'BOSPAD|forest|hedgerow|dogleg|5|1|none',
+ 'HEUVELPOST|forest|fortified_line|s|5|1|flank',
+ 'STENEN WEG|forest|desert_ridge|curve|6|1|none',
+ 'KLOOFBOCHT|forest|desert_ridge|dogleg|6|1|smoke',
+ 'HOOGBOERDERIJ|village|hedgerow|s|7|1|none',
+ 'TUNNELWEG|forest|fortified_line|dogleg|8|1|flank',
+ 'DE BERGPAS|forest|desert_ridge|dogleg|8|1|none',
+ 'DALWEG|village|open_fields|curve|9|1|smoke',
+ 'SPOORBRUG|village|river_crossing|cross|9|1|none',
+ 'VOORSTAD|suburb|urban_blocks|cross|10|2|none',
+ 'DE BUITENRING|suburb|urban_blocks|straight|11|2|flank',
+ 'GOEDERENLOODS|industrial|rail_yard|straight|11|2|none',
+ 'KANAALWEG|industrial|bridge|cross|12|2|smoke',
+ 'MAGAZIJNZONE|industrial|factory_belt|yard|13|2|none',
+ 'RANGEERTERREIN|industrial|rail_yard|yard|13|2|flank',
+ 'STADSRAND|suburb|urban_blocks|cross|14|2|none',
+ 'DE BOULEVARD|metropolis|urban_blocks|cross|14|2|smoke',
+ 'OUDE MARKT|metropolis|urban_blocks|cross|15|2|none',
+ 'NOORDWIJK|metropolis|rubble_quarter|cross|16|2|flank',
+ 'CENTRAAL STATION|metropolis|rail_yard|yard|16|2|none',
+ 'DE BINNENRING|metropolis|urban_blocks|cross|17|3|smoke',
+ 'HET CENTRUM|metropolis|urban_blocks|cross|18|3|flank'
 ].map(function(line,i){
- var a=line.split('|'),chapter=Math.floor(i/10);
- return {index:i,name:a[0],theme:a[1],feature:a[2],layout:a[3],recipe:a[4],twist:a[5],
- seconds:Number(a[6]),chapter:chapter,year:i<30?'1944':'1945',
- theater:['FRONTLINE · WOODS','FRONTLINE · COAST','FRONTLINE · CITY','FRONTLINE · FINALE'][chapter]};
+ var p=line.split('|');
+ return {index:i,name:p[0],theme:p[1],feature:p[2],layout:p[3],
+  foot:Number(p[4]),vehicles:Number(p[5]),twist:p[6],
+  chapter:Math.floor(i/6),world:V10_WORLDS[Math.floor(i/6)]};
 });
-if(V10_MISSIONS.length!==40)throw new Error('V10 requires 40 mission layouts');
-var V10_RECIPES=['skirmish','scouts','rush','convoy','pincer','feint','ambush','armored','crossfire','airdrop','bikes','laststand','finale'];
-var V10_CHAPTERS=['GREENLINE','IRON PASS','BLACKOUT','LAST STAND'];
-var V10_TWISTS={flank:'FLANK ATTACK',smoke:'SMOKE SCREEN',storm:'STORM FRONT',signal:'RADIO SIGNAL',
- blizzard:'BLIZZARD',eclipse:'BLACKOUT',fire:'BURNING GROUND',dust:'DUST WALL',
- shell:'ARTILLERY STRIKE',counter:'COUNTERATTACK',fog:'SEA FOG',raid:'FAST RAID',plane:'AIR ALERT'};
-// Authoritative new campaign data, entirely separate from v9.9.53.
-V10_MISSIONS.forEach(function(q,i){
- var old=WORLD_TOUR_9934[i];
- var m={index:i,year:q.year,theater:q.theater,title:q.name,short:q.name,
-  theme:q.theme,feature:q.feature,recipe:q.recipe,layout:q.layout,
-  objective:'HOLD '+q.name,packLabel:'V10 · '+String(i+1).padStart(2,'0')+' · '+q.name,
-  v10:true,twist:q.twist};
- WORLD_TOUR_9934[i]=m;
- var L=LEVELS[i];L.zone=q.chapter;L.stage=i%3;L.actStage=i%5;
- L.type=q.theater;L.theme=q.theme;L.name=q.name;L.shortTitle=q.name;L.packLabel=m.packLabel;
- L.packFeature=q.feature;L.year9934=q.year;L.theater9934=q.theater;L.historicalTitle9934=q.name;
- L.objective9934=m.objective;L.tourId9934=i;L.tourFeature9934=q.feature;
- L.tourLayout9934=q.layout;L.tourRecipe9934=q.recipe;
- L.seed=(0x33AC0197^Math.imul(i+19,0x45D9F3B))>>>0;
- var digits=tourCode9934(m,i).split('');
- // Spatial DNA: vary cover, roads, density, weather and destructibility.
- digits[16]=String((i*7+3)%10);
- digits[17]=String((i*3+2)%10);
- digits[18]=String(Math.min(9,2+(i*5)%8));
- digits[19]=String(2+(i*3)%7);
- digits[20]=String(q.theme==='forest'?9:q.theme==='snow'?6:q.theme==='desert'?0:(i*7)%8);
- digits[21]=String(3+(i*5)%7);
- digits[23]=String(q.twist==='blizzard'||q.twist==='fog'?8:(i*3)%7);
- L.code=digits.join('');
- var layout=tourLayout9934(i,m);
- layout.name=m.packLabel;
- layout.style=q.layout;
- layout.roadWidth=q.recipe==='bikes'||q.recipe==='convoy'?28:q.feature==='bridge'?20:19+(i%5)*2;
- layout.cover=i<5?.38+i*.05:.53+(i%4)*.09;
- layout.patches=2+(i%4);
- layout.setpieces=2+(i%3);
- layout.corridor=.21+(i%4)*.012;
- layout.secondary=['none','cross','fork','alley','yard'][i%5];
+if(V10_ROAD.length!==30)throw Error('The Long Road needs exactly 30 maps');
+CAMPAIGN_LENGTH=30;
+WORLD_TOUR_9934.length=30;LEVELS.length=30;TOUR_LAYOUTS_9934.length=30;
+V10_ROAD.forEach(function(q,i){
+ var m=WORLD_TOUR_9934[i];
+ m.index=i;m.year='';m.theater=q.world;m.title=q.name;m.short=q.name;
+ m.theme=q.theme;m.feature=q.feature;m.recipe=i<4?'scouts':i<10?'infantry':i<18?'mixed':'convoy';
+ m.layout=q.layout;m.objective='DEFEND '+q.name;
+ m.packLabel='MAP '+String(i+1).padStart(2,'0')+' · '+q.name;m.chapter=q.chapter;
+ var L=LEVELS[i];
+ L.zone=q.chapter;L.stage=i%3;L.actStage=i%5;L.type=q.world;L.theme=q.theme;
+ L.name=q.name;L.shortTitle=q.name;L.packLabel=m.packLabel;L.packFeature=q.feature;
+ L.year9934='';L.theater9934=q.world;L.historicalTitle9934=q.name;L.objective9934=m.objective;
+ L.tourId9934=i;L.tourFeature9934=q.feature;L.tourLayout9934=q.layout;L.tourRecipe9934=m.recipe;
+ L.seed=(0xA17C4063^Math.imul(i+1,0x45d9f3b))>>>0;
+ var d=tourCode9934(m,i).split('');
+ // Gradual skill/weapon scaling and spatial complexity.
+ d[0]=String(Math.min(8,Math.floor(i/4)));
+ d[1]=String(Math.min(7,Math.floor(i/5)));
+ d[2]=String(Math.min(7,Math.floor(i/6)));
+ d[5]=String(Math.min(8,Math.floor(i/4)));
+ d[6]=String(Math.min(8,Math.floor(i/5)));
+ d[10]='0';d[11]='0';d[12]=String(Math.min(7,2+Math.floor(i/6)));
+ d[14]=String(Math.min(7,1+Math.floor(i/5)));
+ d[17]=String(2+(i%5));d[18]=String(Math.min(7,1+Math.floor(i/5)));
+ d[19]=String(Math.min(7,1+Math.floor(i/4)));
+ d[20]=String(q.theme==='forest'?7:q.theme==='village'?4:q.theme==='suburb'?3:1);
+ d[21]=String(Math.min(6,1+Math.floor(i/5)));
+ d[23]=String(Math.min(6,Math.floor(i/6)));
+ d[24]='0';
+ L.code=d.join('');
+ var lay=tourLayout9934(i,m);
+ lay.name=m.packLabel;lay.style=q.layout;lay.roadWidth=22+(i%3)*2;
+ lay.secondary=i<4?'none':i<10?'fork':i<18?'alley':'cross';
+ lay.cover=.32+Math.min(.38,i*.015);lay.patches=2+Math.floor(i/10);
+ lay.setpieces=2+Math.floor(i/10);lay.corridor=.25+(i%3)*.012;
 });
-CAMPAIGN_BLUEPRINT=LEVELS.map(function(x){return Object.assign({},x);});
-SHORT_BATTLES_987=V10_MISSIONS.map(function(q){return [q.recipe,q.name,q.seconds];});
+CAMPAIGN_BLUEPRINT=LEVELS.map(function(L){return Object.assign({},L);});
+SHORT_BATTLES_987=V10_ROAD.map(function(q){return ['progressive',q.name,95];});
+SAVE_KEY='jbd_v10_progressive_30_save_20261115';
 
-// Extended geometry, with deliberately readable fire corridors and different playable cover.
-var V10_buildMapBase=buildMap;
+// Automatic micro upgrades: precisely one level per cleared map, no shopping.
+var V10_UPGRADE_ORDER=['rate','range','armor','special'];
+function v10Equip(idx){
+ if(!gameState||!gameState.save)return;
+ idx=clamp(idx|0,0,29);
+ var u={range:0,rate:0,armor:0,special:0};
+ for(var i=0;i<idx;i++)u[V10_UPGRADE_ORDER[i%4]]++;
+ gameState.save.upgrades=u;gameState.save.upgradeSchema9935=1;
+ gameState.save.arsenalPoints=0;
+}
+function v10UpgradeLabel(idx){
+ return ({rate:'MEER CONTROLE',range:'BETERE BALLISTIEK',armor:'STERKERE BUNKER',special:'LICHT VERSTERKTE FLAK'})[V10_UPGRADE_ORDER[(idx-1)%4]]||'VERSTERKING';
+}
+// Keep terrain readable and the same continent recognizable between maps.
+var v10MapBase=buildMap;
 buildMap=function(){
- var out=V10_buildMapBase.apply(this,arguments);
- if(!gameState||!gameState.map||gameState.startMode==='demo')return out;
- var q=V10_MISSIONS[clamp(gameState.levelIndex|0,0,39)],m=gameState.map;
- m.v10Signature='V10-'+String(q.index+1).padStart(2,'0')+'-'+q.feature+'-'+q.layout+'-'+q.twist;
- m.layoutName=q.name;
- m.v10Chapter=q.chapter;
- // Per-map tactical cover: staggered positions rather than repeated horizontal rows.
- var geometry=i=>((q.index*37+i*31)%13-6);
- var archetype=q.index%5;
- for(var j=0;j<3+(q.chapter%2);j++){
-  var x=(archetype===0?(j%2?.78:.20):archetype===1?(j%2?.70:.29):archetype===2?(j%2?.83:.16):archetype===3?(j%2?.64:.35):(j%2?.74:.25))*W+geometry(j)*.6,
-      y=H*(.27+j*.115+(q.index%3)*.011);
-  if(q.feature==='urban_blocks'||q.feature==='rubble_quarter'||q.feature==='factory_belt'){
-   createHouse986(m,x,y,29+(j%3)*7,27+(j%2)*9,q.feature==='factory_belt',37000+q.index*8+j);
-  }else if(q.theme==='snow'||q.theme==='desert'){
-   createObstacle986(m,x,y,9+(j%3)*2,'rock',38000+q.index*8+j);
-  }else{
-   createObstacle986(m,x,y,7+(j%2)*2,j%2?'hedgehog':'log',39000+q.index*8+j);
+ var out=v10MapBase.apply(this,arguments);
+ if(!gameState||!gameState.map||gameState.startMode==='demo'||gameState.startMode==='random')return out;
+ var q=V10_ROAD[gameState.levelIndex],m=gameState.map;
+ m.v10RouteSignature='ROAD-'+String(q.index+1).padStart(2,'0')+'-'+q.feature+'-'+q.layout;
+ m.layoutName=q.name;m.v10Region=q.world;m.v10Step=q.index+1;
+ if(q.index>=10&&q.index<=16){
+  // Mountains introduce stone cover gradually, not a sudden winter biome.
+  for(var i=0;i<4;i++){
+   var x=W*(i%2?.80:.20)+(q.index%3-1)*5;
+   var y=H*(.29+i*.115);
+   createObstacle986(m,x,y,8+(i%3)*2,'rock',47000+q.index*10+i);
   }
  }
- // A distinctive landmark and a visible gap in front of the bunker.
- m.setpieces.push({x:W*(.18+(q.index%4)*.21),y:H*(.30+(q.index%3)*.14),
-  type:['roadblock','supply','rubble','timber','defense'][q.index%5],
-  s:.68+(q.index%3)*.06,rot:(q.index%4-2)*.18,flip:q.index%2?-1:1});
  return out;
 };
 
-// Forty custom fast encounters — EASY and HARD have different squad sizes,
-// not a slowed-down version of the same generic endless wave director.
-var V10_buildPlanBase=buildEncounterPlan;
+// Slower and steadier movement throughout the campaign.
+// At level 1 a lone unarmed vehicle travels slowly towards the bunker.
+var v10VehicleBase=spawnVehicle;
+spawnVehicle=function(type,count,id,direction,passengers){
+ var before=gameState.vehicles.length;
+ var result=v10VehicleBase.apply(this,arguments);
+ if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')return result;
+ var idx=gameState.levelIndex,speed=idx===0?.30:Math.min(.79,.36+idx*.014);
+ for(var k=before;k<gameState.vehicles.length;k++){
+  var v=gameState.vehicles[k];
+  v.speed*=speed;v.currentSpeed*=speed;v.accel*=Math.max(.45,speed);
+  if(idx===0){
+   v.hp=v.maxHp=42;v.armorHp=0;v.maxArmorHp=0;
+   v.hasMG=false;v.passengers=0;v.unloadLeft=0;
+  }else if(idx<5){
+   v.hasMG=false;v.passengers=0;v.unloadLeft=0;
+  }
+ }
+ return result;
+};
+var v10EnemyProgressBase=enemyProgression;
+enemyProgression=function(idx){
+ var p=v10EnemyProgressBase.apply(this,arguments);
+ if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')return p;
+ var t=clamp(idx/29,0,1);
+ p.infantrySpeed*=.62+.24*t;
+ p.vehicleSpeed*=.76+.15*t;
+ p.infantryDamage*=.64+.28*t;
+ p.vehicleDamage*=.64+.28*t;
+ p.cooldown*=1.25-.12*t;
+ return p;
+};
+// Deliberately authored attack schedule: level 1 is EXACTLY one jeep.
+// Later levels add one new unit type or small squad at a time.
+var v10PlanBase=buildEncounterPlan;
 buildEncounterPlan=function(){
  if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')
-   return V10_buildPlanBase.apply(this,arguments);
- var i=clamp(gameState.levelIndex|0,0,39),q=V10_MISSIONS[i],
-     hard=gameState.startMode==='hard',rank=q.chapter,
-     n=3+Math.floor(i/7)+(hard?2:0),ev=[],cap=2+(hard?1:0);
- var m=gameState.map,dir=levelDNA().direction;
+  return v10PlanBase.apply(this,arguments);
+ var i=gameState.levelIndex,q=V10_ROAD[i],ev=[];
+ gameState.shortBattle={kind:'road30',label:q.name,maxDuration:100};
+ gameState.shortBattleWithdrawn=false;
+ gameState.encounterName=q.name+' · '+q.world;
  gameState.waveTotal=1;gameState.mgTeamsPlanned=0;gameState.wave=1;
- gameState.shortBattle={kind:'v10_'+q.recipe,label:q.name,maxDuration:q.seconds+(hard?3:0)};
- gameState.shortBattleWithdrawn=false;gameState.encounterName='V10 · '+q.name;
- function push(at,type,count,name,opts){
-   return addEncounter(ev,at,type,count,0,1,name||q.name,opts||{});
+ function add(t,type,count,label,opts){return addEncounter(ev,t,type,count,0,1,label||q.name,opts||{});}
+ function vehicle(t,family,direction){
+  var spec=vehicleSpecFor(family,i);
+  return add(t,spec.baseType,1,spec.name,{vehicleId:spec.id,motorCap:2,passengersOverride:0,direction:direction==null?0:direction});
  }
- function foot(at,count,mix,tactic,from){
-   return push(at,'foot',Math.max(1,count),q.name,{
-    roleMix:mix||'rifle',tactic:tactic||'split',direction:from==null?dir:from,rocketCount:0});
+ function foot(t,n,tactic){
+  if(n<=0)return;
+  add(t,'foot',n,'INFANTRY CONTACT',{roleMix:i<10?'rifle':i<21?'rifle':'lmg',tactic:tactic||'line',rocketCount:0,direction:0});
  }
- function motor(at,family,passengers,from){
-   var spec=vehicleSpecFor(family,i);
-   return push(at,spec.baseType,1,spec.name,{
-    vehicleId:spec.id,motorCap:cap,passengersOverride:passengers||0,direction:from==null?dir:from});
+ var mainFamily=i<11?'kubel':i<17?'horch':i<22?'spah':'sdkfz250';
+ vehicle(2.5,mainFamily,0);
+ if(q.foot){
+  if(q.foot<=4)foot(12,q.foot,'line');
+  else{
+   var first=Math.ceil(q.foot*.54);
+   foot(10.5,first,i<10?'line':'split');
+   foot(20,q.foot-first,i<15?'split':'flankRight');
+  }
  }
- var secondary=Math.min(q.seconds*.46,10);
- switch(q.recipe){
-  case 'skirmish':foot(.3,n+1,'rifle','line',0);foot(secondary,2+rank,'lmg','flankRight',4);break;
-  case 'scouts':motor(.3,'kubel',0,0);foot(1.4,n,'rifle','bound');motor(secondary,'horch',0,2);break;
-  case 'rush':motor(.3,'motorcycle',0,2);foot(1.3,n+1,'rifle','split');motor(secondary,'quad',0,4);break;
-  case 'convoy':motor(.5,'blitz',Math.min(6,2+rank),0);foot(2.3,n,'lmg','support');motor(secondary,'kubel',0,2);break;
-  case 'pincer':foot(.4,n,'rifle','flankLeft',2);foot(2.1,n,'lmg','flankRight',4);break;
-  case 'feint':foot(.5,Math.max(2,n-2),'rifle','line');foot(secondary,n+2,'lmg','pincer');break;
-  case 'ambush':foot(.4,n,'rifle','flankRight',4);motor(2.0,'kubel',0,2);foot(secondary,2+rank,'marksman','flankLeft',2);break;
-  case 'armored':motor(.45,'spah',0,0);foot(1.7,n,'rifle','support');motor(secondary,'sdkfz250',0,2);break;
-  case 'crossfire':foot(.4,n,'lmg','flankLeft',2);foot(2.1,n,'rifle','flankRight',4);foot(secondary,2+rank,'marksman','support',0);break;
-  case 'airdrop':push(.6,'plane',1,'PARATROOPERS');foot(1.8,n,'rifle','bound');foot(secondary,2+rank,'lmg','flankLeft',2);break;
-  case 'bikes':motor(.3,'motorcycle',0,2);motor(1.5,'quad',0,4);foot(3,n,'rifle','split');break;
-  case 'laststand':foot(.3,n+2,'rifle','line');foot(2.4,n,'lmg','pincer');motor(secondary,'spah',0,0);break;
-  case 'finale':foot(.35,n+2,'lmg','pincer');motor(1.7,'spah',0,0);motor(4,'blitz',5,4);foot(secondary,n+3,'elite','flankLeft',2);break;
- }
- // Every map has a second distinct beat, preventing premature win
- // before the surprise; no infinite enemy spawning.
- if(q.twist==='shell'||q.twist==='fire'||q.twist==='storm')
-   push(secondary+1.2,'artilleryBeat',1,'INCOMING SHELLS',{power:.65});
- else if(q.twist==='smoke'||q.twist==='blizzard'||q.twist==='fog'||q.twist==='dust'||q.twist==='eclipse')
-   push(secondary+1.2,'smokeBeat',1,'VISIBILITY CHANGING',{power:.55});
- else if(q.twist==='signal'||q.twist==='plane')
-   push(secondary+1.2,'opportunity',1,'RADIO OBJECTIVE',{opportunityType:'radio'});
- else push(secondary+1.2,'foot',2+rank,'SURPRISE CONTACT',{
-   roleMix:i>18?'lmg':'rifle',tactic:i%2?'flankLeft':'flankRight',direction:i%2?2:4,rocketCount:0});
- if(hard)foot(secondary+2.1,2+rank,'lmg','flankRight',4);
+ if(q.vehicles>=2)vehicle(24,i<23?'kubel':'spah',2);
+ if(q.vehicles>=3)vehicle(34,'horch',4);
  ev.sort(function(a,b){return a.t-b.t;});
  return ev;
 };
 
-var V10_resetBase=resetLevel;
+// Level 1 magazine: THREE bursts of THREE rounds = NINE rounds.
+var v10ResetBase=resetLevel;
 resetLevel=function(){
- V10_resetBase.apply(this,arguments);
- if(gameState&&gameState.startMode!=='demo'&&gameState.startMode!=='random'){
-   gameState.v10={surprised:false,flashed:0,weather:0,notice:V10_CHAPTERS[Math.floor(gameState.levelIndex/10)],
-    objective:'SURVIVE',quota:Math.min(4,1+Math.floor(gameState.levelIndex/12)),bonus:false};
-   // More responsive attack lanes; balanced for fixed 20–34-second missions.
-   gameState.zoneRule.enemySpeed*=1.10;
-   gameState.zoneRule.vehicleSpeed*=1.16;
-   gameState.bunkerGraceT=Math.max(gameState.bunkerGraceT,1.9);
-   gameState.message='V10 · '+V10_MISSIONS[gameState.levelIndex].name;
-   gameState.messageT=2.0;
- }
+ if(gameState&&gameState.startMode!=='demo'&&gameState.startMode!=='random')v10Equip(gameState.levelIndex);
+ v10ResetBase.apply(this,arguments);
+ if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')return;
+ var i=gameState.levelIndex;
+ gameState.profile.primaryMag=9+3*Math.floor(i/6);
+ gameState.profile.primaryReload=Math.max(1.65,2.7-i*.026);
+ gameState.primaryAmmo=gameState.profile.primaryMag;
+ gameState.heat=0;gameState.overheat=false;gameState.fps9950=null;
+ gameState.v10Gradual={surprised:false,notice:'',noticeT:0};
+ gameState.message=i===0?'MIK OP HET VOERTUIG · 3 × 3 KOGELS + 1 FLAK':'MAP '+(i+1)+' · '+V10_ROAD[i].name;
+ gameState.messageT=3.1;
 };
-
-// Predictable mid-mission event that materially affects the battlefield.
-function v10Surprise(q){
- var v=gameState.v10;if(!v||v.surprised)return;v.surprised=true;
- v.notice=V10_TWISTS[q.twist];v.flashed=2.3;
- gameState.message='⚠ '+v.notice;gameState.messageT=2.1;
- var idx=gameState.levelIndex,hard=gameState.startMode==='hard';
- var n=2+q.chapter+(hard?1:0);
- if(q.twist==='flank'||q.twist==='counter')spawnPlannedFoot(n,'lmg',idx%2?'flankLeft':'flankRight',0,idx%2?2:4);
- else if(q.twist==='smoke'||q.twist==='fog'){startSmokeBarrage(2,.75);v.weather=5;}
- else if(q.twist==='storm'||q.twist==='shell'){startArtilleryBarrage(2,.72);v.weather=3;}
- else if(q.twist==='blizzard'||q.twist==='dust'){startSmokeBarrage(2,.58);v.weather=6;}
- else if(q.twist==='eclipse'){v.weather=4.8;spawnPlannedFoot(n,'rifle','flankLeft',0,2);}
- else if(q.twist==='fire'){
-   createFireZone(W*.26,H*.39,{radius:18,burnDuration:5,burnDps:1.25,visual:1,source:'v10'},false);
-   createFireZone(W*.74,H*.36,{radius:18,burnDuration:5,burnDps:1.25,visual:1,source:'v10'},false);
- }else if(q.twist==='signal'){spawnOpportunity('radio');spawnPlannedFoot(n,'rifle','flankRight',0,4);}
- else if(q.twist==='raid'){
-   var spec=vehicleSpecFor('motorcycle',idx);spawnVehicle(spec.baseType,1,spec.id,2,0);
- }else if(q.twist==='plane'){spawnPlane(1);}
- v.flashed=2.3;
+// The first and every subsequent tap fires one controlled burst of 3.
+// Gun has exactly 3 bursts before it reloads on map 1.
+queueMG=function(x,y){
+ if(!gameState||gameState.mode!=='playing')return false;
+ if(gameState.primaryReloadT>0){gameState.message='HERLADEN';gameState.messageT=.34;return false;}
+ if(gameState.primaryAmmo<=0){beginPrimaryReload();return false;}
+ var state=fpsState9950();
+ if(state.queued.length>0)return false;
+ var requested=Math.min(3,gameState.primaryAmmo),now=gameState.time;
+ for(var k=0;k<requested;k++)state.queued.push({x:x,y:y,tier:0,serial:k,recoil:k*.03});
+ state.chain=0;state.lastClick=now;
+ fpsFireQueue9950();
+ return true;
+};
+var v10UpdateWeaponsBase=updatePlayerWeapons9937;
+updatePlayerWeapons9937=function(dt){
+ v10UpdateWeaponsBase.apply(this,arguments);
+ if(gameState&&gameState.mode==='playing'&&gameState.primaryAmmo<=0&&
+   gameState.primaryReloadT<=0&&!(gameState.fps9950&&gameState.fps9950.queued.length))beginPrimaryReload();
+};
+// The actual Flak button fires ONE accurate, weak projectile.
+flakStats9951=function(level){
+ level=clamp(level|0,0,SKILL_MAX);
+ return {rounds:1,damage:6+level*.37,vehicleDamage:8+level*.60,
+         radius:17+level*.14,reload:6.7-Math.min(1.5,level*.13)};
+};
+fireFlak9950=function(x,y){
+ if(!gameState||gameState.mode!=='playing')return false;
+ var f=currentFlak9950(),stats=flakStats9951(gameState.save.upgrades.special||0);
+ if(f.cooldown>0){gameState.message='FLAK HERLADEN · '+f.cooldown.toFixed(1)+'s';gameState.messageT=.5;return false;}
+ if(!Number.isFinite(x)||!Number.isFinite(y)){x=gameState.aim.x;y=gameState.aim.y;}
+ f.cooldown=stats.reload;f.lastFire=gameState.time;
+ var sx=gameState.bunker.x,sy=gameState.bunker.y-10;
+ f.shots.push({x:sx,y:sy,px:sx,py:sy,tx:clamp(x,20,W-20),
+  ty:clamp(y,safeTop+55,H-safeBottom-65),delay:0,
+  speed:390,active:true,smoke:0,
+  damage:stats.damage,vehicleDamage:stats.vehicleDamage,radius:stats.radius});
+ gameState.message='FLAK · 1 SCHOT';gameState.messageT=.6;
+ return true;
+};
+// Surprise encounters unlock only AFTER the introductory missions.
+// They add cover/smoke or a small flank — never huge instant swarms.
+function v10RoadSurprise(){
+ var g=gameState,q=V10_ROAD[g.levelIndex],b=g.v10Gradual;
+ if(!b||b.surprised||q.twist==='none')return;
+ b.surprised=true;b.notice=q.twist==='smoke'?'ROOKGORDIJN':'FLANK VAN RECHTS';b.noticeT=2.2;
+ g.message=b.notice;g.messageT=2.1;
+ if(q.twist==='smoke')startSmokeBarrage(1,.52);
+ else spawnPlannedFoot(2+Math.floor(g.levelIndex/12),'rifle','flankRight',0,4);
 }
-// Hard limit with a playable extraction objective. No 60–90-second
-// cleanup phase against stuck AI. Require a few real kills before extraction.
-function v10Extraction(){
- if(!gameState||gameState.mode!=='playing'||!gameState.v10)return;
- var v=gameState.v10,q=V10_MISSIONS[gameState.levelIndex],kills=gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills,
-     limit=q.seconds+(gameState.startMode==='hard'?3:0);
- if(gameState.levelTime<limit)return;
- if(kills<v.quota&&gameState.levelTime<limit+8){
-   if(!v.bonus){v.bonus=true;gameState.message='NOG '+(v.quota-kills)+' TARGET(S) VOOR EXTRACTIE';gameState.messageT=2.2;}
-   return;
- }
- if(kills<v.quota){endGame('DOEL NIET GEHAALD');return;}
- gameState.shortBattleWithdrawn=false; // Timed survival is the intended objective, not a failed retreat.
- gameState.message='EXTRACTIE · SECTOR VEILIG';gameState.messageT=1.5;
- gameState.eventCursor=gameState.events.length;
- gameState.infantry.forEach(function(e){e.alive=false;});
- gameState.vehicles.forEach(function(x){if(!x.allied){x.alive=false;x.currentSpeed=0;}});
- gameState.air.forEach(function(x){x.alive=false;});
- gameState.paras.length=0;
- gameState.smokeZones.length=0;gameState.artillery.length=0;
- completeLevel();
-}
-var V10_updateBase=update;
+var v10StepBase=update;
 update=function(dt){
- V10_updateBase.apply(this,arguments);
- if(!gameState||gameState.mode!=='playing'||!gameState.v10)return;
- var q=V10_MISSIONS[gameState.levelIndex],v=gameState.v10;
- v.flashed=Math.max(0,v.flashed-dt);
- v.weather=Math.max(0,v.weather-dt);
- if(!v.surprised&&gameState.levelTime>=Math.max(4,q.seconds*.36))v10Surprise(q);
- v10Extraction();
+ v10StepBase.apply(this,arguments);
+ if(!gameState||gameState.mode!=='playing'||!gameState.v10Gradual)return;
+ var b=gameState.v10Gradual,q=V10_ROAD[gameState.levelIndex];
+ b.noticeT=Math.max(0,b.noticeT-dt);
+ if(!b.surprised&&q.twist!=='none'&&gameState.levelTime>27)v10RoadSurprise();
 };
-var V10_renderBase=render;
+var v10DrawBase=render;
 render=function(){
- V10_renderBase.apply(this,arguments);
- if(!gameState||gameState.mode!=='playing'||!gameState.v10)return;
- var q=V10_MISSIONS[gameState.levelIndex],v=gameState.v10;
+ v10DrawBase.apply(this,arguments);
+ if(!gameState||gameState.mode!=='playing'||!gameState.v10Gradual)return;
+ var q=V10_ROAD[gameState.levelIndex],b=gameState.v10Gradual;
  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
- if(v.weather>0){
-   var alpha=clamp(v.weather/6,0,1)*(q.twist==='eclipse'?.42:q.twist==='dust'?.22:.16);
-   ctx.fillStyle=q.twist==='eclipse'?'rgba(8,11,23,'+alpha+')':q.twist==='dust'?'rgba(196,165,110,'+alpha+')':'rgba(201,217,223,'+alpha+')';
-   ctx.fillRect(0,safeTop+81,W,H-safeBottom-safeTop-133);
- }
- var top=safeTop+76,remain=Math.max(0,Math.ceil(q.seconds+(gameState.startMode==='hard'?3:0)-gameState.levelTime)),
-     kills=gameState.stats.kills+gameState.stats.vehicleKills+gameState.stats.airKills;
- ctx.fillStyle='rgba(14,25,21,.87)';roundRect(ctx,10,top,W-20,27,7);ctx.fill();
- ctx.fillStyle=v.flashed>0?'#f5bf74':'#a0d8bc';ctx.font='800 10px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';
- ctx.fillText('V10 '+String(gameState.levelIndex+1).padStart(2,'0')+' · '+V10_CHAPTERS[q.chapter],18,top+13,Math.max(130,W*.43));
- ctx.fillStyle='#faf2cf';ctx.textAlign='center';ctx.fillText(kills+'/'+v.quota+' K',W*.69,top+13,57);
- ctx.textAlign='right';ctx.fillText(remain+'s',W-20,top+13);
- if(v.flashed>0){
-  ctx.fillStyle='rgba(68,34,20,.86)';roundRect(ctx,W*.12,H*.18,W*.76,24,6);ctx.fill();
-  ctx.fillStyle='#ffdba1';ctx.textAlign='center';ctx.font='900 11px system-ui';
-  ctx.fillText('⚠ '+v.notice,W*.5,H*.18+12,W*.72);
+ var top=safeTop+75;
+ ctx.fillStyle='rgba(15,27,22,.88)';roundRect(ctx,10,top,W-20,24,6);ctx.fill();
+ ctx.fillStyle='#e8eac6';ctx.font='800 10px system-ui';ctx.textBaseline='middle';
+ ctx.textAlign='left';ctx.fillText('MAP '+(q.index+1)+'/30 · '+q.world,17,top+12,W*.62);
+ ctx.textAlign='right';ctx.fillText('MG '+Math.ceil(gameState.primaryAmmo/3)+' SALVO',W-17,top+12);
+ if(b.noticeT>0){
+  ctx.fillStyle='#bdca9b';ctx.textAlign='center';ctx.font='900 12px system-ui';
+  ctx.fillText(b.notice,W*.5,top+40,W-40);
  }
  ctx.restore();
 };
-// No state migration: V10 starts at its own new campaign, preserving v9 saves.
-SAVE_KEY='jbd_v10_quickfire_campaign_save';
+// No shop interaction: automatic micro-upgrade, then "Volgende map".
+var v10CompleteBase=completeLevel;
+completeLevel=function(){
+ if(!gameState||gameState.levelComplete)return;
+ v10CompleteBase.apply(this,arguments);
+ if(gameState&&gameState.mode==='shop'){
+  var next=gameState.levelIndex+1;
+  shopEl.style.display='none';
+  if(next<30){
+   subEl.textContent='MAP '+next+'/30 VOLTOOID · AUTOMATISCHE UPGRADE: '+v10UpgradeLabel(next)+
+    ' · De route loopt verder naar '+V10_ROAD[next].name+'.';
+   summaryEl.style.display='block';
+   summaryEl.textContent='Je hoeft niets te kopen of te kiezen. Elke map maakt je wapen of bunker automatisch een klein beetje sterker.';
+   deployBtn.textContent='VOLGENDE MAP →';
+  }else{
+   titleEl.textContent='DE HELE ROUTE VOLTOOID';
+   subEl.textContent='Alle 30 maps zijn uitgespeeld. Je kunt opnieuw beginnen of via het menu een map testen.';
+   deployBtn.textContent='ROUTE OPNIEUW';
+  }
+ }
+};
+var v10StartBase=startSelectedMode;
+startSelectedMode=function(mode){
+ v10StartBase.apply(this,arguments);
+ if(!gameState||mode==='demo'||mode==='random')return;
+ var el=document.getElementById('mapSelectV10'),val=el?Number(el.value)||1:1;
+ val=clamp(Math.floor(val),1,30);
+ if(val!==1){gameState.levelIndex=val-1;resetLevel();}
+};
