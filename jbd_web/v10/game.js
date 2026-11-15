@@ -12221,6 +12221,33 @@ render=function(){
  var g=gameState;
  if(!g||g.mode!=='playing'||!g.v102VictoryHold)return;
  var rem=Math.max(0,Math.ceil(5-g.v102VictoryHold.elapsed));
+ // Guaranteed visual smoke (even when the old particle pool is full).
+ // The gray plumes rise, spread, then fade completely at 5 seconds.
+ var h=g.v102VictoryHold,fade=clamp(1-h.elapsed/5,0,1);
+ ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
+ for(var puff=0;puff<8;puff++){
+  var phase=(h.elapsed*.36+puff*.175)%1,
+      px=h.x+Math.sin(h.elapsed*.95+puff*2.1)*(5+phase*12),
+      py=h.y-9-phase*(30+55*h.elapsed/5)-puff*.7,
+      radius=8+phase*22+(1-fade)*8,
+      alpha=fade*(1-phase)*.28;
+  if(alpha<=.006)continue;
+  var cloud=ctx.createRadialGradient(px,py,1,px,py,radius);
+  cloud.addColorStop(0,'rgba(64,66,63,'+(alpha*.88)+')');
+  cloud.addColorStop(.58,'rgba(95,101,96,'+(alpha*.60)+')');
+  cloud.addColorStop(1,'rgba(131,134,129,0)');
+  ctx.fillStyle=cloud;ctx.beginPath();ctx.arc(px,py,radius,0,TAU);ctx.fill();
+ }
+ // The flame is strongest immediately after destruction, then dies down.
+ if(h.elapsed<2.5){
+  var flicker=.9+Math.sin(h.elapsed*21)*.11;
+  ctx.globalAlpha=clamp((2.5-h.elapsed)/2.5,0,1)*.78;
+  ctx.fillStyle='#e58535';ctx.beginPath();
+  ctx.ellipse(h.x,h.y-7,6*flicker,10*flicker,0,0,TAU);ctx.fill();
+  ctx.fillStyle='#f5d27c';ctx.beginPath();
+  ctx.ellipse(h.x,h.y-7,2.5*flicker,5*flicker,0,0,TAU);ctx.fill();
+ }
+ ctx.restore();
  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
  ctx.fillStyle='rgba(23,31,24,.86)';
  roundRect(ctx,13,safeTop+108,W-26,32,9);ctx.fill();
