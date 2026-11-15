@@ -12258,4 +12258,30 @@ function v102NextMap(ev){
 }
 deployBtn.addEventListener('click',v102NextMap,true);
 
+
+/* V10.2 safety: a disabled driver is NOT a destroyed vehicle.
+   If the intro car gets a damaged wheel/driver from FLAK, it must
+   remain shootable and cannot disappear before the player destroys it. */
+var v102_neutralizeBase=neutralizeVehicle;
+neutralizeVehicle=function(v,reason,fragments){
+ if(v&&v.v102Tutorial&&v.alive){
+  v.state='driverless9935';v.currentSpeed=0;v.sideVel=0;
+  v.hasMG=false;v.driverHit=true;v.v102TutorialStopped=true;
+  gameState.message='VOERTUIG STIL · MAAK HET WRAK AF';
+  gameState.messageT=1.7;
+  return false;
+ }
+ return v102_neutralizeBase.apply(this,arguments);
+};
+var v102_outerUpdateBase=update;
+update=function(dt){
+ v102_outerUpdateBase.apply(this,arguments);
+ if(!gameState||gameState.levelIndex!==0||!gameState.v102IntroCar)return;
+ var v=gameState.v102IntroCar;
+ if(!v.alive&&!gameState.v102IntroDestroyed){
+  v102ConfirmVehicle(v);
+  if(gameState.mode==='playing'&&v102ReadyToCelebrate())completeLevel();
+ }
+};
+
 })();
