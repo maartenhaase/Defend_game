@@ -237,7 +237,7 @@ function schrijven(){let lvl=state.level,sets=[[],['1','2','3','F','0'],['4','5'
  }
  canvas.addEventListener('pointerdown',e=>{
    if(state.locked||state.write.drawing)return;
-   e.preventDefault();canvas.setPointerCapture(e.pointerId);
+   e.preventDefault();try{canvas.setPointerCapture(e.pointerId)}catch{}
    const p=pt(e),w=state.write;w.drawing=true;w.pointerId=e.pointerId;w.strokes++;w.last=p;w.points.push(p);
    ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.01,p.y+.01);ctx.stroke();mark(p);renderWriteStatus();
  });
@@ -289,6 +289,32 @@ try { home(); }
 catch (err) {
   console.error('Spike startup:', err);
   app.innerHTML = '<main class="preview-help"><div class="preview-emoji">🐲</div><h1>Spel kon niet starten</h1><p>Open dit als een website met Safari. Een voorvertoning van het HTML-bestand kan het spel blokkeren.</p></main>';
+}
+// Non-interactive browser regression test, never enabled for ordinary players.
+if(new URLSearchParams(location.search).get('traceTest')==='1'){
+  const report=document.createElement('pre');report.id='trace-test-result';report.style.display='none';document.body.append(report);
+  try{
+    const random=Math.random;Math.random=()=>0;start('schrijven',4);Math.random=random;
+    const w=state.write,c=$('#ink'),r=c.getBoundingClientRect();
+    if(state.task.ch!=='A'||w.tracePaths.length!==2)throw Error('Expected A with 2 separate strokes');
+    const stroke=(points)=>{
+      const ev=(name,q)=>c.dispatchEvent(new PointerEvent(name,{
+        bubbles:true,pointerId:1,pointerType:'touch',clientX:r.left+q[0]/300*r.width,clientY:r.top+q[1]/350*r.height
+      }));
+      ev('pointerdown',points[0]);
+      for(let i=1;i<points.length;i++)ev('pointermove',points[i]);
+      ev('pointerup',points[points.length-1]);
+    };
+    stroke(w.tracePaths[0].slice(0,Math.floor(w.tracePaths[0].length/2)));
+    if(state.locked)throw Error('APPROVED HALF A!');
+    clearInk();
+    if(w.hit.some(h=>h.size!==0))throw Error('Erase did not reset tracing');
+    stroke(w.tracePaths[0]);
+    if(state.locked)throw Error('APPROVED A WITHOUT CROSSBAR!');
+    stroke(w.tracePaths[1]);
+    if(!state.locked)throw Error('Fully traced A was not approved');
+    report.textContent='PASS: half letter rejected, eraser works, missing crossbar rejected, full A approved';
+  }catch(e){report.textContent='FAIL: '+e.message;console.error(e)}
 }
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
