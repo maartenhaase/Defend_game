@@ -1,41 +1,49 @@
-# Just Bunker Defense V10 — QUICKFIRE
+# Just Bunker Defense V10 — The Long Road (30 maps)
 
-**Play (GitHub Pages):** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
+**iPhone play:** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
 
-A self-contained release of the existing Just Bunker Defense engine from V9.9.53 with **40 newly authored, short missions**. The original game engine (troops, vehicles, ballistics, input, audio and animations) is retained; V10 adds a new campaign layer and separate save key.
+This is a **rebalanced progressive campaign** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
 
-## New campaign
+## First map: the tutorial
 
-- **40 missions, 4 chapters**: Greenline, Iron Pass, Blackout, Last Stand.
-- **20–34-second target encounter windows** (HARD adds 3 seconds). Survive and score the required number of kills. If needed, an **8-second objective grace period** precedes a failed objective. Full rewards are earned on successful extraction.
-- **9 terrain palettes** and more than ten feature geometries: forests, bridges, factory belts, snow roads, rail yards, cliff batteries, airfields, dense urban blocks, ports and desert ridges.
-- **13 encounter types**: infantry skirmishes, scouting patrols, motorbikes, rushes, armored attacks, airdrops, road convoys, feints, crossfires, ambushes, pincers, holdouts and a finale.
-- **13 scripted tactical surprises**, including smoke, sudden flank attacks, fog, blizzards, artillery, radio objectives, fire zones, air threats and sandstorms.
-- Mode: EASY or HARD. The unit-testing/demo mode remains available.
-- Fully touch-operated on iPhone, and usable with desktop mouse controls.
+- **Exactly one slow, unarmed jeep** approaches the bunker. There are **no enemy infantry, convoy reinforcements, aircraft or surprise waves** in this first mission.
+- The starter machine gun carries **9 bullets**: **3 taps of 3 bullets** per magazine, followed by a noticeable reload.
+- The separate **FLAK** button fires **a single accurately aimed shell**, with small initial damage and a cooldown. You can wear the vehicle down until it is out of action.
+- Movement, damage, weapons and Flak power increase gradually over subsequent maps, not all at once.
+
+## Geography: one contiguous route, not random continents
+
+1. **Maps 1–6:** farms, pasture, bridge, village, the first forest edge.
+2. **Maps 7–12:** forests, wooded roads and rising foothills.
+3. **Maps 13–18:** rock-lined mountain routes, passes, highland farm, descent to the outer suburbs.
+4. **Maps 19–24:** suburban ring, railway yards, warehouses and factories.
+5. **Maps 25–30:** city boulevard, market, station, inner ring and downtown finale.
+
+No beach, ocean, desert or snow maps. Each map retains its own layout, obstruction placements and tactical approach.
+
+## Core changes
+
+- Every stage gradually adds at most a few infantry and vehicles. The first 2 maps have no enemy soldiers.
+- Enemy speed and firepower rise slowly. Introductory vehicles move much more slowly than in the previous Quickfire release.
+- Only selected later maps have a gentle surprise (small flank or smoke), not every map.
+- **No forced 20–34 second extraction timer.** Defeat the finite enemies.
+- **No upgrade shopping required:** on finishing each map, one micro-upgrade is automatically assigned, in a repeating order: rate, ballistics, bunker armor, Flak. Press **Volgende map** to continue.
+- On the start screen, pick **any level 1–30** to quickly test the campaign's pacing and maps.
 
 ## Controls
 
-- **Tap:** one precise shot.
-- **Tap rapidly:** short three-shot salvos.
-- **Hold:** a grenade.
-- **After clearing a map:** choose an upgrade in the existing Field Workshop, then press Next Map.
+- Tap anywhere to aim and fire a **three-round burst**.
+- After three bursts on map 1, wait for the MG reload.
+- Aim and tap **FLAK** to shoot **one** low-power shell.
+- Tap through the completion screen to play the next map. No purchasing or allocation needed.
 
-## Architecture
+## Testing
 
-- `index.html` — iPhone viewport and campaign entry.
-- `game.js` — complete, standalone source including the V9.9.53 engine and V10 changes.
-- `v10_campaign_source.js` — readable source of the new V10 campaign layer; inserted inside the engine IIFE when assembling `game.js`.
-- `v10_regression.cjs` — 40-map geometry, encounter, mode and iPhone VM tests.
-- The test harness references `../v9_9_53/battle_regression.cjs` and does not alter the old release.
-
-## Test and deploy
-
-```sh
+```bash
 node --check jbd_web/v10/game.js
 node jbd_web/v10/v10_regression.cjs
 ```
 
-The workflow `.github/workflows/v10-check.yml` runs these tests on relevant pushes. The existing GitHub Pages workflow publishes the `jbd_web/v10/` folder alongside previous releases.
+The V10 GitHub Actions check validates all 30 maps, initial enemy composition and pace, initial weapon capacities, single-shell Flak, automatic incremental upgrades and iPhone canvas rendering.
 
-**Note:** This is a new campaign built on the existing visual and gameplay engine, not a from-scratch rendering rewrite. All V9.9.53 files remain untouched.
+All game graphics, vehicles, ballistics, audio and mobile controls come from the full original game engine; V10 supplies the new campaign progression and pacing.
