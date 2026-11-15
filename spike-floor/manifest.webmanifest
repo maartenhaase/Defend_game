@@ -1,0 +1,21 @@
+{
+  "name": "Spike & Floor – Leeravontuur",
+  "short_name": "Spike & Floor",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f3ff",
+  "theme_color": "#6c55ee",
+  "lang": "nl-NL",
+  "description": "Educatief spel met acht leerwerelden voor Floor.",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
