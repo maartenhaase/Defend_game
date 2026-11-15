@@ -51,8 +51,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <canvas id="game"></canvas>
 <div id="overlay" class="overlay">
   <div class="panel">
-    <div class="eyebrow">JBD V10 // QUICKFIRE CAMPAIGN</div>
-    <h1 id="title">V10 · THE LONG ROAD · 30 MAPS</h1>
+    <div class="eyebrow">JBD V10.2 // DE LANGE ROUTE</div>
+    <h1 id="title">V10.2 · DE LANGE ROUTE · 30 MAPS</h1>
     <p id="sub">30 progressieve maps door één werelddeel. Map 1: één langzaam voertuig. MG: 3 salvo’s van 3. Flak: 1 lichte kogel. Elke map automatisch iets sterker.</p>
     <div id="summary" class="summary"></div>
     <div id="shop" class="shop"><div class="shopTitle">FIELD WORKSHOP</div><div id="supply" class="supply"></div><div id="shopGrid" class="shopGrid"></div></div>
@@ -64,12 +64,12 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
     </div>
     <button id="deploy" class="action" type="button" style="display:none">DEPLOY</button>
     <button id="restart" class="action" type="button">PLAY AGAIN</button>
-    <div class="hint">Tik = 3 kogels. Je begint met 3 salvo’s per magazijn. De FLAK-knop schiet één zwakke maar gerichte granaat.</div>
-    <div class="hint" style="opacity:.62;font-size:10px">30 maps · samenhangende route · langzaam oplopende vijanden · automatische upgrades</div>
+    <div class="hint">Tik = 3 kogels. Start: drie salvo’s per magazijn. FLAK = één gericht schot. Vernietig alle vijanden en bekijk het brandende wrak nog 5 seconden.</div>
+    <div class="hint" style="opacity:.62;font-size:10px">30 maps · geleidelijke opbouw · automatisch upgraden · geen voortijdig level-einde</div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-<script src="game.js?v=10-progressive30-20261115-a"></script>
+<script src="game.js?v=10-2-burn-nextfix-20261115"></script>
 <script>(function(){var e=document.getElementById('mapSelectV10');if(!e)return;var names=['De eerste weg','Boerderijpad','Het hooiland','Oude brug','Dorpsrand','Bosrand','Dennenweg','Houtkamp','Bospad','Heuvelpost','Stenen weg','Kloofbocht','Hoogboerderij','Tunnelweg','De bergpas','Dalweg','Spoorbrug','Voorstad','De buitenring','Goederenloods','Kanaalweg','Magazijnzone','Rangeerterrein','Stadsrand','De boulevard','Oude markt','Noordwijk','Centraal station','De binnenring','Het centrum'];for(var i=0;i<30;i++){var o=document.createElement('option');o.value=String(i+1);o.textContent=String(i+1).padStart(2,'0')+' · '+names[i];e.appendChild(o);}})();</script>
 <!-- V10.1: 30 slow-build maps, automatic upgrades and single-round Flak -->
 </body>
