@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   check:
-    name: iPhone canvas and all 40 missions
+    name: iPhone canvas and all 30 progressive missions
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
