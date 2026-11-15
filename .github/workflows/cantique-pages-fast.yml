@@ -48,6 +48,9 @@ jobs:
           # Replace ONLY the Cantique folder with current repo assets.
           rm -rf _site/cantique-adventure
           cp -a cantique-adventure _site/cantique-adventure
+          # Keep Spike & Floor in the full Pages deployment on future Cantique updates.
+          cp -a spike-floor _site/spike-floor
+          test -s _site/spike-floor/index.html
           touch _site/.nojekyll
           test -s _site/index.html
           test -s _site/cantique-adventure/sem-v15/index.html
