@@ -12004,4 +12004,256 @@ startSelectedMode=function(mode){
  if(val!==1){gameState.levelIndex=val-1;resetLevel();}
 };
 
+
+/* =============================================================
+   V10.2 — REAL VICTORIES, UNARMED CREW, CINEMATIC AFTERMATH
+   ============================================================= */
+
+// A destroyed vehicle, not a stopped/parked/escaped vehicle, is the
+// first mission's win condition. Keep it available to shoot.
+var v102_spawnVehicle=spawnVehicle;
+spawnVehicle=function(){
+ var before=gameState&&gameState.vehicles?gameState.vehicles.length:0;
+ var result=v102_spawnVehicle.apply(this,arguments);
+ if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')return result;
+ for(var j=before;j<gameState.vehicles.length;j++){
+  var v=gameState.vehicles[j];
+  if(gameState.levelIndex===0&&!gameState.v102IntroCar){
+   v.v102Tutorial=true;v.hp=v.maxHp=58;v.armorHp=0;v.maxArmorHp=0;
+   v.hasMG=false;v.passengers=0;v.unloadLeft=0;
+   gameState.v102IntroCar=v;
+  }
+ }
+ return result;
+};
+var v102_resetLevel=resetLevel;
+resetLevel=function(){
+ v102_resetLevel.apply(this,arguments);
+ if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')return;
+ gameState.v102IntroCar=null;
+ gameState.v102IntroDestroyed=false;
+ gameState.v102Evacuated=false;
+ gameState.v102VictoryHold=null;
+ gameState.v102LastDestroyed=null;
+ gameState.v102BurnSmokeCd=0;
+ // The next-map action must never carry a "shop requires selection" lock.
+ deployBtn.disabled=false;
+};
+
+// Three UNARMED occupants leave the car and flee in different directions.
+// They aren't hostile combatants; shooting them is not a victory requirement.
+function v102Evacuate(v){
+ var g=gameState;
+ if(!g||!v||g.v102Evacuated||g.levelIndex!==0)return;
+ g.v102Evacuated=true;
+ for(var i=0;i<3;i++){
+  var side=i%2?1:-1;
+  var x=clamp(v.x+(i-1)*11,18,W-18),y=clamp(v.y+(i%2)*5+12,safeTop+93,H*.67);
+  var e=spawnInfantry(x,y,'rifle',null,'vehicle');
+  e.v102Unarmed=true;e.v102ExitSide=side;e.v102ExitAge=0;
+  e.v102ExitSpeed=33+i*7;e.fireCd=9999;e.state='panic';
+  e.panicT=999;e.decisionT=999;e.suppression=0;e.morale=.25;
+ }
+ g.message='DRIE ONBEWAPENDE INZITTENDEN VLUCHTEN';
+ g.messageT=2.4;
+}
+var v102_enemyFire=enemyFire;
+enemyFire=function(e){
+ if(e&&e.v102Unarmed)return;
+ return v102_enemyFire.apply(this,arguments);
+};
+// Same recognizable style as the world sprites, but visibly no rifle.
+var v102_drawSoldier=drawSoldier;
+drawSoldier=function(e){
+ if(!e||!e.v102Unarmed)return v102_drawSoldier.apply(this,arguments);
+ if(!e.alive)return;
+ var t=gameState.time*(7.5+(e.v102ExitSpeed||33)*.06),gait=Math.sin(t),x=e.x,y=e.y;
+ ctx.save();ctx.translate(x,y);ctx.imageSmoothingEnabled=false;
+ ctx.fillStyle='rgba(11,19,15,.30)';ctx.beginPath();ctx.ellipse(0,5,6,2.2,0,0,TAU);ctx.fill();
+ ctx.strokeStyle='#2b3028';ctx.lineWidth=2.8;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(-2,-2);ctx.lineTo(-3-gait*2,4);
+ ctx.moveTo(2,-2);ctx.lineTo(3+gait*2,4);ctx.stroke();
+ ctx.fillStyle='#687657';ctx.fillRect(-4,-12,8,11);
+ ctx.fillStyle='#a1ac86';ctx.fillRect(-3,-11,6,4);
+ ctx.strokeStyle='#b18e75';ctx.lineWidth=2.5;
+ ctx.beginPath();ctx.moveTo(-4,-10);ctx.lineTo(-8-gait,-6);
+ ctx.moveTo(4,-10);ctx.lineTo(8+gait,-6);ctx.stroke();
+ ctx.fillStyle='#c6a086';ctx.beginPath();ctx.arc(0,-15,3.5,0,TAU);ctx.fill();
+ ctx.fillStyle='#555d4b';ctx.fillRect(-5,-19,10,3);
+ ctx.restore();
+};
+
+// Vehicles are allowed to stop, but NOT to count as destroyed just
+// because the driver is gone. The tutorial hull stays shootable.
+var v102_updateVehicles=updateVehicles;
+updateVehicles=function(dt){
+ if(gameState&&gameState.levelIndex===0&&gameState.v102IntroCar){
+  var v=gameState.v102IntroCar;
+  if(v.alive&&v.y>H*.45&&!v.v102TutorialStopped){
+   v.v102TutorialStopped=true;v.currentSpeed=0;
+   v.state='driverless9935';v.hasMG=false;
+   v102Evacuate(v);
+  }
+ }
+ v102_updateVehicles.apply(this,arguments);
+};
+
+// Unlike the original engine, tutorial MG rounds damage the actual hull.
+// The old engine floors MG hull health at 28%, which made true victory
+// impossible with the starting weapon.
+function v102ConfirmVehicle(v){
+ if(!v||!gameState||v.alive)return;
+ if(v.hp<=0||v.exploded||v.burnPhase9941==='burntOut'){
+  if(v.v102Tutorial)gameState.v102IntroDestroyed=true;
+  gameState.v102LastDestroyed={x:v.x,y:v.y};
+ }
+}
+var v102_primaryVehicleHit=primaryVehicleHit;
+primaryVehicleHit=function(v,b){
+ if(!v||!v.v102Tutorial||!v.alive)return v102_primaryVehicleHit.apply(this,arguments);
+ v102Evacuate(v);
+ v.bulletHoles=(v.bulletHoles||0)+1;
+ var result=damageVehicleBase9935(v,Math.max(2.8,(b.damage||6)*.53),'mg');
+ v102ConfirmVehicle(v);
+ return result;
+};
+var v102_damageVehicle=damageVehicle;
+damageVehicle=function(v,dmg,kind){
+ var result=v102_damageVehicle.apply(this,arguments);
+ v102ConfirmVehicle(v);
+ return result;
+};
+
+// Guard against old game logic completing a mission while a vehicle is
+// still driving, parked, or disabled but visibly intact.
+function v102HostilesAlive(){
+ var g=gameState;
+ return g.infantry.some(function(e){return e.alive&&!e.v102Unarmed;})||
+  g.vehicles.some(function(v){return v.alive&&!v.allied;})||
+  g.air.some(function(a){return a.alive;})||g.paras.some(function(p){return p.alive;});
+}
+function v102ReadyToCelebrate(){
+ var g=gameState;
+ if(!g||g.mode!=='playing'||g.eventCursor<g.events.length)return false;
+ if(v102HostilesAlive())return false;
+ if(g.levelIndex===0)return !!g.v102IntroDestroyed;
+ // Each map contains vehicles. They must have been neutralized, not
+ // merely passed through the battlefield and vanished.
+ return (g.stats.vehicleKills||0)>0 || g.wrecks.some(function(w){return w.exploded||w.disabled||w.carcass;});
+}
+function v102StartAftermath(){
+ var g=gameState;
+ if(g.v102VictoryHold)return;
+ var w=g.wrecks[g.wrecks.length-1];
+ var p=g.v102LastDestroyed||(w?{x:w.x,y:w.y}:{x:W*.5,y:H*.45});
+ g.v102VictoryHold={elapsed:0,x:p.x,y:p.y};
+ g.message='DOEL VERNIETIGD · 5 SECONDEN NABRAND';
+ g.messageT=2.1;
+ if(w){w.burnT=Math.max(w.burnT||0,5.4);w.smokeCd=0;w.flameCd=0;}
+ // The blast and sparks remain visible, instead of cutting straight to
+ // a giant modal dialog over the intact-looking vehicle.
+ emitFlame(p.x,p.y,true);
+ emitSmoke(p.x,p.y,true);
+}
+var v102_completeLevel=completeLevel;
+completeLevel=function(){
+ if(!gameState||gameState.levelComplete||gameState.mode!=='playing')return;
+ if(!v102ReadyToCelebrate())return;
+ if(!gameState.v102VictoryHold){v102StartAftermath();return;}
+ if(gameState.v102VictoryHold.elapsed<5)return;
+ v102_completeLevel.apply(this,arguments);
+ if(gameState.mode==='shop'){
+  // renderShop() in V9 disables the Next button until a manual upgrade
+  // is selected. V10 upgrades automatically; ENABLE IT after that call.
+  deployBtn.disabled=false;
+  deployBtn.style.pointerEvents='auto';
+  deployBtn.style.opacity='1';
+  var picker=document.getElementById('mapSelectV10');
+  if(picker)picker.value=String(Math.min(CAMPAIGN_LENGTH,gameState.levelIndex+2));
+  titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?
+   'ROUTE VOLTOOID':'MAP '+(gameState.levelIndex+1)+' VOLTOOID';
+  // The battle's exact nine-round first magazine must not be replaced
+  // by the legacy shop's 40-round preview profile.
+  gameState.profile.primaryMag=9+3*Math.floor(gameState.levelIndex/6);
+ }
+};
+
+// The original game updates a finite mission only while playing.
+// Continue to animate fading flames and smoke during the five seconds.
+var v102_update=update;
+update=function(dt){
+ v102_update.apply(this,arguments);
+ var g=gameState;
+ if(!g||g.mode!=='playing'||g.startMode==='demo'||g.startMode==='random')return;
+ var car=g.v102IntroCar;
+ if(g.levelIndex===0&&car&&!g.v102Evacuated&&
+  ((g.levelTime>8&&car.y>safeTop+75)||(!car.alive))){
+  v102Evacuate(car);
+ }
+ for(var i=0;i<g.infantry.length;i++){
+  var e=g.infantry[i];
+  if(!e.v102Unarmed||!e.alive)continue;
+  e.v102ExitAge+=dt;e.fireCd=9999;e.panicT=999;
+  e.state='panic';e.x+=e.v102ExitSide*e.v102ExitSpeed*dt;
+  e.y-=dt*6;e.angle=e.v102ExitSide<0?Math.PI:0;
+  if(e.v102ExitAge>9||e.x<5||e.x>W-5)e.alive=false;
+ }
+ // Evaluate victory even when evacuated, unarmed figures are still on
+ // the field: the original engine counts every living soldier.
+ if(!g.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
+ var hold=g.v102VictoryHold;
+ if(!hold||g.mode!=='playing')return;
+ hold.elapsed=Math.min(5.1,hold.elapsed+dt);
+ var fade=1-hold.elapsed/5;
+ g.v102BurnSmokeCd-=dt;
+ if(g.v102BurnSmokeCd<=0&&fade>.025){
+  g.v102BurnSmokeCd=.10+.32*(1-fade);
+  emitSmoke(hold.x,hold.y,fade>.3);
+  if(fade>.27&&Math.random()<fade*.85)emitFlame(hold.x,hold.y,fade>.58);
+ }
+ if(hold.elapsed>=5)completeLevel();
+};
+var v102_draw=render;
+render=function(){
+ v102_draw.apply(this,arguments);
+ var g=gameState;
+ if(!g||g.mode!=='playing'||!g.v102VictoryHold)return;
+ var rem=Math.max(0,Math.ceil(5-g.v102VictoryHold.elapsed));
+ ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
+ ctx.fillStyle='rgba(23,31,24,.86)';
+ roundRect(ctx,13,safeTop+108,W-26,32,9);ctx.fill();
+ ctx.font='800 12px system-ui';ctx.fillStyle='#f3d48a';ctx.textBaseline='middle';
+ ctx.textAlign='center';ctx.fillText('DOEL VERNIETIGD · WRAK BRANDT · '+rem+'s',W*.5,safeTop+124,W-45);
+ ctx.restore();
+};
+// The visual effect is a deliberate pause, not free damage farming.
+var v102_fireMG=queueMG;
+queueMG=function(x,y){
+ if(gameState&&gameState.v102VictoryHold)return false;
+ return v102_fireMG.apply(this,arguments);
+};
+var v102_fireFlak=fireFlak9950;
+fireFlak9950=function(x,y){
+ if(gameState&&gameState.v102VictoryHold)return false;
+ return v102_fireFlak.apply(this,arguments);
+};
+
+// Native iPhone <button> click, handled in capture phase before any legacy
+// shop listeners. Also sync the test-map selector for subsequent play.
+function v102NextMap(ev){
+ if(!gameState||gameState.mode!=='shop')return;
+ if(ev&&ev.preventDefault)ev.preventDefault();
+ if(ev&&ev.stopImmediatePropagation)ev.stopImmediatePropagation();
+ var next=gameState.levelIndex+1;
+ if(next>=CAMPAIGN_LENGTH)next=0;
+ gameState.levelIndex=next;
+ var picker=document.getElementById('mapSelectV10');
+ if(picker)picker.value=String(next+1);
+ overlay.classList.add('hidden');
+ shopEl.style.display='none';summaryEl.style.display='none';
+ deployBtn.style.display='none';deployBtn.disabled=false;
+ resetLevel();
+}
+deployBtn.addEventListener('click',v102NextMap,true);
+
 })();
