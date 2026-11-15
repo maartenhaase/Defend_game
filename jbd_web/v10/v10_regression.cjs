@@ -63,3 +63,47 @@ assert(features.size>=7,'varied obstacle terrain');
 assert.equal(t.tour[0].theme,'village');
 assert.equal(t.tour[29].theme,'metropolis');
 console.log('PASS: 30 progressive missions, single slow vehicle in level 1, three 3-shot bursts, single weak Flak, upgrades, continent geography and iPhone rendering.');
+
+// V10.2: test the exact problem shown in the iPhone screenshot.
+// Do NOT award a map while the vehicle is parked, disabled or still alive.
+// Destroy the actual target, observe the wreck for at least five seconds,
+// then verify the Next Map button is ENABLED and switches to map 2.
+{
+ const h=loadGame(dir),u=h.t;
+ u.start('easy');
+ const s=u.state;
+ for(let n=0;n<140;n++)u.step(1/30);
+ const car=s.vehicles[0];
+ assert(car&&car.alive,'tutorial car is a real live target');
+ assert.equal(s.events.length,1,'exactly one vehicle encounter');
+ assert(car.y>100,'first car is visible beneath the HUD');
+ assert.equal(s.mode,'playing','map 1 did not end just because the car was parked');
+ assert.equal(s.v102VictoryHold,null,'no premature fireworks');
+ assert(s.levelTime>3.5,'the first map has enough time for aiming');
+ u.damageVehicle(car,car.hp+100,'he');
+ assert(!car.alive&&s.v102IntroDestroyed,'car is genuinely destroyed');
+ for(let n=0;n<25;n++)u.step(1/30);
+ assert(s.v102VictoryHold,'destruction starts a visible cinematic aftermath');
+ assert(s.infantry.filter(x=>x.v102Unarmed).length>=2,'unarmed crew escape from first car');
+ const bulletsBefore=s.enemyShots.length;
+ const unarmed=s.infantry.find(x=>x.v102Unarmed&&x.alive);
+ if(unarmed)u.enemyFire(unarmed);
+ assert.equal(s.enemyShots.length,bulletsBefore,'crew cannot fire any weapons');
+ // Don't rely on a guessed delay from the previous game update:
+ // the actual victory hold must stay visible for >=5 game seconds.
+ while(s.v102VictoryHold.elapsed<4.75)u.step(1/30);
+ assert.equal(s.mode,'playing','result dialog cannot cover the burning wreck too early');
+ for(let n=0;n<25&&s.mode==='playing';n++)u.step(1/30);
+ assert.equal(s.mode,'shop','victory screen finally appears after 5 seconds');
+ assert.equal(h.ids.get('deploy').disabled,false,'Next Map is clickable, not disabled by legacy shop');
+ assert.equal(h.ids.get('shop').style.display,'none','no forced upgrade shop');
+ let stopped=false;
+ const ev={preventDefault(){},stopImmediatePropagation(){stopped=true;}};
+ const entries=(h.ids.get('deploy').eventEntries.click||[]).slice()
+  .sort((a,b)=>Number(b.capture)-Number(a.capture));
+ for(const entry of entries){if(stopped)break;entry.fn(ev);}
+ assert.equal(s.levelIndex,1,'Next Map really advances to map 2');
+ assert.equal(s.mode,'playing','map 2 is playable after click');
+ assert(s.map.v10RouteSignature.startsWith('ROAD-02'),'the right terrain is loaded');
+ console.log('PASS: iPhone Next Map click, true wreck destruction, unarmed evacuation, and five-second burning pause.');
+}
