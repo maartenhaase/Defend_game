@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#6c55ee" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Spike & Floor – Leeravontuur</title>
+  <title>Spike & Floor – Leeravontuur v2.2</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icon.svg" />
   <meta name="description" content="Acht vrolijke leerwerelden om te tellen, letters te ontdekken en te oefenen met schrijven, speciaal voor Floor." />
@@ -107,10 +107,33 @@ function tone(kind='good'){
   if(!progress.music)return;
   try{audioCtx ||= new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const now=audioCtx.currentTime;const notes=kind==='good'?[392,523.25,659.25]:kind==='finish'?[392,523.25,659.25,784,1046.5]:[280,235];notes.forEach((n,i)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=kind==='bad'?'sine':'triangle';osc.frequency.setValueAtTime(n,now+i*.09);gain.gain.setValueAtTime(.0001,now+i*.09);gain.gain.exponentialRampToValueAtTime(.11,now+i*.09+.015);gain.gain.exponentialRampToValueAtTime(.0001,now+i*.09+.19);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now+i*.09);osc.stop(now+i*.09+.2)})}catch{}
 }
-function say(s){state.lastUtterance=s;if(!progress.sound||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return;try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(s);u.lang='nl-NL';u.rate=.89;u.pitch=1.15;u.volume=1;const voices=speechSynthesis.getVoices();const dutch=voices.find(v=>v.lang.toLowerCase()==='nl-nl')||voices.find(v=>v.lang.toLowerCase().startsWith('nl'));if(dutch)u.voice=dutch;speechSynthesis.speak(u)}catch{}}
+// Pre-generated open-source Piper recordings are preferred; the iPhone voice is a fallback.
+let voiceMap=Object.create(null), spokenAudio=null, speechSerial=0;
+const voiceKey=s=>String(s).normalize('NFC').trim().replace(/\\s+/g,' ');
+function stopVoice(){speechSerial++;if(spokenAudio){spokenAudio.pause();spokenAudio.onended=null;spokenAudio.onerror=null;spokenAudio=null}try{speechSynthesis.cancel()}catch{}}
+function bestDutchVoice(){try{const v=speechSynthesis.getVoices().filter(x=>/^nl[-_]/i.test(x.lang));return v.sort((a,b)=>{const score=x=>/premium|enhanced|siri|natural/i.test(x.name)?20:0;return score(b)-score(a)||Number(b.localService)-Number(a.localService)})[0]}catch{return null}}
+function speakDevice(s,serial){if(!progress.sound||serial!==speechSerial||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(s));u.lang='nl-NL';u.rate=.98;u.pitch=1;u.volume=1;const voice=bestDutchVoice();if(voice)u.voice=voice;speechSynthesis.speak(u)}catch{}}
+function say(s){
+  state.lastUtterance=String(s);stopVoice();
+  if(!progress.sound)return;
+  const serial=speechSerial,key=voiceKey(s),file=voiceMap[key];
+  if(file){
+    try{
+      const a=new Audio('./voice/'+encodeURIComponent(file));spokenAudio=a;a.preload='auto';
+      a.onerror=()=>{if(serial===speechSerial){spokenAudio=null;speakDevice(s,serial)}};
+      const attempt=a.play();if(attempt&&typeof attempt.catch==='function')attempt.catch(()=>{if(serial===speechSerial){spokenAudio=null;speakDevice(s,serial)}});
+      return;
+    }catch{}
+  }
+  speakDevice(s,serial);
+}
+fetch('./voice/voice-map.json?v=2.2',{cache:'no-store'})
+  .then(r=>{if(!r.ok)throw Error('Voice pack not yet installed');return r.json()})
+  .then(data=>{if(data&&typeof data==='object')voiceMap=data})
+  .catch(()=>{});
 function topbar(){let stars=Object.values(progress.stars).reduce((a,b)=>a+(Number(b)||0),0);return `<header class="top"><div class="brand"><span class="brand-logo">🌈</span><span>Spike <span style="color:#886ce8">&</span> Floor</span></div><div class="top-right"><div class="pill">⭐ ${stars}</div><button type="button" class="iconbtn" id="settings" aria-label="Instellingen">⚙️</button></div></header>`}
 function attachTop(){const b=$('#settings');if(b)b.addEventListener('click',settings)}
-function home(){state.screen='home';state.world=null;state.locked=false;try{speechSynthesis.cancel()}catch{};app.innerHTML=topbar()+`<main><section class="home-hero"><div class="hero-copy"><span class="eyebrow">🌟 JOUW EIGEN AVONTUUR</span><h1>Hoi Floor!<br>Kom je spelen?</h1><p>Ontdek, leer en verdien sterren met Spike!</p></div><div class="hero-spike">${SPIKE}</div></section><div class="section-head"><h2>Kies een wereld</h2><small>8 avonturen</small></div><div class="world-grid">${WORLDS.map(w=>`<button type="button" class="world-card" data-world="${w.id}" style="--accent:${w.color};--light:${w.light}"><span class="world-icon">${w.icon}</span><b>${w.name}</b><span class="desc">${w.desc}</span><span class="level">⭐ ${progress.stars[w.id]||0} sterren · level ${progress.levels[w.id]||1}</span></button>`).join('')}</div><div class="banner"><span style="font-size:29px">🏆</span><span>Elke wereld heeft 5 opdrachten. Foutje? Geen probleem: Spike helpt je verder!</span></div></main><p class="footer-note">Gemaakt voor Floor · Speel op je eigen tempo 💜</p>`;
+function home(){state.screen='home';state.world=null;state.locked=false;stopVoice();app.innerHTML=topbar()+`<main><section class="home-hero"><div class="hero-copy"><span class="eyebrow">🌟 JOUW EIGEN AVONTUUR</span><h1>Hoi Floor!<br>Kom je spelen?</h1><p>Ontdek, leer en verdien sterren met Spike!</p></div><div class="hero-spike">${SPIKE}</div></section><div class="section-head"><h2>Kies een wereld</h2><small>8 avonturen</small></div><div class="world-grid">${WORLDS.map(w=>`<button type="button" class="world-card" data-world="${w.id}" style="--accent:${w.color};--light:${w.light}"><span class="world-icon">${w.icon}</span><b>${w.name}</b><span class="desc">${w.desc}</span><span class="level">⭐ ${progress.stars[w.id]||0} sterren · level ${progress.levels[w.id]||1}</span></button>`).join('')}</div><div class="banner"><span style="font-size:29px">🏆</span><span>Elke wereld heeft 5 opdrachten. Foutje? Geen probleem: Spike helpt je verder!</span></div></main><p class="footer-note">Gemaakt voor Floor · Speel op je eigen tempo 💜</p>`;
   attachTop();app.querySelectorAll('[data-world]').forEach(el=>el.addEventListener('click',()=>start(el.dataset.world)));
 }
 function start(id,forcedLevel){state.screen='game';state.world=WORLDS.find(x=>x.id===id);state.level=Math.min(6,forcedLevel||progress.levels[id]||1);state.step=0;state.correct=0;state.errors=0;state.locked=false;state.mem=null;state.sessionSeen=[];next();}
@@ -164,15 +187,78 @@ const PATHS={
 };
 const LETTER_PATH_KEYS=['F','M','S','P','B','K','A','O','R','T','L','D','E','N','Z'];
 let writingResize;
-function schrijven(){let lvl=state.level,sets=[[],['1','2','3','F','0'],['4','5','6','M','S'],['7','8','9','P','B','K'],['A','O','R','T','L','D'],Object.keys(PATHS),Object.keys(PATHS)];let remaining=sets[lvl].filter(x=>!state.sessionSeen.includes(x));if(!remaining.length){state.sessionSeen=[];remaining=sets[lvl]}let ch=pick(remaining);state.sessionSeen.push(ch);state.task={ch};gameShell('Schrijf de '+((/[0-9]/.test(ch))?'':'letter ')+ch+'!','Volg de stippellijntjes met je vinger.','decor-sky');let root=$('#activity');root.innerHTML=`<div class="writing-board" id="writing"><svg class="trace-svg" id="trace" viewBox="0 0 300 350" preserveAspectRatio="none"><g fill="none" stroke="#cfc8ec" stroke-width="29" stroke-linecap="round" stroke-linejoin="round">${PATHS[ch].map(d=>`<path d="${d}"/>`).join('')}</g><g fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 22">${PATHS[ch].map(d=>`<path class="sample-path" d="${d}"/>`).join('')}</g></svg><canvas id="ink" class="ink-canvas" width="300" height="350" aria-label="Teken hier de letter of het cijfer"></canvas></div><div class="writing-status" id="write-status">✏️ Trek de lijn na!</div><div class="write-tools"><button class="softbtn" id="erase">↶ Opnieuw proberen</button><button class="softbtn" id="show">👀 Toon voorbeeld</button></div>`;
+function schrijven(){let lvl=state.level,sets=[[],['1','2','3','F','0'],['4','5','6','M','S'],['7','8','9','P','B','K'],['A','O','R','T','L','D'],Object.keys(PATHS),Object.keys(PATHS)];let remaining=sets[lvl].filter(x=>!state.sessionSeen.includes(x));if(!remaining.length){state.sessionSeen=[];remaining=sets[lvl]}let ch=pick(remaining);state.sessionSeen.push(ch);state.task={ch};gameShell('Schrijf de '+((/[0-9]/.test(ch))?'':'letter ')+ch+'!','Volg de stippellijntjes met je vinger.','decor-sky');let root=$('#activity');root.innerHTML=`<div class="writing-board" id="writing"><svg class="trace-svg" id="trace" viewBox="0 0 300 350" preserveAspectRatio="none"><g fill="none" stroke="#cfc8ec" stroke-width="29" stroke-linecap="round" stroke-linejoin="round">${PATHS[ch].map(d=>`<path d="${d}"/>`).join('')}</g><g fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 22">${PATHS[ch].map(d=>`<path class="sample-path" d="${d}"/>`).join('')}</g></svg><canvas id="ink" class="ink-canvas" width="300" height="350" aria-label="Teken hier de letter of het cijfer"></canvas></div><div class="writing-status" id="write-status">✏️ Trek de hele stippellijn na!</div><div class="write-tools"><button class="softbtn" id="erase">↶ Opnieuw proberen</button><button class="softbtn" id="show">👀 Toon voorbeeld</button></div>`;
  $('#erase').addEventListener('click',()=>clearInk());$('#show').addEventListener('click',()=>{const path=$('#trace');path.querySelectorAll('g')[0].setAttribute('stroke','#86d6aa');setTimeout(()=>{if(path.isConnected)path.querySelectorAll('g')[0].setAttribute('stroke','#cfc8ec')},850);say('Kijk goed naar de stippellijn en teken die na.')});
- state.write={drawing:false,points:[],samples:[],hit:new Set(),strokes:0};let svg=$('#trace');for(let p of svg.querySelectorAll('.sample-path')){let len=p.getTotalLength();for(let d=0;d<=len;d+=7){let q=p.getPointAtLength(d);state.write.samples.push([q.x,q.y])}};
- let canvas=$('#ink'),ctx=canvas.getContext('2d');ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#7757ef';ctx.lineWidth=15;const pt=e=>{let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*300,y:(e.clientY-r.top)/r.height*350}};
- function mark(point){let w=state.write;if(!w)return;w.samples.forEach(([sx,sy],i)=>{if((sx-point.x)**2+(sy-point.y)**2<27**2)w.hit.add(i)});let ratio=w.hit.size/Math.max(1,w.samples.length);let s=$('#write-status');if(s)s.textContent=ratio>.1?`🌈 ${Math.round(ratio*100)}% van de lijn nagetekend!`:'✏️ Trek de lijn na!';if(ratio>=.67&&w.points.length>=12&& !state.locked){canvas.style.pointerEvents='none';success()}}
- canvas.addEventListener('pointerdown',e=>{if(state.locked)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);let p=pt(e);state.write.drawing=true;state.write.strokes++;state.write.points.push(p);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.01,p.y+.01);ctx.stroke();mark(p)});
- canvas.addEventListener('pointermove',e=>{let w=state.write;if(!w?.drawing||state.locked)return;e.preventDefault();let p=pt(e),prev=w.points[w.points.length-1];ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(p.x,p.y);ctx.stroke();const steps=Math.max(1,Math.ceil(Math.hypot(p.x-prev.x,p.y-prev.y)/8));for(let i=1;i<=steps;i++){mark({x:prev.x+(p.x-prev.x)*i/steps,y:prev.y+(p.y-prev.y)*i/steps})}w.points.push(p)});
- const end=()=>{if(state.write)state.write.drawing=false};canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);say('Schrijf de '+ch+'. Volg met je vinger de stippellijntjes.');}
-function clearInk(){const c=$('#ink');if(!c)return;c.getContext('2d').clearRect(0,0,300,350);c.style.pointerEvents='auto';if(state.write){state.write.points=[];state.write.hit.clear();state.write.strokes=0;}const status=$('#write-status');if(status)status.textContent='✏️ Trek de lijn na!'}
+ // Every SVG path is a separate pencil stroke: all must be traced to the end.
+ state.write={drawing:false,points:[],tracePaths:[],hit:[],strokes:0,last:null,pointerId:null};
+ const svg=$('#trace');
+ for(const path of svg.querySelectorAll('.sample-path')){
+   const length=path.getTotalLength(),count=Math.max(2,Math.ceil(length/5));
+   const samples=Array.from({length:count+1},(_,i)=>{const q=path.getPointAtLength(length*i/count);return [q.x,q.y]});
+   state.write.tracePaths.push(samples);
+   state.write.hit.push(new Set());
+ }
+ const canvas=$('#ink'),ctx=canvas.getContext('2d');
+ ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#7757ef';ctx.lineWidth=15;
+ const pt=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*300,y:(e.clientY-r.top)/r.height*350}};
+ const completion=w=>w.tracePaths.map((samples,i)=>({
+   ratio:w.hit[i].size/Math.max(1,samples.length),
+   ends:w.hit[i].has(0)&&w.hit[i].has(samples.length-1)
+ }));
+ function renderWriteStatus(){
+   const w=state.write,status=$('#write-status');if(!w||!status)return;
+   const total=w.tracePaths.reduce((sum,p)=>sum+p.length,0);
+   const done=w.hit.reduce((sum,h)=>sum+h.size,0);
+   const pct=Math.min(100,Math.floor(100*done/Math.max(1,total)));
+   status.textContent=pct<1?'✏️ Trek de hele stippellijn na!':pct>=97?'🌟 Kijk of je álle lijntjes hebt gedaan!':`🌈 ${pct}% gedaan. Ga door tot het einde!`;
+ }
+ function mark(point){
+   const w=state.write;if(!w||state.locked)return;
+   // Small child-friendly tolerance, but NO early completion at 67%.
+   const near=18*18;
+   for(let p=0;p<w.tracePaths.length;p++){
+     const samples=w.tracePaths[p],hits=w.hit[p];
+     for(let i=0;i<samples.length;i++){
+       const dx=samples[i][0]-point.x,dy=samples[i][1]-point.y;
+       if(dx*dx+dy*dy<=near)hits.add(i);
+     }
+   }
+ }
+ function finishStroke(){
+   const w=state.write;if(!w||!w.drawing)return;
+   w.drawing=false;w.last=null;w.pointerId=null;
+   const each=completion(w);
+   // Only after lifting the finger AND after EVERY separate segment is complete.
+   if(each.length&&each.every(x=>x.ratio>=.97&&x.ends)&&!state.locked){
+     canvas.style.pointerEvents='none';
+     const status=$('#write-status');if(status)status.textContent='🌟 Helemaal nagetekend!';
+     success();
+   }else renderWriteStatus();
+ }
+ canvas.addEventListener('pointerdown',e=>{
+   if(state.locked||state.write.drawing)return;
+   e.preventDefault();canvas.setPointerCapture(e.pointerId);
+   const p=pt(e),w=state.write;w.drawing=true;w.pointerId=e.pointerId;w.strokes++;w.last=p;w.points.push(p);
+   ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.01,p.y+.01);ctx.stroke();mark(p);renderWriteStatus();
+ });
+ canvas.addEventListener('pointermove',e=>{
+   const w=state.write;if(!w?.drawing||state.locked||w.pointerId!==e.pointerId)return;
+   e.preventDefault();const p=pt(e),prev=w.last;
+   ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+   const steps=Math.max(1,Math.ceil(Math.hypot(p.x-prev.x,p.y-prev.y)/5));
+   for(let i=1;i<=steps;i++)mark({x:prev.x+(p.x-prev.x)*i/steps,y:prev.y+(p.y-prev.y)*i/steps});
+   w.points.push(p);w.last=p;renderWriteStatus();
+ });
+ canvas.addEventListener('pointerup',e=>{if(state.write?.pointerId===e.pointerId)finishStroke()});
+ canvas.addEventListener('pointercancel',e=>{if(state.write?.pointerId===e.pointerId)finishStroke()});
+ say('Schrijf de '+ch+'. Volg met je vinger alle stippellijntjes.');
+}
+function clearInk(){
+ const c=$('#ink');if(!c)return;
+ c.getContext('2d').clearRect(0,0,300,350);c.style.pointerEvents='auto';
+ if(state.write){const w=state.write;w.drawing=false;w.last=null;w.pointerId=null;w.points=[];w.hit.forEach(h=>h.clear());w.strokes=0}
+ const status=$('#write-status');if(status)status.textContent='✏️ Trek de hele stippellijn na!';
+}
 const SHAPES=[{id:'cirkel',name:'cirkel',draw:'circle',color:'#ee7595'},{id:'vierkant',name:'vierkant',draw:'rect',color:'#8d82ed'},{id:'driehoek',name:'driehoek',draw:'triangle',color:'#f6b84a'},{id:'ster',name:'ster',draw:'star',color:'#55c7ad'},{id:'hart',name:'hart',draw:'heart',color:'#ee7595'},{id:'rechthoek',name:'rechthoek',draw:'wide',color:'#79a6f9'},{id:'ovaal',name:'ovaal',draw:'oval',color:'#9d77df'}];
 const COLORS=[{name:'rood',c:'#ef5b62'},{name:'blauw',c:'#5d99f5'},{name:'groen',c:'#5fc98b'},{name:'geel',c:'#f0bf4c'},{name:'paars',c:'#a67ce5'},{name:'oranje',c:'#ffa053'}];
 function shape(s,color){let d;let c=color||s.color;switch(s.draw){case'circle':d='<circle cx="50" cy="50" r="36" />';break;case'rect':d='<rect x="15" y="15" width="70" height="70" rx="6" />';break;case'wide':d='<rect x="7" y="27" width="86" height="47" rx="6" />';break;case'oval':d='<ellipse cx="50" cy="50" rx="43" ry="28" />';break;case'triangle':d='<polygon points="50,7 93,87 7,87" />';break;case'star':d='<polygon points="50,5 63,35 96,37 70,58 79,93 50,74 21,93 30,58 4,37 37,35" />';break;case'heart':d='<path d="M50 86 C18 63 -2 42 16 22 C30 6 48 18 50 27 C65 3 90 13 92 35 C93 54 74 68 50 86Z" />';break;}return `<svg class="shape-icon" viewBox="0 0 100 100" aria-hidden="true"><g fill="${c}" stroke="#3b4260" stroke-width="3">${d}</g></svg>`}
@@ -189,8 +275,8 @@ function memory(){let level=state.level,n=level<2?3:level<4?4:6;let pool=shuffle
 function renderMemory(){let m=state.mem,root=$('#activity');root.innerHTML=`<div class="memory-grid ${m.pairs>=4?'four':''}">${m.cards.map((c,i)=>`<button class="memory-tile ${(m.flipped.includes(i)||m.matched.includes(i))?'flipped':''} ${m.matched.includes(i)?'matched':''}" data-card="${i}" aria-label="Kaart omdraaien">${m.flipped.includes(i)||m.matched.includes(i)?c.v:'⭐'}</button>`).join('')}</div><p style="text-align:center;font-size:14px;font-weight:900;color:#7c8199">${m.matched.length/2} van ${m.pairs} paar gevonden</p>`;root.querySelectorAll('[data-card]').forEach(b=>b.addEventListener('click',()=>flip(Number(b.dataset.card))));}
 function flip(index){let m=state.mem;if(!m||m.busy||m.matched.includes(index)||m.flipped.includes(index)||state.locked)return;m.flipped.push(index);tone('good');renderMemory();if(m.flipped.length===2){m.tries++;let [i,j]=m.flipped;if(m.cards[i].v===m.cards[j].v){m.matched.push(i,j);m.flipped=[];sparkle();if(m.matched.length===m.cards.length){state.errors+=Math.max(0,m.tries-m.pairs-2);setTimeout(success,450)}else{feedback(true,'⭐ Een paar gevonden!');say('Ja! Een paar!')}}else{m.busy=true;state.errors++;setTimeout(()=>{if(state.mem!==m)return;m.flipped=[];m.busy=false;renderMemory()},950)}}}
 function finish(){state.screen='finish';let id=state.world.id;let points=state.errors===0?3:state.errors<4?2:1;progress.stars[id]=(progress.stars[id]||0)+points;progress.wins[id]=(progress.wins[id]||0)+1;const maxL=6;progress.levels[id]=Math.min(maxL,Math.max(progress.levels[id]||1,state.level+1));save();tone('finish');sparkle();let stars='⭐'.repeat(points)+'☆'.repeat(3-points);app.innerHTML=topbar()+`<main><div class="game-top"><button class="back" id="back" aria-label="Terug">←</button><div class="game-name">${state.world.icon} ${state.world.name}</div></div><section class="stage"><div class="finish"><div class="finish-mascot">${SPIKE}</div><div class="huge-stars">${stars}</div><h2>Joepie, Floor!</h2><p>Je hebt alle 5 opdrachten gedaan!<br>Je verdient ${points} ${points===1?'ster':'sterren'}!</p><div class="button-row"><button class="primary" id="again">🚀 Nog een level!</button><button class="primary purple" id="home">🏡 Werelden</button></div></div></section></main>`;attachTop();$('#back').addEventListener('click',home);$('#home').addEventListener('click',home);$('#again').addEventListener('click',()=>start(id));say('Joepie Floor! Goed gedaan! Je hebt '+points+' sterren verdiend!')}
-function settings(){let modal=document.createElement('div');modal.className='overlay';modal.id='settingsModal';let levOpt=WORLDS.map(w=>`<option value="${w.id}">${w.name} (level ${progress.levels[w.id]||1})</option>`).join('');modal.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Instellingen"><button class="iconbtn close" id="close" aria-label="Sluiten">✕</button><h2>⚙️ Voor grote mensen</h2><p>Stel het spel in zoals Floor het fijn vindt. Je voortgang blijft op dit apparaat bewaard.</p><label><input type="checkbox" id="voiceToggle" ${progress.sound?'checked':''}/> Spreek opdrachten in het Nederlands uit</label><label><input type="checkbox" id="musicToggle" ${progress.music?'checked':''}/> Speel geluidjes bij het oefenen</label><p><b>Kies een wereld om op een bepaald level te beginnen</b></p><select id="worldSel">${levOpt}</select><select id="levelSel" style="margin-top:10px">${Array.from({length:6},(_,i)=>`<option value="${i+1}">Level ${i+1}${i===0?' – beginnen':i===5?' – extra moeilijk':''}</option>`).join('')}</select><div class="button-row"><button class="primary purple" id="levelStart">▶️ Start gekozen level</button></div><div class="info">Tip: je kunt via Safari op <b>Deel → Zet op beginscherm</b> een app-icoontje maken. Dit spel werkt ook zonder internet, zodra het op het apparaat is opgeslagen.</div><div class="button-row"><button class="softbtn" id="reset">Voortgang opnieuw beginnen</button></div></div>`;document.body.append(modal);const close=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)close()});modal.querySelector('#close').addEventListener('click',close);modal.querySelector('#voiceToggle').addEventListener('change',e=>{progress.sound=e.target.checked;save();if(!e.target.checked)try{speechSynthesis.cancel()}catch{}});modal.querySelector('#musicToggle').addEventListener('change',e=>{progress.music=e.target.checked;save()});modal.querySelector('#levelStart').addEventListener('click',()=>{let id=modal.querySelector('#worldSel').value,lvl=Number(modal.querySelector('#levelSel').value);close();start(id,lvl)});modal.querySelector('#reset').addEventListener('click',()=>{if(confirm('Weet je zeker dat je Floors sterren en levels wilt wissen?')){progress.levels={};progress.stars={};progress.wins={};save();close();home()}})}
-window.addEventListener('pagehide',()=>{try{speechSynthesis.cancel()}catch{}});
+function settings(){let modal=document.createElement('div');modal.className='overlay';modal.id='settingsModal';let levOpt=WORLDS.map(w=>`<option value="${w.id}">${w.name} (level ${progress.levels[w.id]||1})</option>`).join('');modal.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Instellingen"><button class="iconbtn close" id="close" aria-label="Sluiten">✕</button><h2>⚙️ Voor grote mensen</h2><p>Stel het spel in zoals Floor het fijn vindt. Je voortgang blijft op dit apparaat bewaard.</p><label><input type="checkbox" id="voiceToggle" ${progress.sound?'checked':''}/> Spreek opdrachten in het Nederlands uit (natuurlijke stem indien beschikbaar)</label><label><input type="checkbox" id="musicToggle" ${progress.music?'checked':''}/> Speel geluidjes bij het oefenen</label><p><b>Kies een wereld om op een bepaald level te beginnen</b></p><select id="worldSel">${levOpt}</select><select id="levelSel" style="margin-top:10px">${Array.from({length:6},(_,i)=>`<option value="${i+1}">Level ${i+1}${i===0?' – beginnen':i===5?' – extra moeilijk':''}</option>`).join('')}</select><div class="button-row"><button class="primary purple" id="levelStart">▶️ Start gekozen level</button></div><div class="info">Tip: je kunt via Safari op <b>Deel → Zet op beginscherm</b> een app-icoontje maken. Dit spel werkt ook zonder internet, zodra het op het apparaat is opgeslagen.</div><div class="button-row"><button class="softbtn" id="reset">Voortgang opnieuw beginnen</button></div></div>`;document.body.append(modal);const close=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)close()});modal.querySelector('#close').addEventListener('click',close);modal.querySelector('#voiceToggle').addEventListener('change',e=>{progress.sound=e.target.checked;save();if(!e.target.checked)stopVoice()});modal.querySelector('#musicToggle').addEventListener('change',e=>{progress.music=e.target.checked;save()});modal.querySelector('#levelStart').addEventListener('click',()=>{let id=modal.querySelector('#worldSel').value,lvl=Number(modal.querySelector('#levelSel').value);close();start(id,lvl)});modal.querySelector('#reset').addEventListener('click',()=>{if(confirm('Weet je zeker dat je Floors sterren en levels wilt wissen?')){progress.levels={};progress.stars={};progress.wins={};save();close();home()}})}
+window.addEventListener('pagehide',stopVoice);
 try { home(); }
 catch (err) {
   console.error('Spike startup:', err);
