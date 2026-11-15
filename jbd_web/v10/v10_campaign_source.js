@@ -336,6 +336,8 @@ spawnVehicle=function(){
   var v=gameState.vehicles[j];
   if(gameState.levelIndex===0&&!gameState.v102IntroCar){
    v.v102Tutorial=true;v.hp=v.maxHp=58;v.armorHp=0;v.maxArmorHp=0;
+   // Enter visibly below the HUD rather than hiding off-screen above it.
+   v.y=Math.max(v.y,H*.22);
    v.hasMG=false;v.passengers=0;v.unloadLeft=0;
    gameState.v102IntroCar=v;
   }
