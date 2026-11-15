@@ -12051,9 +12051,9 @@ function v102Evacuate(v){
  for(var i=0;i<3;i++){
   var side=i%2?1:-1;
   var x=clamp(v.x+(i-1)*11,18,W-18),y=clamp(v.y+(i%2)*5+12,safeTop+93,H*.67);
-  var e=spawnInfantry(x,y,'rifle',null,'vehicle');
+  var e=spawnInfantry(x,y,'medic',null,'vehicle');
   e.v102Unarmed=true;e.v102ExitSide=side;e.v102ExitAge=0;
-  e.v102ExitSpeed=33+i*7;e.fireCd=9999;e.state='panic';
+  e.v102ExitSpeed=94+i*12;e.fireCd=9999;e.state='panic';
   e.panicT=999;e.decisionT=999;e.suppression=0;e.morale=.25;
  }
  g.message='DRIE ONBEWAPENDE INZITTENDEN VLUCHTEN';
@@ -12196,12 +12196,16 @@ update=function(dt){
   var e=g.infantry[i];
   if(!e.v102Unarmed||!e.alive)continue;
   e.v102ExitAge+=dt;e.fireCd=9999;e.panicT=999;
-  e.state='panic';e.x+=e.v102ExitSide*e.v102ExitSpeed*dt;
-  e.y-=dt*6;e.angle=e.v102ExitSide<0?Math.PI:0;
-  if(e.v102ExitAge>9||e.x<5||e.x>W-5)e.alive=false;
+  e.state='panic';e.muzzle=0;e.recoil=0;
+  e.vx=e.v102ExitSide*e.v102ExitSpeed;e.vy=-9;
+  e.anim+=dt*8;e.anim2+=dt*3;
+  e.x+=e.vx*dt;e.y+=e.vy*dt;
+  e.angle=e.v102ExitSide<0?Math.PI:0;
+  if(e.v102ExitAge>3.8||e.x<5||e.x>W-5)e.alive=false;
  }
  // Evaluate victory even when evacuated, unarmed figures are still on
  // the field: the original engine counts every living soldier.
+ g.infantry=g.infantry.filter(function(e){return !e.v102Unarmed||e.alive;});
  if(!g.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
  var hold=g.v102VictoryHold;
  if(!hold||g.mode!=='playing')return;
@@ -12258,12 +12262,10 @@ render=function(){
 // The visual effect is a deliberate pause, not free damage farming.
 var v102_fireMG=queueMG;
 queueMG=function(x,y){
- if(gameState&&gameState.v102VictoryHold)return false;
  return v102_fireMG.apply(this,arguments);
 };
 var v102_fireFlak=fireFlak9950;
 fireFlak9950=function(x,y){
- if(gameState&&gameState.v102VictoryHold)return false;
  return v102_fireFlak.apply(this,arguments);
 };
 
@@ -12309,6 +12311,112 @@ update=function(dt){
   v102ConfirmVehicle(v);
   if(gameState.mode==='playing'&&v102ReadyToCelebrate())completeLevel();
  }
+};
+
+
+/* ============================================================
+   V10.3 — LOCKED MISSION DIRECTOR AND GUARANTEED FINISH
+   Fixes iPhone screenshot: 0s freeze, surprise enemies, arcade
+   overlays, locked gun and inconsistent escape animations.
+   ============================================================ */
+function v103Campaign(){
+ return !!(gameState&&gameState.v10Gradual&&gameState.startMode!=='random'&&gameState.startMode!=='demo');
+}
+// The authored 30-map encounter plan is the ONLY source of new
+// ordinary enemy waves. The old ambient game randomly spawned
+// extra transports and units even while the victory timer ran.
+var v103BattleBase=updateBattleEvents;
+updateBattleEvents=function(dt){
+ if(v103Campaign())return;
+ return v103BattleBase.apply(this,arguments);
+};
+var v103RiskBase=updateDynamicRisk;
+updateDynamicRisk=function(dt){
+ if(v103Campaign())return;
+ return v103RiskBase.apply(this,arguments);
+};
+// The three fugitives are animated by the deterministic escape
+// controller, never by combat AI. Combat AI was turning them back
+// toward the player, switching poses and triggering ghost movement.
+var v103InfantryBase=updateInfantry;
+updateInfantry=function(dt){
+ if(!v103Campaign()||gameState.levelIndex!==0)
+  return v103InfantryBase.apply(this,arguments);
+ var g=gameState;
+ var crew=g.infantry.filter(function(e){return e.v102Unarmed&&e.alive;});
+ // No other enemy infantry exists in the tutorial.
+ g.infantry=[];
+ try{v103InfantryBase.apply(this,arguments);}
+ finally{g.infantry=crew;}
+};
+// Use the original game's fully animated character atlas, not
+// temporary block/line drawings. Medics have an unarmed look.
+drawSoldier=function(e){
+ if(e&&e.v102Unarmed){e.role='medic';e.muzzle=0;e.rocketUnit=false;}
+ return v102_drawSoldier.apply(this,arguments);
+};
+// Hide legacy strike/reinforcement buttons which overlap the
+// FLAK and gaming area on small iPhones.
+function v103HideLegacySupport(){
+ var ui=document.getElementById('jbdLadderPanel925');
+ if(ui&&gameState){
+  ui.style.display=v103Campaign()?'none':'grid';
+  ui.style.pointerEvents=v103Campaign()?'none':'auto';
+ }
+}
+var v103ResetBase=resetLevel;
+resetLevel=function(){
+ v103ResetBase.apply(this,arguments);
+ v103HideLegacySupport();
+};
+// V10.2 re-tested whether there were still enemies *after* the
+// five-second burn pause. Ambient enemies made that fail forever.
+// V10.3 guarantees level completion when the countdown expires.
+var v103CompleteBase=completeLevel;
+completeLevel=function(){
+ if(!v103Campaign())return v103CompleteBase.apply(this,arguments);
+ if(!gameState||gameState.mode!=='playing'||gameState.levelComplete)return;
+ var hold=gameState.v102VictoryHold;
+ if(!hold)return v103CompleteBase.apply(this,arguments);
+ if(hold.elapsed<5)return;
+ // Call the V10 completion formatter directly, skipping the
+ // now-irrelevant second enemy-count check.
+ v102_completeLevel.apply(this,arguments);
+ if(gameState.mode!=='shop')return;
+ deployBtn.disabled=false;
+ deployBtn.style.display='block';
+ deployBtn.style.pointerEvents='auto';
+ deployBtn.style.opacity='1';
+ shopEl.style.display='none';
+ titleEl.textContent=gameState.levelIndex>=CAMPAIGN_LENGTH-1?
+  'ROUTE VOLTOOID':'MAP '+(gameState.levelIndex+1)+' VOLTOOID';
+ var picker=document.getElementById('mapSelectV10');
+ if(picker)picker.value=String(Math.min(CAMPAIGN_LENGTH,gameState.levelIndex+2));
+};
+// Prevent a victory countdown from acquiring additional combat
+// contacts, and make sure the correct clock can always advance.
+var v103UpdateBase=update;
+update=function(dt){
+ var before=gameState,holding=!!(before&&before.v102VictoryHold);
+ v103UpdateBase.apply(this,arguments);
+ var g=gameState;
+ if(!g||!v103Campaign())return;
+ v103HideLegacySupport();
+ if(holding&&g.mode==='playing'&&g.v102VictoryHold){
+  g.infantry=g.infantry.filter(function(e){return e.v102Unarmed&&e.alive;});
+  g.vehicles=g.vehicles.filter(function(v){return v.allied&&v.alive;});
+  g.air=[];g.paras=[];
+  g.eventCursor=g.events.length;
+ }
+ if(g.mode==='playing'&&g.v102VictoryHold&&g.v102VictoryHold.elapsed>=5)
+  completeLevel();
+};
+// No temporary enemy-side combat interface should cover the
+// cinematic celebration or confuse the very first map.
+var v103RenderBase=render;
+render=function(){
+ v103RenderBase.apply(this,arguments);
+ if(v103Campaign())v103HideLegacySupport();
 };
 
 })();
