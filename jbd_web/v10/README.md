@@ -2,7 +2,7 @@
 
 **iPhone play:** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
 
-This is a **rebalanced progressive campaign (V10.2)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
+This is a **rebalanced progressive campaign (V10.3)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
 
 ## First map: the tutorial
 
@@ -36,6 +36,16 @@ No beach, ocean, desert or snow maps. Each map retains its own layout, obstructi
 - The tutorial car must be destroyed, and subsequent maps must clear their actual enemies.
 - After destruction, the game remains playable for **five seconds** of burning wreckage and visibly fading smoke before the results appear.
 - The **Next Map** button is explicitly enabled; its tap runs the next map directly. No upgrade shop selection is required.
+
+## V10.3 — iPhone freeze and crew fix
+
+- **The 0s countdown always completes**: after the five-second wreck scene, the result screen appears without re-checking enemies added by unrelated systems.
+- **No surprise legacy spawns**: the 30-map campaign uses only its authored encounter plan. The old battle ambience and adaptive reserve generators cannot add unexpected infantry or transports.
+- **The MG and Flak remain usable** while the wreck smolders.
+- **Unarmed evacuees use the original game's animated medic sprite atlas** instead of temporary low-detail stick figures; they move in one consistent direction and disappear cleanly after leaving the scene.
+- The old **Strike/Reinforcements bonus overlay is hidden** on iPhone so it does not cover the Flak control.
+- The Next Map button remains enabled and transitions directly into the following mission.
+- Screenshot regression tests deliberately inject an unrelated enemy at the end of the burning timer to ensure the results dialog does not hang.
 
 ## Controls
 
