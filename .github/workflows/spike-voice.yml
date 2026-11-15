@@ -1,0 +1,61 @@
+name: Build Spike Floor natural Dutch voice
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/spike-voice.yml"
+      - "spike-floor/voice-prompts.json"
+      - "spike-floor/build_voice.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: spike-floor-voice
+  cancel-in-progress: false
+
+jobs:
+  make-voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Set up Piper 1.8 Dutch voice
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "piper-tts==1.8.0"
+          mkdir -p /tmp/spike-piper
+          python -m piper.download_voices nl_BE-nathalie-medium --data-dir /tmp/spike-piper
+          test -s /tmp/spike-piper/nl_BE-nathalie-medium.onnx
+          test -s /tmp/spike-piper/nl_BE-nathalie-medium.onnx.json
+          ffmpeg -hide_banner -version | head -1
+      - name: Generate Dutch audio with CC0 Nathalie voice
+        run: |
+          set -euo pipefail
+          python spike-floor/build_voice.py
+          test -s spike-floor/voice/voice-map.json
+          test "$(find spike-floor/voice -name '*.mp3' | wc -l)" -ge 120
+      - name: Commit generated MP3 assets
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add spike-floor/voice/
+          if git diff --cached --quiet; then
+            echo "Audio already up-to-date"
+          else
+            git commit -m 'Add 155 Piper natural Dutch speech recordings for Spike and Floor'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Request a full Pages publish with new audio
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main --repo "$GITHUB_REPOSITORY"
