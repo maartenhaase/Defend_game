@@ -42,7 +42,11 @@ jobs:
           set -euo pipefail
           mkdir -p _site /tmp/cantique-pages-base
           # Last verified successful complete Pages build (including generated audio).
-          gh run download 43020205871 --repo "$GITHUB_REPOSITORY" --name github-pages --dir /tmp/cantique-pages-base
+          # Find the most recent successful full Pages artifact (the old pinned one expired).
+          FULL_RUN="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow pages.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          test -n "$FULL_RUN"
+          echo "Restoring Pages from successful workflow run $FULL_RUN"
+          gh run download "$FULL_RUN" --repo "$GITHUB_REPOSITORY" --name github-pages --dir /tmp/cantique-pages-base
           test -s /tmp/cantique-pages-base/artifact.tar
           tar -xf /tmp/cantique-pages-base/artifact.tar -C _site
           # Replace ONLY the Cantique folder with current repo assets.
