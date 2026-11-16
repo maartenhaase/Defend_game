@@ -51,8 +51,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <canvas id="game"></canvas>
 <div id="overlay" class="overlay">
   <div class="panel">
-    <div class="eyebrow">JBD V10.6 // DE LANGE ROUTE</div>
-    <h1 id="title">V10.6 · DE LANGE ROUTE · 30 MAPS</h1>
+    <div class="eyebrow">JBD V10.7 // DE LANGE ROUTE</div>
+    <h1 id="title">V10.7 · DE LANGE ROUTE · 30 MAPS</h1>
     <p id="sub">30 progressieve maps door één werelddeel. Map 1: één langzaam voertuig. MG begint met 12 kogels en FLAK met 1 projectiel. Schiet de 3 parachutekisten per map open: alleen daarin zitten willekeurige upgrades en versterkingen.</p>
     <div id="summary" class="summary"></div>
     <div id="shop" class="shop"><div class="shopTitle">FIELD WORKSHOP</div><div id="supply" class="supply"></div><div id="shopGrid" class="shopGrid"></div></div>
@@ -65,13 +65,13 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
     <button id="deploy" class="action" type="button" style="display:none">DEPLOY</button>
     <button id="restart" class="action" type="button">PLAY AGAIN</button>
     <div class="hint">Schiet de parachutekist kapot (kleine HP-balk) om de verborgen upgrade te verdienen. MG: 3 kogels per salvo. FLAK begint met 1 projectiel. Extra kracht krijg je alleen uit kisten. Kijk vijf seconden naar het wrak; daarna kun je direct naar de volgende map.</div>
-    <div class="hint" style="opacity:.62;font-size:10px">30 maps · V10.6 · brandende doelen, sterfanimaties en munitieboogjes</div>
+    <div class="hint" style="opacity:.62;font-size:10px">30 maps · V10.7 · brandende doelen, sterfanimaties en munitieboogjes</div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-<script src="game.js?v=10-6-parachute-crates-20261116"></script>
+<script src="game.js?v=10-7-revive-damage-levels-20261116"></script>
 <script>(function(){var e=document.getElementById('mapSelectV10');if(!e)return;var names=['De eerste weg','Boerderijpad','Het hooiland','Oude brug','Dorpsrand','Bosrand','Dennenweg','Houtkamp','Bospad','Heuvelpost','Stenen weg','Kloofbocht','Hoogboerderij','Tunnelweg','De bergpas','Dalweg','Spoorbrug','Voorstad','De buitenring','Goederenloods','Kanaalweg','Magazijnzone','Rangeerterrein','Stadsrand','De boulevard','Oude markt','Noordwijk','Centraal station','De binnenring','Het centrum'];for(var i=0;i<30;i++){var o=document.createElement('option');o.value=String(i+1);o.textContent=String(i+1).padStart(2,'0')+' · '+names[i];e.appendChild(o);}})();</script>
-<!-- V10.6: 30 maps, three destructible parachute loot crates and earned-only upgrades -->
+<!-- V10.7: 30 maps, three destructible parachute loot crates and earned-only upgrades -->
 </body>
 </html>
 
