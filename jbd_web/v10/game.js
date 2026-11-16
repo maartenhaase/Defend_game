@@ -9707,7 +9707,7 @@ function updateCookoffRounds9943(dt){
   b.px=b.x;b.py=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;if(b.life<=0)return;
   var contacts=[],dx=b.x-b.px,dy=b.y-b.py,len2=dx*dx+dy*dy;
   function at(x,y){return clamp(((x-b.px)*dx+(y-b.py)*dy)/Math.max(.001,len2),0,1);}
-  people.forEach(function(e){if(e.alive&&e.state!=='parachuting'&&pointSegDist(e.x,e.y-2,b.px,b.py,b.x,b.y)<5)contacts.push({t:at(e.x,e.y),unit:e});});
+  people.forEach(function(e){if(e.alive&&e.state!=='parachuting'&&pointSegDist(e.x,e.y-2,b.px,b.py,b.x,b.y)<(e.allied?5.1:e.wounded?5.3:7.25))contacts.push({t:at(e.x,e.y),unit:e});});
   gameState.map.cover.forEach(function(c){if(c.destroyed||coverIntegrity(c)<=1)return;if(c.kind==='building'?buildingWallHit(b,c)>=0:pointSegDist(c.x,c.y,b.px,b.py,b.x,b.y)<coverRadius(c))contacts.push({t:at(c.x,c.y),cover:c});});
   contacts.sort(function(a,c){return a.t-c.t;});
   if(contacts.length){var hit=contacts[0];if(hit.unit){damageInfantry(hit.unit,b.damage,'cookoff');hit.unit.ammoEscape9943=b.source;}else emitRicochet(b.x,b.y,Math.atan2(b.vy,b.vx),.6);b.life=0;}
@@ -13453,7 +13453,7 @@ damageInfantry=function(e,dmg,kind){
  if(fatal){
   var reduced=Math.max(.01,e.hp-Math.max(1,e.maxHp*.06));
   v107DamageInfantryOld.call(this,e,reduced,kind);
-  if(e.alive){v107Down(e);return false;}
+  if(e.alive){e.wounded=false;v107Down(e);return false;}
  }
  var out=v107DamageInfantryOld.apply(this,arguments);
  if(!e.alive&&e.medicPatient9938){
