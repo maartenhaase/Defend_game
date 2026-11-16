@@ -2,7 +2,7 @@
 
 **iPhone play:** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
 
-This is a **rebalanced progressive campaign (V10.3)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
+This is a **rebalanced progressive campaign (V10.4)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
 
 ## First map: the tutorial
 
@@ -64,3 +64,11 @@ node jbd_web/v10/v10_regression.cjs
 The V10 GitHub Actions check validates all 30 maps, initial enemy composition and pace, initial weapon capacities, single-shell Flak, automatic incremental upgrades and iPhone canvas rendering.
 
 All game graphics, vehicles, ballistics, audio and mobile controls come from the full original game engine; V10 supplies the new campaign progression and pacing.
+
+## V10.4 — brandende doelen, vallen en munitie
+
+- Brandende voertuigen die onbeweeglijk en feitelijk onraakbaar zijn, bereiken nu binnen circa 5,5 seconden de normale vernietigingsroutine. Een echt nog intact en bereikbaar doel moet nog steeds worden geraakt.
+- Voertuigwrakken blokkeren een level niet meer nadat de laatste echte vijand is uitgeschakeld en alle geplande aanvallen zijn geweest. De bestaande vijf seconden smeulen blijven zichtbaar, daarna verschijnt **Volgende map**.
+- Infanterie krijgt een duidelijke geraakte-reactie en een vallende/ineenzakkende doodanimatie in plaats van een onmiddellijke sprite-wissel. Het originele sprite-atlas blijft gebruikt.
+- Rondvliegende munitie bij een voertuigbrand heeft langere ballistische boogbanen en een afzonderlijk plof-/metaalgeluid per schot.
+- De regressietests controleren nu ook een vastgelopen brandend voertuig in map 3, de valanimatie en de munitieboogjes.
