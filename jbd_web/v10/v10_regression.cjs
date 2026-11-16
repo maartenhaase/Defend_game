@@ -292,3 +292,133 @@ console.log('PASS: 30 maps, 3 planned drops each, no automatic arsenal progressi
  }
  console.log('PASS V10.7: real campaign 6 → 7 → 8 → 9, working Next Map, no missing encounters.');
 }
+
+
+// V10.7: nine damage phases, 8% HP compounding and category protection.
+{
+ const g=loadGame(dir),u=g.t;u.start('easy');
+ const hp=[];
+ for(let i=5;i<=8;i++){
+  u.state.levelIndex=i;u.reset();
+  u.spawnVehicle('jeep',0,'kubel_1',undefined,0);
+  const v=u.state.vehicles[u.state.vehicles.length-1];
+  hp.push(v.maxHp);
+  assert(v.maxHp>60,'a campaign vehicle is materially tougher');
+ }
+ hp.slice(1).forEach((x,i)=>
+  assert(Math.abs(x/hp[i]-1.08)<.0001,'vehicle HP compounds by 8% at '+(i+7)));
+ u.state.levelIndex=6;u.reset();
+ u.spawnVehicle('jeep',0,'kubel_1',undefined,0);
+ let v=u.state.vehicles[u.state.vehicles.length-1];
+ const levels=[1,.88,.73,.59,.46,.33,.20,.08];
+ for(let i=0;i<8;i++){
+  v.hp=v.maxHp*levels[i];v.alive=true;v.fuelIgnited=false;
+  u.damageVehicle(v,.03,'mg');
+  assert.equal(v.v107Stage,i+1,'visual damage stage '+(i+1));
+ }
+ u.damageVehicle(v,v.hp+1000,'he');
+ assert(!v.alive,'terminal stage destroys hull');
+ assert(u.state.wrecks.some(w=>w.v107Stage===9),'stage nine creates a persistent wreck');
+ console.log('PASS V10.7: nine visible vehicle stages, real wreck, exact 8% HP ramp (maps 6-9).');
+}
+
+// Genuine enemy medic reaches and revives a wounded, non-dead soldier
+// over multiple seconds. A dead medic cannot finish a treatment.
+{
+ const g=loadGame(dir),u=g.t;u.start('easy');
+ u.state.levelIndex=6;u.reset();
+ const s=u.state;s.events=[];s.eventCursor=0;s.vehicles=[];s.air=[];s.paras=[];
+ s.infantry=[];s.map.cover=[];s.map.rocks=[];s.map.trees=[];
+ const m=u.spawnEnemy(190,420,'medic',null,'vehicle');
+ const p=u.spawnEnemy(200,424,'rifle',null,'vehicle');
+ m.faction='wehrmacht';p.faction='wehrmacht';m.suppression=0;
+ p.wounded=true;p.state='woundedCrawl';p.woundedCrawlT=30;p.hp=p.maxHp*.1;p.bleedT=0;
+ assert(u.alliedMedic(m,s.infantry,.10,false),'medic enters real rescue behavior');
+ assert(m.aidTreatT9938>3,'revival begins with a 3–5 second procedure');
+ for(let k=0;k<20;k++)u.alliedMedic(m,s.infantry,.10,false);
+ assert(p.wounded,'victim is not revived prematurely');
+ for(let k=0;k<29;k++)u.alliedMedic(m,s.infantry,.10,false);
+ assert(!p.wounded&&p.alive,'wounded soldier actually revives');
+ assert(p.hp>=p.maxHp*.50&&p.hp<=p.maxHp*.60,'revived soldier returns with partial health');
+ const q=u.spawnEnemy(201,430,'rifle',null,'vehicle');
+ q.faction=m.faction;q.wounded=true;q.state='woundedCrawl';
+ q.woundedCrawlT=30;q.hp=q.maxHp*.1;q.bleedT=0;
+ m.aidCooldown9938=0;
+ for(let k=0;k<7;k++)u.alliedMedic(m,s.infantry,.1,false);
+ assert(m.medicPatient9938===q,'second rescue is in progress');
+ u.damageInfantry(m,m.hp+900,'he');
+ assert(!m.alive,'medic can be killed during treatment');
+ for(let k=0;k<50;k++)u.alliedMedic(m,s.infantry,.1,false);
+ assert(q.wounded,'treatment stops when medic dies');
+ console.log('PASS V10.7: 3.8-second medical rescue, partial HP, and immediate cancellation after medic death.');
+}
+
+// Harmful shrapnel uses swept collision and spends itself after hitting.
+// Prone enemies have smaller, multi-part hit zones and fear suppresses fire.
+{
+ const g=loadGame(dir),u=g.t;u.start('easy');u.state.levelIndex=6;u.reset();
+ const s=u.state;s.events=[];s.eventCursor=0;s.vehicles=[];s.air=[];s.paras=[];
+ s.infantry=[];s.map.cover=[];s.map.rocks=[];s.map.trees=[];
+ const p=u.spawnEnemy(s.bunker.x,Math.max(190,s.bunker.y-180),'rifle',null,'vehicle');
+ p.hp=p.maxHp=300;p.armorHp=0;p.state='prone';p.angle=Math.PI/2;
+ // Actual machine-gun bullet emitted from the bunker; do not fake a hit.
+ const hp0=p.hp;
+ s.profile.spreadScale=0;s.primaryReloadT=0;s.primaryCooldown=0;
+ assert(u.fire('mg',p.x,p.y),'player launches a real MG bullet at prone soldier');
+ for(let k=0;k<75;k++)u.shotStep(1/60);
+ assert(p.hp<hp0,'prone visible hitbox accepts real MG projectiles');
+ const shard={x:p.x-18,y:p.y,px:p.x-18,py:p.y,vx:630,vy:0,
+  life:.8,rot:0,vr:12,bounces:0,damage:4,spent:false};
+ s.v107Shards=[shard];
+ const before=p.hp;
+ u.step(1/30);
+ assert(p.hp<before,'fast flying fragment hits via swept segment');
+ assert(s.v107Shards.indexOf(shard)<0,'shard cannot hit the same target twice');
+ // Existing V10.6 loot still grants weapon improvements; levels do not.
+ s.save.v106Perks.flakProjectile=2;s.save.v106Perks.magazine=1;
+ u.reset();
+ assert.equal(s.profile.primaryMag,18,'earned magazine loot remains effective');
+ const flak=g.ids.get('jbdFlakFire9951');
+ flak.eventEntries.click[0].fn({preventDefault(){},stopPropagation(){}});
+ assert.equal(s.flak9950.shots.length,3,'FLAK crate upgrade adds two real projectiles');
+ u.render();
+ console.log('PASS V10.7: prone MG hit, swept shard collision, earned MG/FLAK upgrades and rendering.');
+}
+
+// Real sequential transitions, not only mocked Next Map UI. Use
+// overwhelming HE hits for cleanup to isolate progression logic.
+{
+ const g=loadGame(dir),u=g.t;u.start('easy');u.state.levelIndex=5;u.reset();
+ const s=u.state;
+ for(let map=5;map<=8;map++){
+  assert.equal(s.levelIndex,map,'current map number');
+  let frames=0;
+  while(s.mode==='playing'&&frames<5100){
+   u.step(1/30);
+   if(frames%7===0){
+    s.vehicles.filter(v=>v.alive&&!v.allied).forEach(v=>
+     u.damageVehicle(v,(v.hp||0)+(v.armorHp||0)+500,'he'));
+    s.infantry.filter(e=>e.alive&&!e.v102Unarmed).forEach(e=>
+     u.damageInfantry(e,e.hp+(e.armorHp||0)+500,'he'));
+    s.air.forEach(a=>a.alive=false);s.paras.forEach(p=>p.alive=false);
+   }
+   frames++;
+  }
+  assert.equal(s.mode,'shop','map '+(map+1)+' completes, not frozen');
+  assert(s.v102VictoryHold&&s.v102VictoryHold.elapsed>=5,
+   'burning wreck visible for five seconds');
+  assert.equal(s.v106Spawned,3,'three optional crates delivered before victory');
+  assert.equal(g.ids.get('deploy').disabled,false,'Next Level enabled');
+  if(map===8)break;
+  let stop=false;
+  const ev={preventDefault(){},stopImmediatePropagation(){stop=true;}};
+  for(const e of (g.ids.get('deploy').eventEntries.click||[]).slice()
+      .sort((a,b)=>Number(b.capture)-Number(a.capture))){
+   if(stop)break;e.fn(ev);
+  }
+  assert.equal(s.levelIndex,map+1,'Next Level advances exactly once');
+  assert.equal(s.mode,'playing','new map loads its combat scene');
+  assert(s.events.length>0,'following stage loads targets and enemies');
+ }
+ console.log('PASS V10.7: actual map transitions 6 -> 7 -> 8 -> 9, five-second afterburn and active next buttons.');
+}
