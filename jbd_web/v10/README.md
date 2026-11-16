@@ -2,7 +2,7 @@
 
 **iPhone play:** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
 
-This is a **rebalanced progressive campaign (V10.5)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
+This is a **rebalanced progressive campaign (V10.6)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
 
 ## First map: the tutorial
 
@@ -85,3 +85,14 @@ All game graphics, vehicles, ballistics, audio and mobile controls come from the
 - De vroegere V10.4 bescherming tegen brandende/uitgeschakelde voertuigen blijft behouden. De campagne behoudt 30 maps met de vijfseconden-afronding.
 - Automatische upgrades blijven werken zonder winkelkeuzes. Op het startmenu kun je iedere map meteen testen.
 
+
+
+## V10.6 — destructible parachute loot boxes (replaces the free-upgrade progression)
+
+Exactly three parachute crates appear at randomized positions/times on every map. A crate is **not a clickable shop**: it has a visible health bar and requires approximately nine successful MG hits before its reward is granted. The projectile must actually collide with the crate; a wall or other nearer target can block it. FLAK blast damage can also break crates, but must still remove their full HP. Unopened crates grant nothing. Crates are optional, and late arrivals are accelerated if the battle ends quickly, rather than forcing an empty-field wait.
+
+**No more automatic upgrade by map number.** The MG starts with a 12-round magazine, firing 3-round salvos; the FLAK starts with one projectile. Permanent weapon and bunker bonuses can only be obtained from successfully destroyed crates and remain equipped in subsequent maps. Health repair and spawned allies are immediate, single-battle bonuses. Existing enemy variety and story route are retained.
+
+Available randomized crate loot (18 types): Flak damage+, MG damage+, Flak splash+, bunker armor+, health replenish, MG rate-of-fire+, faster Flak reload, one extra Flak projectile (up to 5), MG spread-, Flak spread-, bullet penetration with higher projectile velocity and greater real wall pass-through chance, less MG overheat, maximum MG magazine +6 rounds, faster MG reload, increased obstacle/vehicle bullet damage, 5 elite allied soldiers, an allied armored vehicle and a single very strong MG-armed Rambo ally.
+
+The old kill-based automatic allied reinforcement reward has also been disabled. The existing five-second burning-wreck finish and iPhone aiming controls remain. All loot is rolled and awarded only after the crate has been destroyed. The in-game results text counts how many of the three crates you actually opened.
