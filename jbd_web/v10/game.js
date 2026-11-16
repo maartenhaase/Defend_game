@@ -13000,8 +13000,8 @@ arcadeKillReward=function(){
 flakStats9951=function(){
  var extra=v106Rank('flakProjectile');
  return {rounds:1+extra,
-  damage:11+2.7*v106Rank('flakDamage'),
-  vehicleDamage:15+4.0*v106Rank('flakDamage'),
+  damage:11+2.7*v106Rank('flakDamage')+.85*v106Rank('flakSplash'),
+  vehicleDamage:15+4.0*v106Rank('flakDamage')+1.15*v106Rank('flakSplash'),
   radius:20+3.0*v106Rank('flakSplash'),
   reload:Math.max(1.5,5.6*Math.pow(.86,v106Rank('flakReload')))};
 };
