@@ -7,8 +7,8 @@ This is a **rebalanced progressive campaign (V10.5)** built on the full V9.9.53 
 ## First map: the tutorial
 
 - **Exactly one slow, unarmed jeep** approaches the bunker. There are **no armed infantry, convoy reinforcements, aircraft or surprise waves** in this first mission. Three **unarmed** occupants flee the jeep when it is hit or stopped; they cannot fire and are not required kills.
-- The starter machine gun carries **9 bullets**: **3 taps of 3 bullets** per magazine, followed by a noticeable reload.
-- The separate **FLAK** button fires **a single accurately aimed shell**, with small initial damage and a cooldown. Both the MG and FLAK can damage the jeep's hull until it is truly destroyed. A disabled driver is not counted as a victory.
+- The starter machine gun carries **12 bullets**: **4 taps of 3 bullets** per magazine, followed by a noticeable reload.
+- The separate **FLAK** button fires **a single accurately aimed shell**, with meaningful initial damage and a cooldown. Both the MG and FLAK can damage the jeep's hull until it is truly destroyed. A disabled driver is not counted as a victory.
 - Movement, damage, weapons and Flak power increase gradually over subsequent maps, not all at once.
 
 ## Geography: one contiguous route, not random continents
@@ -23,11 +23,11 @@ No beach, ocean, desert or snow maps. Each map retains its own layout, obstructi
 
 ## Core changes
 
-- Every stage gradually adds at most a few infantry and vehicles. The first 2 maps have no enemy soldiers.
+- Every stage gradually adds at most a few infantry and vehicles. Only map 1 has no hostile infantry. Map 2 introduces enemy foot soldiers and a second vehicle.
 - Enemy speed and firepower rise slowly. Introductory vehicles move much more slowly than in the previous Quickfire release.
 - Only selected later maps have a gentle surprise (small flank or smoke), not every map.
 - **No forced 20–34 second extraction timer.** Defeat the finite enemies.
-- **No upgrade shopping required:** on finishing each map, one micro-upgrade is automatically assigned, in a repeating order: rate, ballistics, bunker armor, Flak. Press **Volgende map** to continue.
+- **No upgrade shopping required:** multiple automatic arsenal improvements are awarded as maps advance, with noticeable MG ammunition, rate, penetration, armor and FLAK upgrades. Press **Volgende map** to continue.
 - On the start screen, pick **any level 1–30** to quickly test the campaign's pacing and maps.
 
 ## Victory conditions (V10.2)
