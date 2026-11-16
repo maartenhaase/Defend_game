@@ -921,3 +921,280 @@ drawField9943=function(){
  });
  ctx.restore();
 };
+
+
+/* ============================================================
+   V10.5 — ARSENAL ACCELERATION / LIVING BATTLEFIELDS
+   30 curated encounters with more vehicles, mixed troop roles,
+   meaningful MG + flak progression, and visible bunker damage.
+   ============================================================ */
+function v105Campaign(){return !!(gameState&&v103Campaign());}
+function v105Magazine(i){return Math.min(60,12+3*Math.floor(i/2)+3*Math.floor(i/5));}
+function v105Burst(i){return i>=13?6:i>=7?5:i>=3?4:3;}
+function v105UpgradeAmounts(idx){
+ idx=clamp(idx|0,0,29);
+ return {rate:Math.min(SKILL_MAX,Math.round(idx*1.30)),
+  special:Math.min(SKILL_MAX,Math.round(idx*1.55)),
+  range:Math.min(SKILL_MAX,Math.floor(idx*.86)),
+  armor:Math.min(SKILL_MAX,Math.floor(idx*.70))};
+}
+// The old rotation awarded just one skill point per level, and the
+// starter gun stayed at nine rounds for six entire maps.
+var v105EquipBase=v10Equip;
+v10Equip=function(idx){
+ if(!gameState||gameState.startMode==='random'||gameState.startMode==='demo')
+  return v105EquipBase.apply(this,arguments);
+ gameState.save.upgrades=v105UpgradeAmounts(idx);
+ gameState.save.upgradeSchema9935=1;gameState.save.arsenalPoints=0;
+};
+v10UpgradeLabel=function(idx){
+ if(idx<=0)return 'STARTBEWAPENING';
+ return 'MG '+v105Magazine(idx)+' PATRONEN · '+v105Burst(idx)+'-SCHOTS SALVO · FLAK VERSTERKT';
+};
+
+// An actual hit now reduces visible HP. The legacy armour calculation
+// registered many bunker hits as just 0.055 HP: rounded to zero in HUD.
+var v105BulletDamageBase=bunkerBulletDamage9910;
+bunkerBulletDamage9910=function(b){
+ var d=v105BulletDamageBase.apply(this,arguments);
+ if(!v105Campaign())return d;
+ if(b&&['rocket','shell','grenade'].indexOf(b.kind)>=0)return d;
+ var i=gameState.levelIndex;
+ return Math.max(3.4+Math.min(1.3,i*.060),Math.min(9.0,d*(1.45+i*.018)));
+};
+var v105DamageBase=damageBunker;
+damageBunker=function(dmg){
+ var g=gameState,before=g&&g.bunker?g.bunker.hp:0;
+ var result=v105DamageBase.apply(this,arguments);
+ if(v105Campaign()&&g&&g.bunker){
+  var taken=Math.max(0,before-g.bunker.hp);
+  if(taken>.02){
+   g.v105HitT=.55;g.v105LastHit=taken;
+   g.screenFlash=Math.max(g.screenFlash||0,.10);
+   g.shake=Math.max(g.shake||0,1.4);
+   g.message='BUNKER GERAAKT · -'+taken.toFixed(1)+' HP';
+   g.messageT=.70;
+  }
+ }
+ return result;
+};
+
+// Let the MG continue damaging a vehicle's actual hull instead of
+// hitting the original hard 28%-HP floor indefinitely. Armoured cars
+// still resist light bullets; Flak remains noticeably more effective.
+var v105VehicleHitBase=primaryVehicleHit;
+primaryVehicleHit=function(v,b){
+ var result=v105VehicleHitBase.apply(this,arguments);
+ if(!v105Campaign()||!v||!v.alive||v.allied||v.v102Tutorial)return result;
+ var range=(gameState.save.upgrades.range||0),boost=1+Math.min(.65,range*.043);
+ var armor=v.vehicleClass>=3?.55:v.vehicleClass===2?.76:1;
+ var amount=(b&&b.damage||6)*(.38+Math.min(.28,range*.016))*boost*armor;
+ damageVehicle(v,amount,'mg');
+ return true;
+};
+
+var v105PlanBase=buildEncounterPlan;
+// Vehicle families all map to existing, hand-authored sprite specs.
+// Special encounters are authored, not runaway infinite spawn loops.
+var V105_FLEETS=[
+ ['kubel','motorcycle','horch','steyr','blitz','spah','sdkfz250'],
+ ['horch','kubel','steyr','motorcycle','spah','blitz','sdkfz250'],
+ ['motorcycle','kubel','horch','blitz','spah','steyr','sdkfz250'],
+ ['kubel','steyr','motorcycle','horch','sdkfz250','blitz','spah'],
+ ['steyr','horch','kubel','spah','blitz','sdkfz250','motorcycle'],
+ ['kubel','blitz','horch','motorcycle','spah','sdkfz250','steyr'],
+ ['horch','motorcycle','kubel','blitz','sdkfz250','spah','steyr']
+];
+var V105_TWISTS=['FLANK','ROOK','LMG','KONVOOI','HINDERLAAG','SNIPER','MOTORRAID','ARTILLERIE','LUCHTAANVAL'];
+function v105VehicleCount(i){return i===0?1:i<3?2:i<6?3:i<12?4:i<18?5:i<24?6:7;}
+function v105InfantryCount(i){return i===0?0:Math.min(19,2+Math.floor(i*.65));}
+buildEncounterPlan=function(){
+ if(!gameState||gameState.startMode==='demo'||gameState.startMode==='random')
+  return v105PlanBase.apply(this,arguments);
+ var i=gameState.levelIndex,q=V10_ROAD[i],g=gameState;
+ if(i===0)return v105PlanBase.apply(this,arguments);
+ var ev=[],count=v105VehicleCount(i),feet=v105InfantryCount(i);
+ var fleet=V105_FLEETS[(i-1)%V105_FLEETS.length];
+ var twist=V105_TWISTS[(i-1)%V105_TWISTS.length];
+ if(i<7&&twist==='ARTILLERIE')twist='ROOK';
+ if(i<10&&twist==='LUCHTAANVAL')twist='MOTORRAID';
+ g.shortBattle={kind:'road30',label:q.name,maxDuration:110};
+ g.shortBattleWithdrawn=false;g.encounterName=q.name+' · '+q.world;
+ g.waveTotal=1;g.wave=1;g.mgTeamsPlanned=0;
+ function add(t,type,n,label,o){return addEncounter(ev,t,type,n,0,1,label,o||{});}
+ function vehicle(t,family,k){
+  var spec=vehicleSpecFor(family,i);
+  var crew=(i>=4&&spec.transport)?Math.min(5,2+Math.floor(i/8)):0;
+  return add(t,spec.baseType,1,'CONTACT · '+(spec.name||family).toUpperCase(),
+   {vehicleId:spec.id,motorCap:Math.min(9,count+1),passengersOverride:crew,
+    direction:(k%3===1?2:k%3===2?4:0)});
+ }
+ // Alternate arrivals so the player isn't waiting for a single slow car.
+ for(var k=0;k<count;k++){
+  var family=fleet[k];
+  if(i<4&&['spah','sdkfz250'].indexOf(family)>=0)family='kubel';
+  if(i<6&&family==='blitz'&&k>1)family='steyr';
+  if(i>=8&&k===count-1&&i%6===1)family='cavalry';
+  if(i>=10&&k===count-2&&i%6===4)family='quad';
+  if(i>=9&&k===count-1&&i%3===0)family='sdkfz250';
+  if(i>=12&&k===count-2&&i%4===0)family='spah';
+  vehicle(2.3+k*(i<6?7.2:i<16?6.7:6.0),family,k);
+ }
+ var first=Math.max(1,Math.ceil(feet*.55)),second=feet-first;
+ add(7.2,'foot',first,'INFANTERIE · '+q.name,
+  {roleMix:i<3?'rifle':i<6?'mixed':i%3===0?'lmg':'mixed',
+   tactic:i%3===0?'flankLeft':'line',direction:i%4===1?2:0,rocketCount:0});
+ if(second)add(19,'foot',second,'TWEEDE GROEP · '+q.name,
+  {roleMix:i>=9&&i%3===1?'marksman':'mixed',tactic:'split',direction:4,rocketCount:0});
+ if(twist==='FLANK'||twist==='HINDERLAAG'){
+  add(14.5,'foot',Math.min(4,2+Math.floor(i/9)),
+   'HINDERLAAG VANUIT DE FLANK',{roleMix:'rifle',tactic:i%2?'flankRight':'flankLeft',direction:i%2?4:2,rocketCount:0});
+ }else if(twist==='ROOK'){
+  add(13.2,'smokeBeat',1,'ROOKGORDIJN', {power:.52});
+ }else if(twist==='LMG'&&i>=3){
+  add(15,'lmgSquad',2,'ZWAAR MITRAILLEURTEAM',{tactic:'flankRight',direction:4,rocketCount:0});
+ }else if(twist==='KONVOOI'&&i>=4){
+  add(16.5,'foot',2,'BEVEILIGING KONVOOI',{roleMix:'lmg',tactic:'bound',direction:0,rocketCount:0});
+ }else if(twist==='SNIPER'&&i>=6){
+  add(16.5,'marksmanSquad',2,'SCHERPSCHUTTERS',{tactic:'flankLeft',direction:2,rocketCount:0});
+ }else if(twist==='MOTORRAID'){
+  var bike=vehicleSpecFor('motorcycle',i);
+  add(14,'jeep',1,'MOTORRAID · SNEL CONTACT',
+   {vehicleId:bike.id,motorCap:count+2,passengersOverride:0,direction:4});
+ }else if(twist==='ARTILLERIE'&&i>=7){
+  add(17,'artilleryBeat',1,'ARTILLERIE',{power:.30});
+ }else if(twist==='LUCHTAANVAL'&&i>=10){
+  add(17,'plane',1,'VIJANDELIJKE VLIEGTUIGEN',{});
+ }
+ if(i>=10&&i%7===3){
+  add(28,'plane',1,'VIJANDELIJKE VERKENNER UIT DE LUCHT',{});
+ }
+ if(i>=15&&i%5===3){
+  add(26,'eliteSquad',3,'ELITEEENHEID VAN RECHTS',
+   {tactic:'flankRight',direction:4,rocketCount:i>=21?1:0});
+ }
+ ev.sort(function(a,b){return a.t-b.t;});
+ return ev;
+};
+
+// Vehicle sprites can actually fight early; the V10 slow-mode
+// previously disabled every vehicle MG for the first five missions.
+var v105SpawnBase=spawnVehicle;
+spawnVehicle=function(){
+ var before=gameState&&gameState.vehicles?gameState.vehicles.length:0;
+ var result=v105SpawnBase.apply(this,arguments);
+ if(!v105Campaign())return result;
+ var i=gameState.levelIndex;
+ for(var k=before;k<gameState.vehicles.length;k++){
+  var v=gameState.vehicles[k];
+  if(!v||v.v102Tutorial)continue;
+  v.speed*=1.12+Math.min(.23,i*.009);
+  v.currentSpeed*=1.12+Math.min(.23,i*.009);
+  if(i>=2&&v.vehicleSpec&&v.vehicleSpec.hasMG)v.hasMG=true;
+  if(i>=4&&v.vehicleSpec&&v.vehicleSpec.transport&&arguments[4]>0){
+   v.passengers=Math.min(6,arguments[4]);
+   v.unloadLeft=v.passengers;v.unloadIndex=0;
+  }
+ }
+ return result;
+};
+
+// MG speed, recoil, hit strength and ammo visibly rise several
+// times per chapter instead of only once every 6 maps.
+var v105ResetBase=resetLevel;
+resetLevel=function(){
+ v105ResetBase.apply(this,arguments);
+ if(!v105Campaign())return;
+ var g=gameState,i=g.levelIndex,p=g.profile;
+ p.primaryMag=v105Magazine(i);
+ p.primaryReload=Math.max(.95,2.45-i*.050);
+ p.primaryDamage*=(1.16+Math.min(.72,i*.034));
+ p.primarySpeed*=(1.0+Math.min(.19,i*.009));
+ p.primaryCycle*=Math.max(.53,.88-i*.012);
+ p.primaryBurstPause*=Math.max(.55,.91-i*.011);
+ p.spreadScale*=Math.max(.63,.92-i*.010);
+ g.primaryAmmo=p.primaryMag;
+ g.v10Gradual.surprised=true; // authored encounters replace late ad-hoc spawns
+ g.v105HitT=0;g.v105LastHit=0;
+ g.message=i===0?'TRAINING · 12 PATRONEN · 1 FLAK':'MAP '+(i+1)+' · '+V10_ROAD[i].name+' · OPGEVOERDE ACTIE';
+ g.messageT=2.5;
+};
+queueMG=function(x,y){
+ if(!gameState||gameState.mode!=='playing')return false;
+ if(gameState.primaryReloadT>0){gameState.message='MG HERLADEN';gameState.messageT=.36;return false;}
+ if(gameState.primaryAmmo<=0){beginPrimaryReload();return false;}
+ var state=fpsState9950();
+ if(state.queued.length>0)return false;
+ var n=Math.min(v105Burst(gameState.levelIndex),gameState.primaryAmmo);
+ for(var k=0;k<n;k++)state.queued.push({x:x,y:y,tier:0,serial:k,recoil:k*.023});
+ state.chain=0;state.lastClick=gameState.time;fpsFireQueue9950();
+ return true;
+};
+// The first shell remains precisely aimed. More rounds and a wider
+// blast are earned rapidly, with small secondary impacts nearby.
+flakStats9951=function(level){
+ level=clamp(level|0,0,SKILL_MAX);
+ var i=gameState?gameState.levelIndex:0;
+ return {rounds:i>=15?4:i>=8?3:i>=3?2:1,
+  damage:11+level*.94,vehicleDamage:15+level*1.12,
+  radius:20+Math.min(17,level*.77),
+  reload:Math.max(2.55,5.6-level*.14)};
+};
+fireFlak9950=function(x,y){
+ if(!gameState||gameState.mode!=='playing')return false;
+ var f=currentFlak9950(),s=flakStats9951(gameState.save.upgrades.special||0),g=gameState;
+ if(f.cooldown>0){g.message='FLAK HERLADEN · '+f.cooldown.toFixed(1)+'s';g.messageT=.48;return false;}
+ if(!Number.isFinite(x)||!Number.isFinite(y)){x=g.aim.x;y=g.aim.y;}
+ var sx=g.bunker.x,sy=g.bunker.y-10;
+ var closest=null,dd=38;
+ g.vehicles.forEach(function(v){if(!v.alive||v.allied)return;var d=Math.hypot(v.x-x,v.y-y);if(d<dd){dd=d;closest=v;}});
+ if(closest){
+  var flight=Math.hypot(closest.x-sx,closest.y-sy)/430;
+  x+=clamp(closest.sideVel||0,-16,16)*flight*.34;
+  y+=clamp(closest.currentSpeed||0,0,85)*flight*.88;
+ }
+ f.cooldown=s.reload;f.lastFire=g.time;
+ for(var k=0;k<s.rounds;k++){
+  var ox=k===0?0:(k%2?1:-1)*(8+Math.ceil(k/2)*10);
+  var oy=k===0?0:(k%2?-1:1)*(6+Math.ceil(k/2)*8);
+  f.shots.push({x:sx,y:sy,px:sx,py:sy,
+   tx:clamp(x+ox,20,W-20),ty:clamp(y+oy,safeTop+55,H-safeBottom-65),
+   delay:k*.115,speed:430+Math.min(115,gameState.levelIndex*4),
+   active:true,smoke:0,damage:s.damage,vehicleDamage:s.vehicleDamage,radius:s.radius});
+ }
+ g.message='FLAK · '+s.rounds+' SCHOTEN';g.messageT=.60;
+ return true;
+};
+var v105DrawBase=render;
+render=function(){
+ v105DrawBase.apply(this,arguments);
+ if(!v105Campaign()||gameState.mode!=='playing')return;
+ var g=gameState;
+ if(g.v105HitT>0){
+  var strength=clamp(g.v105HitT/.55,0,1);
+  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle='rgba(177,48,38,'+(.12*strength)+')';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff2df';ctx.font='900 13px system-ui';
+  ctx.textAlign='center';
+  ctx.fillText('BUNKER -'+g.v105LastHit.toFixed(1)+' HP',W*.5,H-safeBottom-105);
+  ctx.restore();
+ }
+};
+var v105StepBase=update;
+update=function(dt){
+ v105StepBase.apply(this,arguments);
+ if(!v105Campaign())return;
+ gameState.v105HitT=Math.max(0,(gameState.v105HitT||0)-dt);
+ // Air contacts that have fully left the playable battlefield cannot
+ // leave a supposedly cleared stage stuck in 'playing' indefinitely.
+ if(gameState.eventCursor>=gameState.events.length&&gameState.levelTime>42){
+  gameState.air.forEach(function(a){
+   if(!a.alive)return;
+   var off=a.x< -150||a.x>W+150||a.y<safeTop-180||a.y>H+150;
+   a.v105Gone=off?(a.v105Gone||0)+dt:0;
+   if(a.v105Gone>4)a.alive=false;
+  });
+ }
+ if(!gameState.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
+};
