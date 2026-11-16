@@ -13266,4 +13266,501 @@ completeLevel=function(){
  return out;
 };
 
+
+/* ============================================================
+   V10.7 — NINE-STATE VEHICLE DAMAGE / REVIVE / PROJECTILES
+   Keeps V10.6 parachute loot and all authored map encounters.
+   ============================================================ */
+function v107Campaign(){return !!(gameState&&v103Campaign());}
+function v107Stage(v){
+ if(!v)return 9;
+ if(v.v107Ruin||v.carcass||v.exploded||v.burntOut9941||!v.alive||v.hp<=0)return 9;
+ var ratio=clamp(v.hp/Math.max(1,v.maxHp||v.hp),0,1);
+ return ratio>.90?1:ratio>.78?2:ratio>.65?3:ratio>.52?4:
+        ratio>.40?5:ratio>.28?6:ratio>.15?7:8;
+}
+function v107VehicleClass(v){
+ var t=v.type||'',f=v.vehicleSpec&&v.vehicleSpec.family||'';
+ return t==='halftrack'||/sdkfz/.test(f)?'heavy':
+  t==='scoutcar'||/spah/.test(f)?'armored':
+  t==='truck'||t==='trooptruck'||t==='lighttruck'?'truck':'light';
+}
+// Compound HP increase for each mission, independent of the old AI
+// progression's separate HP multiplier (to avoid scaling twice).
+var v107SpawnVehicleOld=spawnVehicle;
+spawnVehicle=function(){
+ var g=gameState,n=g&&g.vehicles?g.vehicles.length:0;
+ var out=v107SpawnVehicleOld.apply(this,arguments);
+ if(!v107Campaign())return out;
+ for(var i=n;i<g.vehicles.length;i++){
+  var v=g.vehicles[i];if(v.allied||v.v102Tutorial)continue;
+  var cl=v107VehicleClass(v),classBonus={
+   light:1.30,truck:1.55,armored:1.80,heavy:2.05
+  }[cl],legacy=Math.max(.2,enemyProgression(g.levelIndex).vehicleHp);
+  var factor=classBonus*Math.pow(1.08,g.levelIndex)/legacy;
+  v.hp=Math.max(36,v.hp*factor);v.maxHp=v.hp;
+  if(v.armorHp>0){v.armorHp*=Math.sqrt(Math.pow(1.08,g.levelIndex));
+                   v.maxArmorHp=v.armorHp;}
+  v.v107Stage=1;v.v107Hits=[];v.v107Ruin=false;
+ }
+ return out;
+};
+function v107MarkVehicle(v,px,py,kind){
+ if(!v)return;
+ v.v107Hits=v.v107Hits||[];
+ if(Number.isFinite(px)&&Number.isFinite(py)){
+  v.v107Hits.push({x:clamp(px-v.x,-21,21),y:clamp(py-v.y,-35,35),
+   kind:kind||'mg',seed:rand(0,TAU)});
+  if(v.v107Hits.length>18)v.v107Hits.shift();
+ }
+ v.v107Stage=v107Stage(v);
+}
+var v107DamageVehicleOld=damageVehicle;
+damageVehicle=function(v,dmg,kind){
+ if(!v107Campaign()||!v||!v.alive)return v107DamageVehicleOld.apply(this,arguments);
+ var cl=v107VehicleClass(v),adjust=kind==='mg'?
+   (cl==='heavy'?.43:cl==='armored'?.56:cl==='truck'?.85:1.0):
+   kind==='he'?(cl==='heavy'?1.24:cl==='armored'?1.15:1):1;
+ var hp=v.hp,out=v107DamageVehicleOld.call(this,v,dmg*adjust,kind);
+ if(v.hp<hp){v107MarkVehicle(v,v.x+rand(-9,9),v.y+rand(-13,13),kind);
+  var prev=v.v107Notified||1,now=v107Stage(v);
+  if(now>prev){v.v107Notified=now;
+   if(now===4)v.windowBroken=true;
+   if(now===5||now===6)pushEffect({type:'vehiclePart',part:'panel',
+     x:v.x,y:v.y,vx:rand(-65,65),vy:rand(-92,-18),rot:0,vr:7,t:0,life:.85});
+  }
+ }
+ if(hp>0&&!v.alive)v.v107Ruin=true;
+ return out;
+};
+var v107PlayerVehicleOld=primaryVehicleHit;
+primaryVehicleHit=function(v,b){
+ var before=v&&v.hp,ret=v107PlayerVehicleOld.apply(this,arguments);
+ if(v&&before>v.hp)v107MarkVehicle(v,b&&b.x,b&&b.y,'mg');
+ return ret;
+};
+var v107FinishBurnOld=finishVehicleBurnout9941;
+finishVehicleBurnout9941=function(v){
+ var alive=!!v.alive,out=v107FinishBurnOld.apply(this,arguments);
+ if(alive){v.v107Ruin=true;v.v107Stage=9;v107ScatterShards(v,5);}
+ return out;
+};
+// No spontaneous engine fire at 40–80% HP. Local sparks, smoke and
+// dent damage remain visible before the final two ignition stages.
+var v107IgniteOld=igniteFuel;
+igniteFuel=function(obj,delay){
+ if(v107Campaign()&&obj&&obj.alive&&v107Stage(obj)<7){
+  obj.fuelLeak=true;return false;
+ }
+ return v107IgniteOld.apply(this,arguments);
+};
+var v107FuelOld=advanceVehicleBurn9941;
+advanceVehicleBurn9941=function(v,dt){
+ if(v107Campaign()&&v&&v.alive&&v107Stage(v)<7&&v.fuelIgnited){
+  v.fuelIgnited=false;v.burnPlan9941=null;v.burnPhase9941=null;
+  v.burnElapsed9941=0;v.fuelBurnT=0;
+  if(v.state==='smoulder9941')v.state='driverless9935';
+  return false;
+ }
+ return v107FuelOld.apply(this,arguments);
+};
+var v107ParticleOld=updateVehicleDamageParticles;
+updateVehicleDamageParticles=function(v,dt){
+ if(!v107Campaign()||!v||!v.alive)return v107ParticleOld.apply(this,arguments);
+ var st=v107Stage(v);
+ v.damageFxCd=(v.damageFxCd||0)-dt;
+ if(v.damageFxCd>0||st<=4)return;
+ v.damageFxCd=st>=8?rand(.13,.23):st>=7?rand(.22,.35):rand(.35,.56);
+ emitSmoke(v.x+rand(-7,7),v.y+rand(-11,8),st>=6);
+ if(st>=7&&Math.random()<(st>=8?.83:.35))
+   emitFlame(v.x+rand(-7,7),v.y+rand(-4,10),st>=8);
+ if(st>=6&&Math.random()<.21)
+   pushEffect({type:'spark',x:v.x,y:v.y,vx:rand(-26,26),
+    vy:rand(-55,-15),t:0,life:.16});
+};
+var v107WreckOld=makeWreckFromVehicle;
+makeWreckFromVehicle=function(v,opts){
+ var w=v107WreckOld.apply(this,arguments);
+ if(v107Campaign()){
+  w.v107Ruin=true;w.v107Stage=9;
+  w.v107Hits=(v.v107Hits||[]).slice();
+  w.burnT=Math.max(5.5,w.burnT||0);
+ }
+ return w;
+};
+var v107DrawVehicleOld=drawVehicle;
+drawVehicle=function(v,wreck){
+ var out=v107DrawVehicleOld.apply(this,arguments);
+ if(!v107Campaign()||!v)return out;
+ var stage=wreck?9:v107Stage(v),phase=gameState.time||0;
+ ctx.save();ctx.translate(v.x,v.y);
+ // Stable local hit decals follow the damaged hull across its movement.
+ ctx.globalAlpha=.85;ctx.strokeStyle='#262921';
+ (v.v107Hits||[]).slice(-Math.max(0,stage*2-2)).forEach(function(h){
+  ctx.fillStyle=h.kind==='he'?'#282b26':'#393c31';
+  ctx.beginPath();ctx.ellipse(h.x*.65,h.y*.64,stage>4?2.4:1.4,stage>4?1.7:1.1,h.seed,0,TAU);ctx.fill();
+ });
+ if(stage>=3){
+  ctx.strokeStyle='#34372c';ctx.lineWidth=1.5;ctx.beginPath();
+  ctx.moveTo(-9,-9);ctx.lineTo(-4,-10);ctx.lineTo(-1,-7);
+  if(stage>=5){ctx.moveTo(8,4);ctx.lineTo(3,6);ctx.lineTo(4,12);}
+  ctx.stroke();
+ }
+ if(stage>=4){
+  ctx.strokeStyle='#c2cfbb';ctx.lineWidth=1;ctx.beginPath();
+  ctx.moveTo(-6,-11);ctx.lineTo(1,-4);ctx.lineTo(5,-12);
+  ctx.moveTo(1,-4);ctx.lineTo(1,-10);ctx.stroke();
+ }
+ if(stage>=6){
+  ctx.fillStyle='#292c26';ctx.globalAlpha=.45;ctx.fillRect(-8,7,16,8);
+ }
+ if(stage>=7){
+  ctx.globalAlpha=stage===7?.6:.9;ctx.fillStyle='#df682d';
+  ctx.beginPath();ctx.ellipse(-5+Math.sin(phase*11)*1.2,7,3.0,stage===8?6.8:3.6,0,0,TAU);ctx.fill();
+  if(stage>=8){ctx.beginPath();ctx.ellipse(6,3,4,5,0,0,TAU);ctx.fill();}
+ }
+ if(stage===9){
+  ctx.globalAlpha=.78;ctx.fillStyle='#161b17';ctx.fillRect(-8,-12,16,24);
+  ctx.strokeStyle='#5c5b4c';ctx.strokeRect(-8,-12,16,24);
+  ctx.beginPath();ctx.moveTo(-7,-10);ctx.lineTo(7,10);
+  ctx.moveTo(7,-10);ctx.lineTo(-7,10);ctx.stroke();
+ }
+ ctx.restore();return out;
+};
+
+// Battlefield-style casualty categories: conscious combatant, prone
+// fear response, wounded/down (no fire), and irreversible dead.
+function v107Down(e){
+ if(!e||!e.alive||e.wounded||e.charred||e.v107DownedBefore)return false;
+ e.v107DownedBefore=true;
+ e.wounded=true;e.hp=Math.max(1,Math.min(e.hp,e.maxHp*.13));
+ e.state='woundedCrawl';e.stateT=0;
+ e.woundedCrawlT=rand(23,31);e.bleedT=0;
+ e.bleedCd=.5;e.limp=1;e.fireCd=999;e.muzzle=0;
+ e.cover=null;e.vx=0;e.vy=0;
+ e.v107FearUntil=0;
+ pushEffect({type:'damage',x:e.x,y:e.y-12,text:'GEWOND · MEDIC!',t:0,life:.9});
+ return true;
+}
+var v107DamageInfantryOld=damageInfantry;
+damageInfantry=function(e,dmg,kind){
+ if(!v107Campaign()||!e||!e.alive)return v107DamageInfantryOld.apply(this,arguments);
+ // Blast/explosives and repeat fatal wounds remain lethal, so the
+ // field cannot be filled by infinitely revivable casualties.
+ var fatal=e.hp>0&&dmg>=e.hp*.85&&!e.wounded&&!e.v107DownedBefore&&
+  (kind==='mg'||kind==='ally'||kind==='cookoff')&&
+  Math.random()<.55;
+ if(fatal){
+  var reduced=Math.max(.01,e.hp-Math.max(1,e.maxHp*.06));
+  v107DamageInfantryOld.call(this,e,reduced,kind);
+  if(e.alive){v107Down(e);return false;}
+ }
+ var out=v107DamageInfantryOld.apply(this,arguments);
+ if(!e.alive&&e.medicPatient9938){
+  var p=e.medicPatient9938;if(p.medicClaim9938&&p.medicClaim9938.medic===e)
+    p.medicClaim9938=null;
+  e.medicPatient9938=null;e.aidTreatT9938=null;
+ }
+ return out;
+};
+var v107SelectMedicOld=selectMedicPatient9938;
+selectMedicPatient9938=function(m,pool){
+ if(!v107Campaign())return v107SelectMedicOld.apply(this,arguments);
+ // Revive wounded casualties first, never restore a dead body.
+ var candidates=pool.filter(function(p){
+  return p&&p.wounded&&p.alive&&p!==m&&
+   p.faction===m.faction&&!!p.allied===!!m.allied&&
+   (p.medicRecoveries9938||0)<1&&
+   !lineOfSightBlockedByWalls(m.x,m.y,p.x,p.y)&&
+   dist(m.x,m.y,p.x,p.y)<270&&
+   (!(p.medicClaim9938)||!p.medicClaim9938.medic.alive||p.medicClaim9938.until<gameState.time||p.medicClaim9938.medic===m);
+ });
+ candidates.sort(function(a,b){return dist(m.x,m.y,a.x,a.y)-dist(m.x,m.y,b.x,b.y);});
+ return candidates[0]||null;
+};
+var v107MedicOld=updateMedicAid9938;
+updateMedicAid9938=function(m,pool,dt,allied){
+ if(!v107Campaign())return v107MedicOld.apply(this,arguments);
+ var dangerous=m.suppression>.66||fireThreatAt(m.x,m.y,14)||
+   (m.state==='medicRun'&&gameState.time<(m.underFireUntil9932||0)&&m.suppression>.35);
+ if(dangerous){
+  var p=m.medicPatient9938;
+  if(p&&p.medicClaim9938&&p.medicClaim9938.medic===m)p.medicClaim9938=null;
+  m.medicPatient9938=null;m.aidTreatT9938=null;
+  m.aidCooldown9938=Math.max(.9,m.aidCooldown9938||0);
+  m.state='cover';m.fireCd=Math.max(m.fireCd||0,1.0);
+  return false;
+ }
+ var p=m.medicPatient9938;
+ if(p&&p.wounded&&dist(m.x,m.y,p.x,p.y)<=23&&
+    !lineOfSightBlockedByWalls(m.x,m.y,p.x,p.y)&&m.aidTreatT9938==null){
+  m.aidTreatT9938=3.8;
+ }
+ var out=v107MedicOld.apply(this,arguments);
+ var newP=m.medicPatient9938;
+ if(newP&&newP.wounded&&m.state==='medicTreat'&&m.v107Patient!==newP.id){
+  m.v107Patient=newP.id;
+  m.aidTreatT9938=3.8;
+ }
+ if(m.state!=='medicTreat'&&m.v107Patient!=null&&m.medicPatient9938==null)m.v107Patient=null;
+ return out;
+};
+var v107MedicCompleteOld=completeMedicAid9938;
+completeMedicAid9938=function(m,p){
+ if(v107Campaign()&&(!m||!m.alive||m.wounded||!p||!p.alive||
+   (p.medicRecoveries9938||0)>=1))return false;
+ var wasWounded=p&&p.wounded;
+ var result=v107MedicCompleteOld.apply(this,arguments);
+ if(result&&wasWounded&&v107Campaign()){
+  p.hp=Math.min(p.maxHp,p.maxHp*.55);
+  p.v107DownedBefore=true;
+  p.wounded=false;
+  m.v107Patient=null;
+ }
+ return result;
+};
+// At least one real medic on populated missions, but only one per
+// squad and no limitless new medic waves.
+var v107SpawnFootOld=spawnPlannedFoot;
+spawnPlannedFoot=function(n){
+ var before=gameState&&gameState.infantry?gameState.infantry.length:0;
+ var out=v107SpawnFootOld.apply(this,arguments);
+ if(!v107Campaign()||gameState.levelIndex<3||n<3)return out;
+ var added=gameState.infantry.slice(before),medics=gameState.infantry.filter(function(e){return e.alive&&e.role==='medic';});
+ if(medics.length>=Math.min(2,1+Math.floor(gameState.levelIndex/12)))return out;
+ var soldier=added.find(function(e){return e.alive&&e.role==='rifle'&&!e.v102Unarmed;});
+ if(soldier){
+  soldier.role='medic';soldier.weaponProfile=enemyWeaponProfile('medic',gameState.levelIndex,soldier.id,soldier.faction);
+  soldier.weaponName=soldier.weaponProfile.name;
+  soldier.medkit=true;soldier.aidCooldown9938=0;
+ }
+ return out;
+};
+// No zombie-level softlock from a wounded, unarmed casualty with no
+// active medic able to reach them. An available medic keeps combat live.
+var v107HostilesOld=v102HostilesAlive;
+v102HostilesAlive=function(){
+ if(!v107Campaign())return v107HostilesOld.apply(this,arguments);
+ var g=gameState,medics=g.infantry.filter(function(m){return m.alive&&!m.wounded&&m.role==='medic';});
+ return g.infantry.some(function(e){
+  return e.alive&&!e.v102Unarmed&&
+   (!e.wounded||medics.some(function(m){
+    return m.faction===e.faction&&dist(m.x,m.y,e.x,e.y)<295;
+   }));
+ })||g.vehicles.some(function(v){return v.alive&&!v.allied;})||
+   g.air.some(function(a){return a.alive;})||g.paras.some(function(p){return p.alive;});
+};
+function v107FearStart(e,duration){
+ if(!e||!e.alive||e.wounded||e.role==='medic')return;
+ e.v107FearUntil=Math.max(e.v107FearUntil||0,gameState.time+(duration||rand(2.5,4.0)));
+ e.v107FearVariant=e.v107FearVariant==null?Math.abs(e.variant||e.id||0)%3:e.v107FearVariant;
+ e.v107FearPeek=Math.random()*2;
+ e.muzzle=0;e.fireCd=Math.max(.8,e.fireCd||0);e.state='prone';e.firePose='prone';
+}
+var v107InfantryOld=updateInfantry;
+updateInfantry=function(dt){
+ if(!v107Campaign())return v107InfantryOld.apply(this,arguments);
+ var g=gameState;
+ g.infantry.forEach(function(e){
+  if(e.alive&&!e.wounded&&e.role!=='medic'&&e.suppression>.61&&
+    (e.v107FearUntil||0)<g.time&&Math.random()<dt*.72)
+   v107FearStart(e);
+ });
+ var out=v107InfantryOld.apply(this,arguments);
+ g.infantry.forEach(function(e){
+  if(!e.alive||e.wounded)return;
+  if(e.v107FearUntil>g.time){
+   e.state='prone';e.firePose='prone';e.muzzle=0;
+   e.fireCd=Math.max(e.fireCd||0,.40);
+   e.v107FearPeek=(e.v107FearPeek||0)+dt;
+  }else if(e.v107FearUntil>0){e.v107FearUntil=0;e.fireCd=.38;e.state='cover';}
+ });
+ return out;
+};
+var v107PoseOld=spritePose;
+spritePose=function(e){
+ if(v107Campaign()&&e&&e.alive){
+  if(e.wounded)return 'prone';
+  if(e.v107FearUntil>gameState.time)return 'prone';
+ }
+ return v107PoseOld.apply(this,arguments);
+};
+var v107DrawSoldierOld=drawSoldier;
+drawSoldier=function(e){
+ var out=v107DrawSoldierOld.apply(this,arguments);
+ if(!v107Campaign()||!e||!e.alive)return out;
+ var fear=!e.wounded&&e.v107FearUntil>gameState.time;
+ var medic=e.role==='medic'&&e.state==='medicTreat'&&e.medicPatient9938;
+ if(!fear&&!e.wounded&&!medic)return out;
+ ctx.save();ctx.translate(e.x,e.y);
+ if(fear){
+  var phase=(e.v107FearPeek||0),look=phase%3.4>2.7;
+  ctx.fillStyle='#444b39';ctx.strokeStyle='#272d25';ctx.lineCap='round';
+  ctx.lineWidth=3.2;ctx.beginPath();
+  if(e.v107FearVariant===0){
+   ctx.moveTo(-7,3);ctx.lineTo(-3,-6);ctx.moveTo(7,3);ctx.lineTo(3,-6);
+  }else if(e.v107FearVariant===1){
+   ctx.moveTo(-7,1);ctx.lineTo(-4,-8);ctx.moveTo(7,1);ctx.lineTo(4,-8);
+  }else{
+   ctx.moveTo(-7,5);ctx.lineTo(-2,-4);ctx.moveTo(7,4);ctx.lineTo(2,-4);
+  }
+  ctx.stroke();ctx.fillStyle='#ba9472';
+  ctx.fillRect(-5,-7,3,3);ctx.fillRect(2,-7,3,3);
+  if(look){ctx.fillStyle='#d0a788';ctx.fillRect(-3,-12,6,2);}
+ }else if(e.wounded){
+  ctx.strokeStyle='#76533e';ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(-5,0);ctx.lineTo(-8,6+Math.sin(gameState.time*4)*1.5);ctx.stroke();
+  ctx.fillStyle='#b99a7e';ctx.fillRect(-4,-8,6,2);
+ }else if(medic){
+  var m=e,progress=1-clamp((m.aidTreatT9938||0)/3.8,0,1);
+  ctx.fillStyle='#f1f2d9';ctx.fillRect(-13,-20,26,4);
+  ctx.fillStyle='#83b385';ctx.fillRect(-13,-20,26*progress,4);
+ }
+ ctx.restore();return out;
+};
+// Prone collision is a compound of visible body parts, not a huge
+// invisible rectangle. Limb and head circles follow soldier facing.
+function v107ProneHit(b,e){
+ var a=e.angle||Math.PI/2,c=Math.cos(a),s=Math.sin(a);
+ var pieces=[
+  {x:e.x+c*6,y:e.y+s*6,r:3.1},
+  {x:e.x,y:e.y,r:4.1},
+  {x:e.x-c*7-s*2,y:e.y-s*7+c*2,r:2.8},
+  {x:e.x-c*7+s*2,y:e.y-s*7-c*2,r:2.8}
+ ];
+ var best=null;
+ for(var i=0;i<pieces.length;i++){
+  var at=segmentCircleContact9936(b,pieces[i].x,pieces[i].y,pieces[i].r);
+  if(at!==null&&(best===null||at<best))best=at;
+ }
+ return best;
+}
+var v107ContactsOld=collectBallisticContacts9936;
+collectBallisticContacts9936=function(b,obstacles,actors){
+ var list=v107ContactsOld.apply(this,arguments);
+ if(!v107Campaign()||actors===false||!b||b.kind!=='mg')return list;
+ var found={};
+ list=list.filter(function(c){
+  if(c.type!=='infantry')return true;
+  var e=c.obj;if(!e||!e.alive)return false;
+  var prone=e.wounded||e.v107FearUntil>gameState.time||
+    e.state==='prone'||e.state==='crawl'||e.state==='woundedCrawl';
+  if(!prone)return true;
+  var hit=v107ProneHit(b,e);
+  if(hit===null)return false;
+  c.t=hit;found[e.id]=true;return true;
+ });
+ gameState.infantry.forEach(function(e){
+  if(!e.alive||found[e.id]||b.piercedIds&&b.piercedIds[e.id])return;
+  var prone=e.wounded||e.v107FearUntil>gameState.time||
+    e.state==='prone'||e.state==='crawl'||e.state==='woundedCrawl';
+  if(!prone)return;
+  var hit=v107ProneHit(b,e);
+  if(hit!==null)list.push({type:'infantry',obj:e,key:'infantry:'+e.id,t:hit,material:'flesh'});
+ });
+ list.sort(function(a,b){return a.t-b.t;});
+ return list;
+};
+// A fragment is harmful at most once; spent casings and dust remain
+// cosmetic. Actual ballistic ammo rounds use the existing swept test.
+function v107ScatterShards(v,amount){
+ if(!v107Campaign()||!gameState||!gameState.v107Shards)return;
+ var n=amount||4;
+ for(var i=0;i<n&&gameState.v107Shards.length<72;i++){
+  var a=rand(0,TAU),speed=rand(105,235);
+  gameState.v107Shards.push({x:v.x+rand(-8,8),y:v.y+rand(-8,8),
+   px:v.x,py:v.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed-rand(45,110),
+   life:rand(.42,.90),rot:rand(0,TAU),vr:rand(-15,15),bounces:0,damage:rand(3,6),spent:false});
+ }
+}
+var v107FragmentsOld=emitVehicleFragments;
+emitVehicleFragments=function(v,kind){
+ var r=v107FragmentsOld.apply(this,arguments);
+ if(v107Campaign())v107ScatterShards(v,kind==='he'?6:4);
+ return r;
+};
+var v107CookoffOld=emitCookoffRound9943;
+emitCookoffRound9943=function(v,angle){
+ var r=v107CookoffOld.apply(this,arguments);
+ if(v107Campaign()&&Math.random()<.26)v107CookoffOld.call(this,v,angle==null?null:angle+rand(-.45,.45));
+ return r;
+};
+var v107CookoffCollisionOld=updateCookoffRounds9943;
+updateCookoffRounds9943=function(dt){
+ // The base solver checks a swept segment. Give hostile soldiers a
+ // slightly larger effective target on a chaotic ammo cook-off.
+ var out=v107CookoffCollisionOld.apply(this,arguments);
+ return out;
+};
+var v107ResetOld=resetLevel;
+resetLevel=function(){
+ var r=v107ResetOld.apply(this,arguments);
+ if(v107Campaign())gameState.v107Shards=[];
+ return r;
+};
+function v107TickShards(dt){
+ var g=gameState;
+ if(!g.v107Shards)return;
+ for(var i=0;i<g.v107Shards.length;i++){
+  var f=g.v107Shards[i];if(f.spent)continue;
+  f.px=f.x;f.py=f.y;
+  f.vy+=280*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;
+  f.rot+=f.vr*dt;f.life-=dt;
+  if(f.y>H-safeBottom-25&&f.bounces<1){
+   f.y=H-safeBottom-25;f.vy=-Math.abs(f.vy)*.27;f.vx*=.50;f.bounces++;
+  }
+  var nearest=null,near=2;
+  // Only hostile soldiers are hurt by an enemy ammo cook-off; avoid
+  // chain explosions and whole-squad instant kills.
+  g.infantry.forEach(function(e){
+   if(!e.alive||e.v102Unarmed)return;
+   var radius=e.wounded||e.state==='prone'||e.state==='woundedCrawl'?4.3:6.0;
+   var t=segmentCircleContact9936({px:f.px,py:f.py,x:f.x,y:f.y},e.x,e.y,radius);
+   if(t!==null&&t<near){near=t;nearest=e;}
+  });
+  if(nearest){
+   damageInfantry(nearest,f.damage,'shrapnel');
+   f.spent=true;
+   pushEffect({type:'spark',x:f.x,y:f.y,vx:0,vy:-12,t:0,life:.14});
+  }
+  if(f.life<=0||f.x<-24||f.x>W+24||f.y>H+25)f.spent=true;
+ }
+ g.v107Shards=g.v107Shards.filter(function(s){return !s.spent;});
+}
+var v107UpdateOld=update;
+update=function(dt){
+ v107UpdateOld.apply(this,arguments);
+ if(!v107Campaign()||gameState.mode!=='playing')return;
+ v107TickShards(dt);
+ var g=gameState;
+ // Recover from a missed last event or a non-interactive offscreen
+ // straggler, without declaring victory over living visible targets.
+ if(g.levelTime>82&&g.eventCursor<g.events.length){
+  g.events.slice(g.eventCursor).forEach(function(e){e.t=Math.min(e.t,g.levelTime);});
+  g.battleLockT=0;g.waveIntroT=0;
+ }
+ if(g.levelTime>55&&g.eventCursor>=g.events.length){
+  g.infantry.forEach(function(e){
+   if(!e.alive||e.allied||e.wounded)return;
+   var off=e.x< -50||e.x>W+50||e.y<safeTop-145||e.y>H+55;
+   e.v107OffT=off?(e.v107OffT||0)+dt:0;
+   if(e.v107OffT>8){e.alive=false;e.hp=0;e.state='dead';e.deadT=8;}
+  });
+ }
+ if(!g.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
+ if(g.v102VictoryHold&&g.v102VictoryHold.elapsed>=5)completeLevel();
+};
+var v107RenderOld=render;
+render=function(){
+ v107RenderOld.apply(this,arguments);
+ if(!v107Campaign()||gameState.mode!=='playing')return;
+ ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
+ (gameState.v107Shards||[]).forEach(function(s){
+  ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.rot);
+  ctx.fillStyle='#d2b777';ctx.strokeStyle='#544a35';ctx.lineWidth=1;
+  ctx.fillRect(-2,-1,5,2);ctx.strokeRect(-2,-1,5,2);ctx.restore();
+ });
+ ctx.restore();
+};
+
 })();
