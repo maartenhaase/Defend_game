@@ -1090,7 +1090,11 @@ spawnVehicle=function(){
   if(!v||v.v102Tutorial)continue;
   v.speed*=1.12+Math.min(.23,i*.009);
   v.currentSpeed*=1.12+Math.min(.23,i*.009);
-  if(i>=2&&v.vehicleSpec&&v.vehicleSpec.hasMG)v.hasMG=true;
+  // Some early armed scouts (Horch/Kubel) declare weapon power but
+  // omit the hasMG flag. Only explicit unarmed / zero-weapon vehicles
+  // stay silent; otherwise the pre-V10 scout gun is restored.
+  if(i>=2&&v.vehicleSpec&&v.vehicleSpec.hasMG!==false&&
+    (v.vehicleSpec.hasMG||(v.vehicleSpec.weapon||0)>.05))v.hasMG=true;
   if(i>=4&&v.vehicleSpec&&v.vehicleSpec.transport&&arguments[4]>0){
    v.passengers=Math.min(6,arguments[4]);
    v.unloadLeft=v.passengers;v.unloadIndex=0;
