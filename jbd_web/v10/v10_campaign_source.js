@@ -1842,9 +1842,17 @@ var v107SpawnFootOld=spawnPlannedFoot;
 spawnPlannedFoot=function(n){
  var before=gameState&&gameState.infantry?gameState.infantry.length:0;
  var out=v107SpawnFootOld.apply(this,arguments);
- if(!v107Campaign()||gameState.levelIndex<3||n<3)return out;
+ if(!v107Campaign()||gameState.levelIndex<3)return out;
  var added=gameState.infantry.slice(before),medics=gameState.infantry.filter(function(e){return e.alive&&e.role==='medic';});
- if(medics.length>=Math.min(2,1+Math.floor(gameState.levelIndex/12)))return out;
+ var maxMedics=Math.min(2,1+Math.floor(gameState.levelIndex/12));
+ if(medics.length>maxMedics){
+  medics.slice(maxMedics).forEach(function(e){
+   e.role='rifle';e.weaponProfile=enemyWeaponProfile('rifle',gameState.levelIndex,e.id,e.faction);
+   e.weaponName=e.weaponProfile.name;e.medkit=false;
+  });
+  medics=medics.slice(0,maxMedics);
+ }
+ if(medics.length>=maxMedics||n<3)return out;
  var soldier=added.find(function(e){return e.alive&&e.role==='rifle'&&!e.v102Unarmed;});
  if(soldier){
   soldier.role='medic';soldier.weaponProfile=enemyWeaponProfile('medic',gameState.levelIndex,soldier.id,soldier.faction);
