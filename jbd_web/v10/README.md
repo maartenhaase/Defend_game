@@ -2,14 +2,14 @@
 
 **iPhone play:** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
 
-This is a **rebalanced progressive campaign (V10.6)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
+This is a **rebalanced progressive campaign (V10.7)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
 
 ## First map: the tutorial
 
 - **Exactly one slow, unarmed jeep** approaches the bunker. There are **no armed infantry, convoy reinforcements, aircraft or surprise waves** in this first mission. Three **unarmed** occupants flee the jeep when it is hit or stopped; they cannot fire and are not required kills.
 - The starter machine gun carries **12 bullets**: **4 taps of 3 bullets** per magazine, followed by a noticeable reload.
 - The separate **FLAK** button fires **a single accurately aimed shell**, with meaningful initial damage and a cooldown. Both the MG and FLAK can damage the jeep's hull until it is truly destroyed. A disabled driver is not counted as a victory.
-- Movement, damage, weapons and Flak power increase gradually over subsequent maps, not all at once.
+- Enemy vehicles become stronger as the route progresses. MG and FLAK weapon upgrades must be earned by destroying parachute crates.
 
 ## Geography: one contiguous route, not random continents
 
@@ -96,3 +96,18 @@ Exactly three parachute crates appear at randomized positions/times on every map
 Available randomized crate loot (18 types): Flak damage+, MG damage+, Flak splash+, bunker armor+, health replenish, MG rate-of-fire+, faster Flak reload, one extra Flak projectile (up to 5), MG spread-, Flak spread-, bullet penetration with higher projectile velocity and greater real wall pass-through chance, less MG overheat, maximum MG magazine +6 rounds, faster MG reload, increased obstacle/vehicle bullet damage, 5 elite allied soldiers, an allied armored vehicle and a single very strong MG-armed Rambo ally.
 
 The old kill-based automatic allied reinforcement reward has also been disabled. The existing five-second burning-wreck finish and iPhone aiming controls remain. All loot is rolled and awarded only after the crate has been destroyed. The in-game results text counts how many of the three crates you actually opened.
+
+
+## V10.7 — combat realism, medical rescue and all 30 map transitions
+
+- Vehicles have **nine separate visual damage conditions**, mapping remaining HP from 100% down to a burnt-out wreck. Bullet impacts, dents, glass, local smoke, detached components, flames and a wreck finish use the existing art and particles.
+- A given hostile vehicle class gets **8% more HP per subsequent map**, compounded. Light vehicles, transports, armored cars, halftracks and tanks have different protection. Machine-gun rounds are especially weak against heavy armor; explosive FLAK shots are relatively effective.
+- Fuel fires at high remaining HP are suppressed. Visible local flames begin only in the late damage conditions, followed by genuine destruction and the existing **five-second burning aftermath**.
+- Soldiers may be conscious and fighting, frightened/prone without firing, wounded and crawling, or irreversibly dead. Wounded enemies are not automatically revived.
+- Enemy medics use the existing combat AI, only approach reachable wounded comrades, **kneel and treat for roughly 3.8 seconds**, and restore partial HP. A medic interrupted by fire or death cannot finish treating. The number of medics is capped to avoid infinite revives.
+- Prone infantry retain small, separate body-part hit regions for fast MG projectiles. Frightened troops have several defensive gestures, periodically peek up, and temporarily cease fire.
+- Ammunition from cooking-off vehicles uses extended ballistic arcs, gravity and swept collisions. Small moving metal shards can strike a single nearby soldier, with gravity and a damped ground bounce. Decorative shell casings remain non-damaging.
+- **Existing V10.6 parachute crates and all 18 earned-only upgrades remain intact**, including Flak projectiles, splash, MG damage, bullet penetration, and allied reinforcement rewards.
+- Regression checks cover the actual **map 6 → 7 → 8 → 9 transition**, nine stages, HP growth, medics and treatment interruption, prone hits, shrapnel damage, loot upgrades and desktop/iPhone-sized viewports.
+- An additional accelerated 30-map simulation cleared all stages with five-second afterburn and an enabled Next Level button. This is an automated engine test and does **not** replace hands-on testing on physical devices.
+
