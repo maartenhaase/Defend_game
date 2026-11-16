@@ -1,4 +1,4 @@
-name: V10.2 progressive campaign tests
+name: V10.5 progressive campaign tests
 on:
   push:
     branches: [main]
@@ -20,5 +20,5 @@ jobs:
           node-version: '22'
       - name: Check V10 JavaScript
         run: node --check jbd_web/v10/game.js
-      - name: Validate 30 maps, real vehicle kills, 5s smoke pause and working Next Map
+      - name: Validate 30 maps, mixed vehicle encounters, bunker HP damage, fast upgrades and Next Map
         run: node jbd_web/v10/v10_regression.cjs
