@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827"><title>Notenkraker — noten leren lezen</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#eff5ff;background:#0c1220}*{box-sizing:border-box}
+body{margin:0}main{max-width:1040px;margin:auto;padding:22px 16px 70px}h1{font-size:clamp(2rem,5vw,3.3rem);margin:0}h2{font-size:1.2rem;margin:0 0 8px}p{line-height:1.5;color:#b7c6d9}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.tag{color:#9be7c2;font-weight:750;font-size:.8rem;letter-spacing:.1em}
+.panel{background:#172234;border:1px solid #34465b;border-radius:18px;padding:18px;margin:16px 0}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+button,select{font:inherit;cursor:pointer}button{border:1px solid #526079;background:#24334a;color:white;border-radius:11px;padding:11px 15px;font-weight:650}button:hover{background:#354963}button.active,.primary{background:#6be3ad;color:#09231e;border-color:#6be3ad}
+button:disabled{opacity:.4;cursor:not-allowed}.levelrow{display:flex;flex-wrap:wrap;gap:8px}.meta{display:flex;gap:10px;flex-wrap:wrap}.chip{background:#263a50;border-radius:12px;padding:9px 13px;font-size:.9rem}.score{width:100%;overflow-x:auto;background:#f8fbff;border-radius:14px;padding:14px 7px;color:#15213a;margin:16px 0}#notation{min-width:290px;min-height:175px;display:flex;justify-content:center;align-items:center}#notation svg{max-width:none}
+.bigstatus{min-height:54px;font-weight:750;font-size:1.14rem;padding:12px;border-radius:12px;background:#24354a}.error{background:#612c35;color:#fff}.success{background:#20533f}.piano{display:flex;justify-content:center;max-width:790px;margin:24px auto;position:relative;min-height:190px;user-select:none;touch-action:manipulation}.white{position:relative;flex:1;max-width:62px;height:186px;background:linear-gradient(#fff,#dce3eb);border:1px solid #798698;border-radius:0 0 8px 8px;color:#233247;display:flex;align-items:end;justify-content:center;padding-bottom:10px;font-size:12px;cursor:pointer}
+.white.pressed{background:#6be3ad}.black{position:absolute;z-index:2;top:0;width:34px;height:108px;background:linear-gradient(#354259,#0a1019);border-radius:0 0 6px 6px;transform:translateX(-50%);cursor:pointer;border:1px solid #070c13}.black.pressed{background:#1a9a71}
+#lessons{margin-top:12px}.theory{font-size:1.06rem}.notice{font-size:.9rem;color:#abc1d5}select{background:#263a50;border:1px solid #54667c;color:#fff;padding:10px;border-radius:10px}
+.progress{height:9px;background:#31435c;border-radius:9px;overflow:hidden;margin:12px 0}.progress>div{height:100%;background:#6be3ad;transition:width .2s}
+kbd{background:#30415a;border-radius:5px;padding:2px 6px;font-size:.9em}.hidden{display:none!important}
+@media(max-width:570px){main{padding:14px 10px}.panel{padding:12px}.white{height:138px;font-size:10px}.black{height:84px;width:21px}.piano{min-height:140px}.top h1{font-size:2rem}}
+</style>
+</head>
+<body>
+<main><header class="top"><div><div class="tag">MUZIEK LEZEN • SPELENDERWIJS</div><h1>🎹 Notenkraker</h1><p>Van losse noten naar ritme, melodieën en meerstemmigheid.</p></div><div class="chip" id="best">⭐ Beste niveau: 1</div></header>
+<div class="tabs" id="tabs"><button data-mode="noten" class="active">🎯 Losse noten</button><button data-mode="liedjes">🎼 Liedjes</button><button data-mode="ritme">🥁 Ritme</button><button data-mode="theorie">📖 Theorie</button></div>
+<section class="panel"><div class="top"><div><h2 id="modeTitle">Losse noten herkennen</h2><p id="description">Speel de noot die je op de notenbalk ziet.</p></div><button id="restart">↻ Opnieuw</button></div>
+<div class="levelrow" id="levels"></div><div class="meta"><span class="chip" id="stage">Niveau 1</span><span class="chip" id="counter">0 / 0</span><span class="chip" id="tempo">Geen tijdsdruk</span></div>
+<div class="progress"><div id="bar" style="width:0%"></div></div>
+<div class="score"><div id="notation" aria-label="Bladmuziek"></div></div>
+<div class="bigstatus" id="status" role="status">Kies een oefening en speel de eerste noot.</div>
+<div class="tabs"><button class="primary" id="start">▶ Start oefening</button><button id="listen">🔊 Voorbeeld horen</button><button id="hint">💡 Toon hulp</button></div>
+</section>
+<section class="panel"><div class="top"><div><h2>Speel mee</h2><p>Met muis, touchscreen, computertoetsen of een USB-MIDI-keyboard.</p></div><div><button id="midiButton">🎛 MIDI verbinden</button> <select id="midiDevices" aria-label="MIDI-apparaat"><option value="">Geen MIDI</option></select></div></div>
+<div class="notice" id="midiStatus">MIDI: nog niet verbonden. In Chrome/Edge via HTTPS.</div>
+<div class="piano" id="piano" aria-label="Virtueel keyboard"></div><p class="notice">Computertoetsen: <kbd>A</kbd> C, <kbd>W</kbd> C♯, <kbd>S</kbd> D, <kbd>E</kbd> D♯, <kbd>D</kbd> E, <kbd>F</kbd> F, <kbd>T</kbd> F♯, <kbd>G</kbd> G, <kbd>Y</kbd> G♯, <kbd>H</kbd> A, <kbd>U</kbd> A♯, <kbd>J</kbd> B, <kbd>K</kbd> C. Bij ritme kun je ook <kbd>spatie</kbd> gebruiken.</p>
+</section><section class="panel"><h2>Zo werkt het</h2><div id="lessons" class="theory"></div></section>
+<footer class="notice">Voortgang wordt lokaal bewaard. De geluiden worden direct in de browser gemaakt; geen account of microfoon nodig.</footer></main>
+<script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"></script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const noteNames=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const keymap={a:60,w:61,s:62,e:63,d:64,f:65,t:66,g:67,y:68,h:69,u:70,j:71,k:72};
+const lessons=[
+{title:'1. De notenbalk',body:'Vijf lijnen vormen samen de notenbalk. Een noot ligt op een lijn of ertussen. Hoe hoger de noot staat, hoe hoger hij klinkt. We beginnen in de vioolsleutel.'},
+{title:'2. De eerste drie noten',body:'De C staat op een extra hulplijntje onder de notenbalk, D er net onder en E op de onderste lijn. Zoek diezelfde C, D en E op je keyboard. In deze training is de middelste C MIDI-noot 60.'},
+{title:'3. F en G erbij',body:'De F ligt tussen de onderste en tweede lijn; G ligt op de tweede lijn. Je hoeft nog niet snel te zijn. Lees eerst, speel daarna.'},
+{title:'4. Meer vingers',body:'Speel C–D–E–F–G achter elkaar. Gebruik bij voorkeur je duim op C, wijsvinger op D, middelvinger op E, ringvinger op F en pink op G. In latere levels komen twee en drie tonen tegelijk.'},
+{title:'5. Ritme en tellen',body:'Een kwartnoot duurt één tel. Een halve noot duurt twee tellen. Twee achtste noten passen samen in één tel. In de ritmetrainer tik je op het juiste moment, na vier tellen aftellen.'},
+{title:'6. Samenklank',body:'Twee noten tegelijk vormen een interval; drie noten kunnen een akkoord vormen. Bij de meerstemmige levels moet je alle getoonde toetsen bijna tegelijk indrukken.'}
+];
+const stages={
+noten:[
+{name:'C, D, E',pool:[60,62,64],length:8,tip:'Lees eerst C, D en E.'},
+{name:'C tot G',pool:[60,62,64,65,67],length:10,tip:'F ligt tussen twee lijnen, G op de tweede.'},
+{name:'Heel octaaf',pool:[60,62,64,65,67,69,71,72],length:12,tip:'Leer alle stamtonen van C tot en met C.'},
+{name:'Met kruisen',pool:[60,61,62,63,64,65,66,67,68,69,70,71,72],length:12,tip:'Een ♯ maakt een noot een halve toon hoger.'}
+],
+liedjes:[
+{name:'3 noten',song:[60,62,64,62,60,60,62,60],tip:'Speel de C, D en E als een klein melodietje.'},
+{name:'Kleine melodie',song:[60,60,67,67,69,69,67],tip:'Een eenvoudige bekende melodische opening, met grotere sprongen.'},
+{name:'Ode aan de vreugde',song:[64,64,65,67,67,65,64,62,60,60,62,64,64,62,62],tip:'Een iets langere melodie. Speel in je eigen tempo.'},
+{name:'Twee vingers tegelijk',song:[[60,64],[62,65],[64,67],[60,64]],tip:'Sla beide noten vrijwel tegelijk aan (binnen 350 ms).'},
+{name:'Drie vingers tegelijk',song:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],tip:'Drie tonen tegelijkertijd; je kent de akkoorden al!'}
+],
+ritme:[
+{name:'Kwartnoten',beats:[1,1,1,1,1,1,1,1],bpm:72,tip:'Tik elke tel precies één keer.'},
+{name:'Halve noten',beats:[2,2,1,1,2],bpm:72,tip:'Tik om de twee tellen bij een halve noot.'},
+{name:'Achtsten',beats:[1,.5,.5,1,.5,.5,1,1],bpm:68,tip:'Achtsten volgen elkaar twee keer zo snel op.'},
+{name:'Afwisselen',beats:[1,2,.5,.5,1,1,2],bpm:80,tip:'Wissel korte en lange noten af.'}
+]};
+let mode='noten',level=0,seq=[],step=0,playing=false,started=false,wrong=0,ctx=null,oscillators=new Map(),midi=null,midiInput=null,rhythmStart=0,rhythmTimer=null,chordHeld=new Set(),chordTimer=null,isPreview=false;
+const storageKey='notenkraker-best-v1';
+function best(){try{return JSON.parse(localStorage.getItem(storageKey)||'{}')}catch{return {}}}
+function saveBest(){const b=best(),old=b[mode]??-1;b[mode]=Math.max(old,level+1);try{localStorage.setItem(storageKey,JSON.stringify(b))}catch{}}
+function updateBest(){const b=best();$('best').textContent='⭐ Niveaus: '+Object.values(b).reduce((a,x)=>a+x,0)}
+function context(){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx}
+function tone(midiNumber, duration=.3,volume=.17){const c=context(),now=c.currentTime;const o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.value=440*Math.pow(2,(midiNumber-69)/12);const h=c.createOscillator(),hg=c.createGain();h.type='sine';h.frequency.value=o.frequency.value*2;hg.gain.value=.16;o.connect(g);h.connect(hg);hg.connect(g);g.connect(c.destination);g.gain.setValueAtTime(.001,now);g.gain.exponentialRampToValueAtTime(volume,now+.018);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.start(now);h.start(now);o.stop(now+duration+.02);h.stop(now+duration+.02)}
+function buzzer(){const c=context(),now=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(195,now);o.frequency.exponentialRampToValueAtTime(76,now+.38);g.gain.setValueAtTime(.13,now);g.gain.exponentialRampToValueAtTime(.001,now+.4);o.connect(g);g.connect(c.destination);o.start();o.stop(now+.41)}
+function metronome(accent=false){const c=context(),now=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=accent?970:660;g.gain.setValueAtTime(.10,now);g.gain.exponentialRampToValueAtTime(.001,now+.07);o.connect(g);g.connect(c.destination);o.start();o.stop(now+.08)}
+function label(n){return noteNames[n%12]+(Math.floor(n/12)-1)}
+function key(n){return noteNames[n%12].replace('♯','#').toLowerCase()+'/'+(Math.floor(n/12)-1)}
+function makeSeq(){const s=stages[mode][level];if(mode==='noten'){const a=[];for(let i=0;i<s.length;i++){let v=s.pool[Math.floor(Math.random()*s.pool.length)];if(i && v===a[i-1] && s.pool.length>1)v=s.pool[(s.pool.indexOf(v)+1)%s.pool.length];a.push(v)}return a}if(mode==='liedjes')return s.song.map(v=>Array.isArray(v)?[...v]:v);return [...s.beats]}
+function setStatus(message,type=''){$('status').textContent=message;$('status').className='bigstatus '+type}
+function clearTimers(){if(rhythmTimer){clearInterval(rhythmTimer);rhythmTimer=null}if(chordTimer){clearTimeout(chordTimer);chordTimer=null}}
+function reset(){clearTimers();seq=makeSeq();step=0;playing=false;started=false;wrong=0;chordHeld.clear();$('start').disabled=false;$('start').textContent='▶ Start oefening';setStatus('Druk op Start oefening om te beginnen.');render()}
+function setMode(m){mode=m;level=0;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('levels').classList.toggle('hidden',m==='theorie');$('start').disabled=m==='theorie';$('listen').disabled=m==='theorie';$('hint').disabled=m==='theorie';$('modeTitle').textContent={noten:'Losse noten herkennen',liedjes:'Melodieën en meer vingers',ritme:'Ritme leren voelen',theorie:'Muziektheorie, stap voor stap'}[m];$('description').textContent={noten:'Speel de afgebeelde noot, zonder tijdslimiet.',liedjes:'Speel elke noot op volgorde. Eén fout? Hele liedje opnieuw!',ritme:'Wacht vier tellen, tik daarna de noten op het ritme.',theorie:'Lees de lessen hieronder en ga daarna oefenen.'}[m];renderLevels();if(m==='theorie'){clearTimers();seq=[];step=0;playing=false;render();setStatus('Begin bij les 1, of bekijk een onderwerp hieronder.')}else reset();renderLessons()}
+function renderLevels(){const list=$('levels');list.innerHTML='';if(!stages[mode])return;stages[mode].forEach((s,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+s.name;b.className=level===i?'active':'';b.onclick=()=>{level=i;renderLevels();reset()};list.appendChild(b)})}
+function renderLessons(){$('lessons').innerHTML='';lessons.forEach((l,i)=>{const d=document.createElement('details');d.open=(mode==='theorie'&&i===0)||(mode!=='theorie'&&i===Math.min(level,lessons.length-1));const sum=document.createElement('summary');sum.textContent=l.title;sum.style.cursor='pointer';sum.style.fontWeight='700';sum.style.padding='9px 0';const p=document.createElement('p');p.textContent=l.body;d.append(sum,p);$('lessons').appendChild(d)})}
+function render(){const total=seq.length;$('stage').textContent=mode==='theorie'?'Lesboek':'Niveau '+(level+1)+' · '+stages[mode][level].name;$('counter').textContent=step+' / '+total;$('tempo').textContent=mode==='ritme'?(stages.ritme[level].bpm+' BPM'):'Geen tijdsdruk';$('bar').style.width=(total?100*step/total:0)+'%';renderNotation()}
+function fallbackSvg(){const current=seq.slice(0,Math.min(seq.length,8));const note=mode==='ritme'?60:current[0];const arr=Array.isArray(note)?note:[note??60];const circles=arr.map(n=>{const diatonic=[0,1,2,3,4,5,6][[0,2,4,5,7,9,11].indexOf(n%12)]??0;const oct=Math.floor(n/12)-5;const y=130-(oct*7+diatonic)*10;return '<ellipse cx="210" cy="'+y+'" rx="11" ry="8" fill="#182d49" transform="rotate(-20 210 '+y+')"/>'}).join('');$('notation').innerHTML='<svg viewBox="0 0 440 220" width="440" height="220"><g stroke="#23334b" stroke-width="1.5">'+[90,110,130,150,170].map(y=>'<line x1="35" y1="'+y+'" x2="405" y2="'+y+'"/>').join('')+'</g><text x="45" y="155" font-size="80" fill="#23334b">𝄞</text>'+circles+'</svg>'}
+function renderNotation(){if(mode==='theorie'){$('notation').innerHTML='<div style="padding:58px 5px;text-align:center;font-size:1.3rem">📚 Leer de regels in kleine stappen</div>';return}if(!seq.length){$('notation').textContent='';return}if(!window.VexFlow){fallbackSvg();return}try{const VF=window.VexFlow;const width=Math.max(320,Math.min(960,$('notation').parentElement.clientWidth-25));$('notation').innerHTML='';const renderer=new VF.Renderer($('notation'),VF.Renderer.Backends.SVG);renderer.resize(width,190);const c=renderer.getContext();const stave=new VF.Stave(10,30,width-24);stave.addClef('treble');if(mode==='ritme')stave.addTimeSignature('4/4');stave.setContext(c).draw();const remaining=seq.slice(step,step+Math.min(8,mode==='ritme'?8:8));const notes=remaining.map((v,i)=>{const vals=mode==='ritme'?[60]:Array.isArray(v)?v:[v];const keys=vals.map(key);let duration='q';if(mode==='ritme')duration=v===2?'h':v===.5?'8':'q';const sn=new VF.StaveNote({clef:'treble',keys,duration,auto_stem:true});keys.forEach((k,j)=>{if(k.includes('#'))sn.addModifier(new VF.Accidental('#'),j)});if(i===0)sn.setStyle({fillStyle:'#0d9e72',strokeStyle:'#0d9e72'});return sn});const voice=new VF.Voice({num_beats:remaining.reduce((a,v)=>a+(mode==='ritme'?v:1),0),beat_value:4}).setStrict(false);voice.addTickables(notes);new VF.Formatter().joinVoices([voice]).format([voice],width-125);voice.draw(c,stave)}catch(err){console.warn('Notation fallback',err);fallbackSvg()}}
+function start(){context();clearTimers();seq=makeSeq();step=0;wrong=0;playing=true;started=true;chordHeld.clear();$('start').textContent='↻ Herstart';if(mode==='ritme'){setStatus('Aftellen: 4…');const beatMs=60000/stages.ritme[level].bpm;const t0=performance.now()+4*beatMs;rhythmStart=t0;let tick=0;metronome(true);rhythmTimer=setInterval(()=>{tick++;if(tick<4){metronome(tick===0);setStatus('Aftellen: '+(4-tick)+'…')}else{clearInterval(rhythmTimer);rhythmTimer=null;setStatus('Tik het ritme! Gebruik spatie of een toets.');metronome(true)}},beatMs)}else setStatus('Speel de groen gemarkeerde noot.');render()}
+function fail(){if(!playing||isPreview)return;clearTimers();buzzer();playing=false;step=0;chordHeld.clear();render();setStatus('❌ Fout! Het hele '+(mode==='liedjes'?'liedje':'onderdeel')+' begint opnieuw.','error');setTimeout(()=>{if(!playing && mode!=='theorie')start()},700)}
+function complete(){clearTimers();playing=false;saveBest();updateBest();render();setStatus('🎉 Helemaal goed! Niveau gehaald.','success');$('start').textContent='▶ Nog eens';if(level<stages[mode].length-1){const completedLevel=level;setTimeout(()=>{if(!playing&&mode!=='theorie'&&level===completedLevel){level++;renderLevels();reset();setStatus('Nieuw niveau vrijgespeeld! Druk op Start.','success');renderLessons()}},1500)}}
+function advance(){step++;chordHeld.clear();render();if(step>=seq.length)complete();else setStatus('Goed! Volgende noot.','success')}
+function rhythmInput(){if(!playing)return;const beat=60000/stages.ritme[level].bpm;const expectedOffset=seq.slice(0,step).reduce((a,b)=>a+b,0)*beat;const now=performance.now();const drift=now-(rhythmStart+expectedOffset);if(Math.abs(drift)>Math.max(200,beat*.3)){fail();return}metronome();step++;render();if(step===seq.length){complete();return}setStatus('Goed getikt! Volgende inzet.','success')}
+function noteInput(n){context();tone(n,.24);highlight(n);if(isPreview||!playing||mode==='theorie')return;if(mode==='ritme'){rhythmInput();return}const target=seq[step];if(Array.isArray(target)){if(!target.includes(n)||chordHeld.has(n)){fail();return}chordHeld.add(n);if(chordHeld.size===1)chordTimer=setTimeout(()=>{if(playing&&chordHeld.size<target.length)fail()},350);if(chordHeld.size===target.length){clearTimeout(chordTimer);advance()}return}if(n!==target){fail();return}advance()}
+function highlight(n){document.querySelectorAll('[data-note="'+n+'"]').forEach(el=>{el.classList.add('pressed');setTimeout(()=>el.classList.remove('pressed'),160)})}
+function buildPiano(){const piano=$('piano');piano.innerHTML='';const whites=[60,62,64,65,67,69,71,72,74];whites.forEach((n,i)=>{const b=document.createElement('div');b.className='white';b.dataset.note=n;b.textContent=label(n);b.onclick=()=>noteInput(n);piano.appendChild(b)});const blacks=[[61,1],[63,2],[66,4],[68,5],[70,6],[73,8]];blacks.forEach(([n,pos])=>{const b=document.createElement('div');b.className='black';b.dataset.note=n;b.style.left=(pos/whites.length*100)+'%';b.onclick=()=>noteInput(n);piano.appendChild(b)})}
+async function connectMidi(){if(!navigator.requestMIDIAccess){$('midiStatus').textContent='Deze browser ondersteunt geen Web MIDI. Gebruik Chrome of Edge op een computer.';return}try{midi=await navigator.requestMIDIAccess();midi.onstatechange=updateMidiDevices;updateMidiDevices();$('midiStatus').textContent='MIDI beschikbaar. Kies je keyboard in de lijst.'}catch(e){$('midiStatus').textContent='MIDI-toegang geweigerd of niet beschikbaar: '+e.message}}
+function updateMidiDevices(){if(!midi)return;const sel=$('midiDevices'),old=sel.value;sel.innerHTML='';const opt=document.createElement('option');opt.value='';opt.textContent='Kies MIDI-invoer';sel.append(opt);for(const input of midi.inputs.values()){const o=document.createElement('option');o.value=input.id;o.textContent=input.name||'MIDI keyboard';sel.append(o)}if([...midi.inputs.values()].some(x=>x.id===old))sel.value=old;else if(midi.inputs.size===1)sel.value=[...midi.inputs.values()][0].id;chooseMidi()}
+function chooseMidi(){if(midiInput)midiInput.onmidimessage=null;midiInput=midi?.inputs.get($('midiDevices').value);if(midiInput){midiInput.onmidimessage=e=>{const [st,n,v]=e.data;if((st&0xf0)===0x90&&v>0)noteInput(n)};$('midiStatus').textContent='✅ Verbonden: '+midiInput.name}else if(midi)$('midiStatus').textContent='Selecteer MIDI-invoer.'}
+function preview(){if(!seq.length||mode==='theorie')return;context();isPreview=true;const a=seq.slice();let delay=0;a.forEach((v,i)=>{const vals=mode==='ritme'?[60]:Array.isArray(v)?v:[v];setTimeout(()=>{if(mode==='ritme')metronome(i===0);else vals.forEach(n=>tone(n,.28))},delay);delay+=(mode==='ritme'?v*60000/stages.ritme[level].bpm:390)});setTimeout(()=>{isPreview=false},delay+50)}
+$('tabs').onclick=e=>{const b=e.target.closest('[data-mode]');if(b)setMode(b.dataset.mode)};
+$('start').onclick=start;$('restart').onclick=reset;$('listen').onclick=preview;
+$('hint').onclick=()=>{if(!seq.length)return;const v=seq[step];const msg=mode==='ritme'?'Tel met de maat mee. '+stages.ritme[level].tip:Array.isArray(v)?'Speel tegelijk: '+v.map(label).join(' + '):'Zoek '+label(v)+' op je keyboard. '+stages[mode][level].tip;setStatus(msg)};
+$('midiButton').onclick=connectMidi;$('midiDevices').onchange=chooseMidi;
+const pressed=new Set();window.addEventListener('keydown',e=>{if(e.repeat||e.target.matches('input,select,textarea'))return;const k=e.key.toLowerCase();if(k===' '&&mode==='ritme'){e.preventDefault();if(!pressed.has(k)){pressed.add(k);if(playing)rhythmInput();else start()}return}if(keymap[k]!==undefined&&!pressed.has(k)){pressed.add(k);noteInput(keymap[k])}});window.addEventListener('keyup',e=>pressed.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>pressed.clear());
+window.addEventListener('resize',renderNotation);
+buildPiano();setMode('noten');updateBest();
+})();
+</script></body></html>
