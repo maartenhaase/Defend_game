@@ -51,9 +51,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <canvas id="game"></canvas>
 <div id="overlay" class="overlay">
   <div class="panel">
-    <div class="eyebrow">JBD V10.4 // DE LANGE ROUTE</div>
-    <h1 id="title">V10.4 · DE LANGE ROUTE · 30 MAPS</h1>
-    <p id="sub">30 progressieve maps door één werelddeel. Map 1: één langzaam voertuig. MG: 3 salvo’s van 3. Flak: 1 lichte kogel. Elke map automatisch iets sterker.</p>
+    <div class="eyebrow">JBD V10.5 // DE LANGE ROUTE</div>
+    <h1 id="title">V10.5 · DE LANGE ROUTE · 30 MAPS</h1>
+    <p id="sub">30 progressieve maps door één werelddeel. Map 1: één langzaam voertuig. MG: 12 kogels in map 1. Snelle upgrades, sterkere Flak en vanaf map 2 meer soorten vijanden.</p>
     <div id="summary" class="summary"></div>
     <div id="shop" class="shop"><div class="shopTitle">FIELD WORKSHOP</div><div id="supply" class="supply"></div><div id="shopGrid" class="shopGrid"></div></div>
     <div class="mapPicker" style="margin:10px 0;padding:9px 11px;border:1px solid #8eae8e55;border-radius:12px;background:#202d22"><label for="mapSelectV10" style="display:block;color:#d7c98b;font-size:10px;font-weight:900;letter-spacing:.1em;margin-bottom:7px">KIES EEN MAP OM TE TESTEN (1–30)</label><select id="mapSelectV10" style="width:100%;border:1px solid #b7c2a666;background:#354538;color:#fff6d9;border-radius:7px;min-height:39px;padding:7px;font-size:13px"></select></div>
@@ -64,12 +64,12 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
     </div>
     <button id="deploy" class="action" type="button" style="display:none">DEPLOY</button>
     <button id="restart" class="action" type="button">PLAY AGAIN</button>
-    <div class="hint">Tik = 3 kogels. Start: drie salvo’s per magazijn. FLAK = één gericht schot. Kijk vijf seconden naar het wrak; daarna kun je direct naar de volgende map.</div>
-    <div class="hint" style="opacity:.62;font-size:10px">30 maps · V10.4 · brandende doelen, sterfanimaties en munitieboogjes</div>
+    <div class="hint">Tik = 3–6 kogels. Start: vier salvo’s per magazijn. FLAK krijgt later extra schoten. Kijk vijf seconden naar het wrak; daarna kun je direct naar de volgende map.</div>
+    <div class="hint" style="opacity:.62;font-size:10px">30 maps · V10.5 · brandende doelen, sterfanimaties en munitieboogjes</div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-<script src="game.js?v=10-4-burnout-deaths-arcs-20261116"></script>
+<script src="game.js?v=10-5-rapid-arsenal-variety-20261116"></script>
 <script>(function(){var e=document.getElementById('mapSelectV10');if(!e)return;var names=['De eerste weg','Boerderijpad','Het hooiland','Oude brug','Dorpsrand','Bosrand','Dennenweg','Houtkamp','Bospad','Heuvelpost','Stenen weg','Kloofbocht','Hoogboerderij','Tunnelweg','De bergpas','Dalweg','Spoorbrug','Voorstad','De buitenring','Goederenloods','Kanaalweg','Magazijnzone','Rangeerterrein','Stadsrand','De boulevard','Oude markt','Noordwijk','Centraal station','De binnenring','Het centrum'];for(var i=0;i<30;i++){var o=document.createElement('option');o.value=String(i+1);o.textContent=String(i+1).padStart(2,'0')+' · '+names[i];e.appendChild(o);}})();</script>
 <!-- V10.1: 30 slow-build maps, automatic upgrades and single-round Flak -->
 </body>
