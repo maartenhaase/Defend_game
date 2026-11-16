@@ -12887,4 +12887,362 @@ update=function(dt){
  if(!gameState.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
 };
 
+
+/* ============================================================
+   V10.6 — PARACHUTE LOOT CRATES / EARNED UPGRADES ONLY
+   Three optional destructible supply crates per stage. All power
+   and ally rewards require actually breaking a falling crate.
+   ============================================================ */
+function v106Campaign(){return !!(gameState&&v103Campaign());}
+var V106_REWARDS=[
+ {id:'flakDamage',label:'FLAK DAMAGE +',max:10},
+ {id:'mgDamage',label:'MG DAMAGE +',max:10},
+ {id:'flakSplash',label:'FLAK SPLASH +',max:9},
+ {id:'bunkerArmor',label:'BUNKER ARMOR +',max:8},
+ {id:'repair',label:'BUNKER HEALTH +',max:99,instant:true},
+ {id:'mgRate',label:'MG RATE OF FIRE +',max:9},
+ {id:'flakReload',label:'FLAK RELOAD +',max:9},
+ {id:'flakProjectile',label:'EXTRA FLAK PROJECTIEL +',max:4},
+ {id:'mgSpread',label:'MG SPREAD -',max:9},
+ {id:'flakSpread',label:'FLAK SPREAD -',max:7},
+ {id:'penetration',label:'BULLET PENETRATION +',max:7},
+ {id:'heat',label:'MG OVERHEAT -',max:9},
+ {id:'magazine',label:'MG MAG CAP +6',max:10},
+ {id:'mgReload',label:'MG RELOAD SPEED +',max:9},
+ {id:'obstacleDamage',label:'OBSTAKEL / VEHICLE DAMAGE +',max:9},
+ {id:'elites',label:'VERSTERKING · 5 ELITES',max:99,instant:true},
+ {id:'armorVehicle',label:'VERSTERKING · PANTSERWAGEN',max:99,instant:true},
+ {id:'rambo',label:'VERSTERKING · RAMBO',max:99,instant:true}
+];
+function v106Perks(){
+ if(!gameState||!gameState.save)return {};
+ return gameState.save.v106Perks||(gameState.save.v106Perks={});
+}
+function v106Rank(id){return v106Perks()[id]||0;}
+function v106Magazine(){return Math.min(72,12+6*v106Rank('magazine'));}
+// These are no longer unlocked merely by reaching a numbered map.
+v105Magazine=function(){return v106Magazine();};
+v105Burst=function(){return 3;};
+v10Equip=function(){
+ if(!gameState||!gameState.save)return;
+ gameState.save.upgrades={range:0,rate:0,armor:0,special:0};
+ gameState.save.arsenalPoints=0;
+};
+v10UpgradeLabel=function(){return 'WAPENS WORDEN ALLEEN BETER VIA KISTEN';};
+// Imported V10.5 upgrades are ignored: loot is authoritative.
+var v106FreshOld=freshState;
+freshState=function(){
+ var g=v106FreshOld.apply(this,arguments);
+ try{
+  var prior=loadSave();
+  if(prior&&prior.v106Perks){
+   g.save.v106Perks=Object.assign({},prior.v106Perks);
+   g.save.v106CratesOpened=prior.v106CratesOpened||0;
+  }
+ }catch(_){}
+ return g;
+};
+
+function v106ApplyProfile(isPickup){
+ var g=gameState,p=g.profile,oldMax=g.bunker.maxHp,oldMag=p.primaryMag;
+ var oldHP=g.bunker.hp,oldAmmo=g.primaryAmmo;
+ // Always reconstruct from the real base weapon instead of stacking
+ // modifiers repeatedly or relying on any level-index bonus.
+ var base=playerProfile();
+ var n=v106Rank;
+ base.primaryDamage*=1+.16*n('mgDamage');
+ base.primarySpeed*=1+.24*n('penetration');
+ base.primaryPenetration=1+n('penetration');
+ base.primaryPenetrationChance=Math.min(.88,.12+.13*n('penetration'));
+ base.primaryPenetrationLevel=n('penetration');
+ base.primaryVisual=Math.min(9,n('penetration')+1);
+ base.primaryCycle*=Math.pow(.84,n('mgRate'));
+ base.primaryBurstPause*=Math.pow(.88,n('mgRate'));
+ base.spreadScale*=Math.pow(.83,n('mgSpread'));
+ base.primaryReload=Math.max(.55,2.65*Math.pow(.87,n('mgReload')));
+ base.primaryMag=v106Magazine();
+ base.heatScale*=Math.pow(.78,n('heat'));
+ base.cool+=n('heat')*.055;
+ base.maxHp*=1+.12*n('bunkerArmor');
+ base.armorScale=Math.max(.30,base.armorScale*Math.pow(.91,n('bunkerArmor')));
+ g.profile=base;
+ g.bunker.maxHp=base.maxHp;
+ if(isPickup){
+  g.bunker.hp=Math.min(base.maxHp,oldHP+Math.max(0,base.maxHp-oldMax));
+  g.primaryAmmo=Math.min(base.primaryMag,oldAmmo+Math.max(0,base.primaryMag-oldMag));
+ }else{
+  g.bunker.hp=base.maxHp;
+  g.primaryAmmo=base.primaryMag;
+ }
+}
+var v106ResetOld=resetLevel;
+resetLevel=function(){
+ v106ResetOld.apply(this,arguments);
+ if(!v106Campaign())return;
+ v106ApplyProfile(false);
+ gameState.v106Crates=[];
+ gameState.v106Spawned=0;
+ gameState.v106Schedule=[1.6+rand(0,.7),6.3+rand(0,1.0),11.3+rand(0,1.3)];
+ gameState.v106Message=null;
+ gameState.v106MessageT=0;
+ gameState.v10Gradual.surprised=true;
+ gameState.message='KISTEN MET PARACHUTES · SCHIET ZE OPEN VOOR UPGRADES';
+ gameState.messageT=3.0;
+};
+
+// No hidden upgrades or free units from kill milestones.
+var v106RewardOld=arcadeKillReward;
+arcadeKillReward=function(){
+ if(!v106Campaign())return v106RewardOld.apply(this,arguments);
+ if(gameState.arcade)gameState.arcade.focus=Math.min(100,gameState.arcade.focus+9);
+};
+
+flakStats9951=function(){
+ var extra=v106Rank('flakProjectile');
+ return {rounds:1+extra,
+  damage:11+2.7*v106Rank('flakDamage'),
+  vehicleDamage:15+4.0*v106Rank('flakDamage'),
+  radius:20+3.0*v106Rank('flakSplash'),
+  reload:Math.max(1.5,5.6*Math.pow(.86,v106Rank('flakReload')))};
+};
+var v106FlakFireOld=fireFlak9950;
+fireFlak9950=function(x,y){
+ var f=currentFlak9950(),before=f.shots.length;
+ var out=v106FlakFireOld.apply(this,arguments);
+ if(!out||!v106Campaign())return out;
+ var tight=Math.max(.24,1-v106Rank('flakSpread')*.12);
+ var shots=f.shots.slice(before);
+ if(shots.length){
+  var cx=shots[0].tx,cy=shots[0].ty;
+  for(var i=1;i<shots.length;i++){
+   shots[i].tx=clamp(cx+(shots[i].tx-cx)*tight,20,W-20);
+   shots[i].ty=clamp(cy+(shots[i].ty-cy)*tight,safeTop+55,H-safeBottom-65);
+  }
+ }
+ return out;
+};
+
+// Penetration is not just a number: it increases actual projectile
+// velocity and raises the chance of passing *successive* wall hits.
+var v106CoverOld=damageCover;
+damageCover=function(c,dmg,source,x,y){
+ if(v106Campaign()&&(source==='bullet'||source==='mg'))
+  dmg*=1+.65*v106Rank('obstacleDamage');
+ return v106CoverOld.call(this,c,dmg,source,x,y);
+};
+var v106VehicleOld=primaryVehicleHit;
+primaryVehicleHit=function(v,b){
+ if(v106Campaign()&&b&&v&&v.alive){
+  // This is scoped to vehicles; regular MG damage is applied in the
+  // normal hit resolver and gets an extra component-damage boost here.
+  var boost=1+.24*v106Rank('obstacleDamage');
+  if(boost>1)b.damage*=boost;
+  try{return v106VehicleOld.apply(this,arguments);}
+  finally{if(boost>1)b.damage/=boost;}
+ }
+ return v106VehicleOld.apply(this,arguments);
+};
+
+function v106SpawnRewardCrate(){
+ var g=gameState,chosenX=W*.5,land=H*rand(.44,.65);
+ for(var k=0;k<14;k++){
+  var xx=rand(W*.15,W*.85),yy=land;
+  var crowded=g.v106Crates.some(function(c){return Math.abs(c.x-xx)<55;});
+  var blocked=(g.map.cover||[]).some(function(c){return !c.destroyed&&Math.hypot(c.x-xx,c.y-yy)<(c.r||25)+21;});
+  if(!crowded&&!blocked){chosenX=xx;break;}
+ }
+ var n=g.v106Spawned,health=54+Math.min(34,g.levelIndex*1.05);
+ var c={id:Math.random()*1e9|0,x:chosenX,y:safeTop+125,
+  landY:land,maxHp:health,hp:health,vy:rand(32,47),age:0,
+  sway:rand(0,TAU),opened:false,landed:false,flash:0,index:n};
+ g.v106Crates.push(c);g.v106Spawned++;
+ AudioSys.tone('metal',.24,{pan:clamp((c.x-W*.5)/(W*.55),-.8,.8)});
+ g.message='PARACHUTEKIST '+g.v106Spawned+'/3 · SCHIET OPEN VOOR UPGRADE';
+ g.messageT=1.4;
+ return c;
+}
+function v106RollReward(){
+ var all=V106_REWARDS.filter(function(r){
+  if(!r.instant&&v106Rank(r.id)>=r.max)return false;
+  if(r.id==='repair'&&gameState.bunker.hp>=gameState.bunker.maxHp*.94)return false;
+  if(r.id==='armorVehicle'&&gameState.arcade.armor.some(function(v){return v.alive;}))return false;
+  return true;
+ });
+ if(!all.length)return V106_REWARDS[0];
+ return all[(Math.random()*all.length)|0];
+}
+function v106GrantReward(){
+ var g=gameState,r=v106RollReward(),p=v106Perks(),b=g.bunker;
+ if(!r.instant){p[r.id]=(p[r.id]||0)+1;v106ApplyProfile(true);}
+ else if(r.id==='repair'){
+  b.hp=Math.min(b.maxHp,b.hp+b.maxHp*.38);
+ }else if(r.id==='elites'){
+  for(var i=0;i<5;i++){
+   var x=clamp(b.x+(i-2)*21,22,W-22);
+   var u=createAlliedInfantry(x,b.y-18-rand(0,20),i%2?'lmg':'marksman');
+   u.hp=u.maxHp=65;u.armorHp=u.maxArmorHp=20;
+   u.aimSkill=2.2;u.assignment='advance';u.fireCd=.1;
+   g.arcade.allies.push(u);
+  }
+ }else if(r.id==='armorVehicle'){
+  spawnAlliedArmor(85);
+  var v=g.arcade.armor[g.arcade.armor.length-1];
+  if(v){v.hp=v.maxHp=Math.max(175,v.maxHp*1.3);v.armorHp=Math.max(40,v.armorHp||0);}
+ }else if(r.id==='rambo'){
+  var rambo=createAlliedInfantry(clamp(b.x+rand(-40,40),25,W-25),b.y-28,'lmg');
+  rambo.v106Rambo=true;
+  rambo.hp=rambo.maxHp=180;rambo.armorHp=rambo.maxArmorHp=75;
+  rambo.aimSkill=4;rambo.speed*=1.26;
+  rambo.fireCd=.05;rambo.ammo9930=100;rambo.assignment='advance';
+  g.arcade.allies.push(rambo);
+ }
+ g.save.v106CratesOpened=(g.save.v106CratesOpened||0)+1;
+ saveGame();
+ g.v106Message={label:r.label,time:2.7};
+ g.v106MessageT=2.7;g.message='KIST GEOPEND · '+r.label;g.messageT=2.4;
+ AudioSys.tone('metal',.90);
+ gameState.shake=Math.max(gameState.shake||0,2.1);
+ return r;
+}
+function v106DamageCrate(c,damage,kind){
+ if(!c||c.opened||!v106Campaign()||gameState.mode!=='playing')return false;
+ c.hp=Math.max(0,c.hp-Math.max(0,damage));
+ c.flash=.16;
+ for(var n=0;n<3;n++)pushEffect({type:'woodChip913',x:c.x+rand(-10,10),
+  y:c.y+rand(-6,6),vx:rand(-55,55),vy:rand(-65,5),rot:0,vr:rand(-9,9),t:0,life:.36});
+ AudioSys.impact('wood',.50,{pan:clamp((c.x-W*.5)/(W*.55),-.8,.8)});
+ if(c.hp<=0){
+  c.opened=true;
+  emitGroundImpact(c.x,c.y,1.1,'wood');
+  for(var n=0;n<9;n++)pushEffect({type:'woodChip913',x:c.x,y:c.y,
+   vx:rand(-95,95),vy:rand(-110,-15),rot:rand(0,TAU),vr:rand(-12,12),t:0,life:.65});
+  c.reward=v106GrantReward().label;c.rewardT=2.3;
+  return true;
+ }
+ return false;
+}
+// Match a bullet's real swept segment against crate volume. Check
+// world collisions first so loot cannot be shot *through* an intact wall
+// without having earned the penetration ability.
+var v106BallisticOld=resolveBallisticSegment9936;
+resolveBallisticSegment9936=function(b,obstacles,actors){
+ if(v106Campaign()&&b&&b.kind==='mg'&&actors!==false){
+  var hits=collectBallisticContacts9936(b,obstacles,actors);
+  var first=hits.length?hits[0].t:2,best=null,bestT=2;
+  gameState.v106Crates.forEach(function(c){
+   if(c.opened)return;
+   var t=segmentCircleContact9936(b,c.x,c.y,15*DEVICE.hitRadius);
+   if(t!==null&&t<=first+.00001&&t<bestT){best=c;bestT=t;}
+  });
+  if(best){
+   b.x=b.px+(b.x-b.px)*bestT;
+   b.y=b.py+(b.y-b.py)*bestT;
+   v106DamageCrate(best,7,'mg');
+   gameState.stats.hits++;
+   return true;
+  }
+ }
+ return v106BallisticOld.apply(this,arguments);
+};
+var v106FlakBlastOld=explodeFlak9950;
+explodeFlak9950=function(x,y,shell){
+ var out=v106FlakBlastOld.apply(this,arguments);
+ if(v106Campaign())gameState.v106Crates.forEach(function(c){
+  if(!c.opened&&Math.hypot(c.x-x,c.y-y)<=Math.max(20,(shell&&shell.radius||20)+9))
+   v106DamageCrate(c,13,'flak');
+ });
+ return out;
+};
+// All three drops appear before the five-second cinematic victory hold.
+// Players can ignore them, but cannot receive their rewards for free.
+var v106VictoryOld=v102ReadyToCelebrate;
+v102ReadyToCelebrate=function(){
+ if(v106Campaign()&&(gameState.v106Spawned||0)<3)return false;
+ return v106VictoryOld.apply(this,arguments);
+};
+var v106UpdateOld=update;
+update=function(dt){
+ v106UpdateOld.apply(this,arguments);
+ if(!v106Campaign()||gameState.mode!=='playing')return;
+ var g=gameState;
+ while(g.v106Spawned<3&&g.levelTime>=g.v106Schedule[g.v106Spawned])
+  v106SpawnRewardCrate();
+ g.v106Crates.forEach(function(c){
+  if(c.opened){c.rewardT=Math.max(0,(c.rewardT||0)-dt);return;}
+  c.age+=dt;c.flash=Math.max(0,c.flash-dt);
+  if(!c.landed){
+   c.y=Math.min(c.landY,c.y+c.vy*dt);
+   c.x+=Math.sin(c.age*2+c.sway)*dt*4.2;
+   if(c.y>=c.landY)c.landed=true;
+  }
+ });
+ g.v106MessageT=Math.max(0,g.v106MessageT-dt);
+ if(!g.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
+};
+
+function v106DrawCrate(c){
+ if(c.opened){
+  if(c.rewardT>0){
+   ctx.save();ctx.globalAlpha=Math.min(1,c.rewardT*2);
+   ctx.fillStyle='#d7f2ba';ctx.font='900 10px system-ui';
+   ctx.textAlign='center';ctx.fillText(c.reward,c.x,c.y-25,200);
+   ctx.restore();
+  }
+  return;
+ }
+ var x=c.x,y=c.y,bob=Math.sin(c.age*3+c.sway)*1.1;
+ ctx.save();
+ if(!c.landed){
+  var py=y-43+bob;
+  ctx.fillStyle='#d1c9a3';ctx.strokeStyle='#394338';ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.moveTo(x-23,py+3);ctx.bezierCurveTo(x-28,py-26,x+26,py-32,x+24,py+3);
+  ctx.quadraticCurveTo(x+13,py+8,x+8,py+3);ctx.quadraticCurveTo(x,py+8,x-8,py+3);ctx.quadraticCurveTo(x-14,py+8,x-23,py+3);
+  ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#75674d';ctx.lineWidth=1.1;ctx.beginPath();
+  ctx.moveTo(x-23,py+3);ctx.lineTo(x-11,y-12);
+  ctx.moveTo(x+24,py+3);ctx.lineTo(x+11,y-12);
+  ctx.moveTo(x,py-12);ctx.lineTo(x,y-12);ctx.stroke();
+ }else{
+  ctx.fillStyle='rgba(28,25,18,.30)';ctx.beginPath();ctx.ellipse(x,y+13,18,4,0,0,TAU);ctx.fill();
+ }
+ ctx.translate(x,y);
+ ctx.fillStyle=c.flash>0?'#f4dfa6':'#a77e45';
+ ctx.strokeStyle='#302b20';ctx.lineWidth=1.8;ctx.beginPath();
+ ctx.rect(-13,-12,26,24);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#81603b';ctx.fillRect(-12,-10,24,5);ctx.fillRect(-12,4,24,5);
+ ctx.strokeStyle='#d3b77e';ctx.lineWidth=2;ctx.beginPath();
+ ctx.moveTo(-11,-10);ctx.lineTo(11,10);ctx.moveTo(11,-10);ctx.lineTo(-11,10);ctx.stroke();
+ ctx.fillStyle='#f4da77';ctx.font='900 16px system-ui';ctx.textAlign='center';
+ ctx.fillText('?',0,5);
+ ctx.restore();
+ // Health bar is deliberately readable at native iPhone resolution.
+ var hp=clamp(c.hp/c.maxHp,0,1);
+ ctx.fillStyle='rgba(16,24,18,.88)';roundRect(ctx,x-22,y-24,44,7,2);ctx.fill();
+ ctx.fillStyle='#cf5748';roundRect(ctx,x-20,y-22,40,3,1);ctx.fill();
+ ctx.fillStyle=hp>.44?'#8bd083':'#efb65d';
+ if(hp>0){roundRect(ctx,x-20,y-22,40*hp,3,1);ctx.fill();}
+}
+var v106RenderOld=render;
+render=function(){
+ v106RenderOld.apply(this,arguments);
+ if(!v106Campaign()||gameState.mode!=='playing')return;
+ var g=gameState;
+ ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
+ g.v106Crates.forEach(v106DrawCrate);
+ if(g.v106MessageT>0&&g.v106Message){
+  ctx.save();ctx.globalAlpha=Math.min(1,g.v106MessageT*2);
+  ctx.fillStyle='rgba(21,44,30,.88)';
+  roundRect(ctx,12,safeTop+143,W-24,30,8);ctx.fill();
+  ctx.font='900 12px system-ui';ctx.textAlign='center';
+  ctx.fillStyle='#d8f1b0';ctx.fillText(g.v106Message.label,W*.5,safeTop+162,W-40);
+  ctx.restore();
+ }
+ g.arcade.allies.forEach(function(a){
+  if(!a.alive||!a.v106Rambo)return;
+  ctx.fillStyle='#bdf0a0';ctx.font='900 10px system-ui';ctx.textAlign='center';
+  ctx.fillText('RAMBO',a.x,a.y-25);
+ });
+ ctx.restore();
+};
+
 })();
