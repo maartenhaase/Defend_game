@@ -13281,7 +13281,8 @@ function v107Stage(v){
 }
 function v107VehicleClass(v){
  var t=v.type||'',f=v.vehicleSpec&&v.vehicleSpec.family||'';
- return t==='halftrack'||/sdkfz/.test(f)?'heavy':
+ return v.tiger994||/tiger|panzer|tank/.test(f)||/tank/.test(t)?'tank':
+  t==='halftrack'||/sdkfz/.test(f)?'heavy':
   t==='scoutcar'||/spah/.test(f)?'armored':
   t==='truck'||t==='trooptruck'||t==='lighttruck'?'truck':'light';
 }
@@ -13295,7 +13296,7 @@ spawnVehicle=function(){
  for(var i=n;i<g.vehicles.length;i++){
   var v=g.vehicles[i];if(v.allied||v.v102Tutorial)continue;
   var cl=v107VehicleClass(v),classBonus={
-   light:1.30,truck:1.55,armored:1.80,heavy:2.05
+   light:1.30,truck:1.55,armored:1.80,heavy:2.05,tank:2.75
   }[cl],legacy=Math.max(.2,enemyProgression(g.levelIndex).vehicleHp);
   var factor=classBonus*Math.pow(1.08,g.levelIndex)/legacy;
   v.hp=Math.max(36,v.hp*factor);v.maxHp=v.hp;
@@ -13319,8 +13320,8 @@ var v107DamageVehicleOld=damageVehicle;
 damageVehicle=function(v,dmg,kind){
  if(!v107Campaign()||!v||!v.alive)return v107DamageVehicleOld.apply(this,arguments);
  var cl=v107VehicleClass(v),adjust=kind==='mg'?
-   (cl==='heavy'?.43:cl==='armored'?.56:cl==='truck'?.85:1.0):
-   kind==='he'?(cl==='heavy'?1.24:cl==='armored'?1.15:1):1;
+   (cl==='tank'?.26:cl==='heavy'?.43:cl==='armored'?.56:cl==='truck'?.85:1.0):
+   kind==='he'?(cl==='tank'?1.36:cl==='heavy'?1.24:cl==='armored'?1.15:1):1;
  var hp=v.hp,out=v107DamageVehicleOld.call(this,v,dmg*adjust,kind);
  if(v.hp<hp){v107MarkVehicle(v,v.x+rand(-9,9),v.y+rand(-13,13),kind);
   var prev=v.v107Notified||1,now=v107Stage(v);
@@ -13553,7 +13554,8 @@ v102HostilesAlive=function(){
  return g.infantry.some(function(e){
   return e.alive&&!e.v102Unarmed&&
    (!e.wounded||medics.some(function(m){
-    return m.faction===e.faction&&dist(m.x,m.y,e.x,e.y)<295;
+    return m.faction===e.faction&&dist(m.x,m.y,e.x,e.y)<295&&
+     !lineOfSightBlockedByWalls(m.x,m.y,e.x,e.y);
    }));
  })||g.vehicles.some(function(v){return v.alive&&!v.allied;})||
    g.air.some(function(a){return a.alive;})||g.paras.some(function(p){return p.alive;});
@@ -13599,8 +13601,13 @@ drawSoldier=function(e){
  if(!v107Campaign()||!e||!e.alive)return out;
  var fear=!e.wounded&&e.v107FearUntil>gameState.time;
  var medic=e.role==='medic'&&e.state==='medicTreat'&&e.medicPatient9938;
- if(!fear&&!e.wounded&&!medic)return out;
+ var markedMedic=e.role==='medic'&&!e.v102Unarmed;
+ if(!fear&&!e.wounded&&!medic&&!markedMedic)return out;
  ctx.save();ctx.translate(e.x,e.y);
+ if(markedMedic){
+  ctx.fillStyle='#e2ead5';ctx.fillRect(-5,-24,10,10);
+  ctx.fillStyle='#397e54';ctx.fillRect(-1.3,-22,2.6,6);ctx.fillRect(-3,-20,6,2);
+ }
  if(fear){
   var phase=(e.v107FearPeek||0),look=phase%3.4>2.7;
   ctx.fillStyle='#444b39';ctx.strokeStyle='#272d25';ctx.lineCap='round';
