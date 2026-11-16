@@ -13167,6 +13167,12 @@ update=function(dt){
  var g=gameState;
  while(g.v106Spawned<3&&g.levelTime>=g.v106Schedule[g.v106Spawned])
   v106SpawnRewardCrate();
+ // Deliver any remaining crates rapidly after a fast enemy wipe.
+ // This prevents an empty battlefield from forcing a long wait.
+ if(g.eventCursor>=g.events.length&&!v102HostilesAlive()&&g.v106Spawned<3){
+  g.v106QuickDrop=(g.v106QuickDrop||0)+dt;
+  if(g.v106QuickDrop>.68){g.v106QuickDrop=0;v106SpawnRewardCrate();}
+ }else g.v106QuickDrop=0;
  g.v106Crates.forEach(function(c){
   if(c.opened){c.rewardT=Math.max(0,(c.rewardT||0)-dt);return;}
   c.age+=dt;c.flash=Math.max(0,c.flash-dt);
@@ -13243,6 +13249,21 @@ render=function(){
   ctx.fillText('RAMBO',a.x,a.y-25);
  });
  ctx.restore();
+};
+
+
+var v106CompleteOld=completeLevel;
+completeLevel=function(){
+ var g=gameState,previous=g&&g.mode;
+ var out=v106CompleteOld.apply(this,arguments);
+ if(v106Campaign()&&g.mode==='shop'&&previous!=='shop'){
+  var opened=(g.v106Crates||[]).filter(function(c){return c.opened;}).length;
+  subEl.textContent='MAP '+(g.levelIndex+1)+'/30 VOLTOOID · '+opened+'/3 KISTEN GEOPEND';
+  summaryEl.style.display='block';
+  summaryEl.textContent='Geen automatische upgrades. Alleen kapotgeschoten parachutekisten geven verbeteringen of eenmalige versterkingen.';
+  deployBtn.textContent=g.levelIndex>=29?'NIEUWE CAMPAGNE →':'VOLGENDE MAP →';
+ }
+ return out;
 };
 
 })();
