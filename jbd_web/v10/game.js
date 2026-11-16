@@ -12644,7 +12644,7 @@ bunkerBulletDamage9910=function(b){
  if(!v105Campaign())return d;
  if(b&&['rocket','shell','grenade'].indexOf(b.kind)>=0)return d;
  var i=gameState.levelIndex;
- return Math.max(1.3+Math.min(.7,i*.027),Math.min(6.7,d*(1.35+i*.012)));
+ return Math.max(3.4+Math.min(1.3,i*.060),Math.min(9.0,d*(1.45+i*.018)));
 };
 var v105DamageBase=damageBunker;
 damageBunker=function(dmg){
@@ -12718,6 +12718,8 @@ buildEncounterPlan=function(){
   var family=fleet[k];
   if(i<4&&['spah','sdkfz250'].indexOf(family)>=0)family='kubel';
   if(i<6&&family==='blitz'&&k>1)family='steyr';
+  if(i>=8&&k===count-1&&i%6===1)family='cavalry';
+  if(i>=10&&k===count-2&&i%6===4)family='quad';
   if(i>=9&&k===count-1&&i%3===0)family='sdkfz250';
   if(i>=12&&k===count-2&&i%4===0)family='spah';
   vehicle(2.3+k*(i<6?7.2:i<16?6.7:6.0),family,k);
@@ -12733,9 +12735,9 @@ buildEncounterPlan=function(){
    'HINDERLAAG VANUIT DE FLANK',{roleMix:'rifle',tactic:i%2?'flankRight':'flankLeft',direction:i%2?4:2,rocketCount:0});
  }else if(twist==='ROOK'){
   add(13.2,'smokeBeat',1,'ROOKGORDIJN', {power:.52});
- }else if(twist==='LMG'&&i>=5){
+ }else if(twist==='LMG'&&i>=3){
   add(15,'lmgSquad',2,'ZWAAR MITRAILLEURTEAM',{tactic:'flankRight',direction:4,rocketCount:0});
- }else if(twist==='KONVOOI'&&i>=5){
+ }else if(twist==='KONVOOI'&&i>=4){
   add(16.5,'foot',2,'BEVEILIGING KONVOOI',{roleMix:'lmg',tactic:'bound',direction:0,rocketCount:0});
  }else if(twist==='SNIPER'&&i>=6){
   add(16.5,'marksmanSquad',2,'SCHERPSCHUTTERS',{tactic:'flankLeft',direction:2,rocketCount:0});
@@ -12747,6 +12749,9 @@ buildEncounterPlan=function(){
   add(17,'artilleryBeat',1,'ARTILLERIE',{power:.30});
  }else if(twist==='LUCHTAANVAL'&&i>=10){
   add(17,'plane',1,'VIJANDELIJKE VLIEGTUIGEN',{});
+ }
+ if(i>=10&&i%7===3){
+  add(28,'plane',1,'VIJANDELIJKE VERKENNER UIT DE LUCHT',{});
  }
  if(i>=15&&i%5===3){
   add(26,'eliteSquad',3,'ELITEEENHEID VAN RECHTS',
