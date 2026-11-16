@@ -111,3 +111,16 @@ The old kill-based automatic allied reinforcement reward has also been disabled.
 - Regression checks cover the actual **map 6 → 7 → 8 → 9 transition**, nine stages, HP growth, medics and treatment interruption, prone hits, shrapnel damage, loot upgrades and desktop/iPhone-sized viewports.
 - An additional accelerated 30-map simulation cleared all stages with five-second afterburn and an enabled Next Level button. This is an automated engine test and does **not** replace hands-on testing on physical devices.
 
+
+
+## V10.7 — voertuigschade, medics, physics en levelovergangen
+
+Deze versie behoudt het V10.6-systeem met drie parachutekisten per map en 18 verdiende beloningen. De oudere beschrijving van automatische upgrades in het historische hoofdstuk V10.5 hierboven geldt niet meer.
+
+**Voertuigen:** de HP van hetzelfde voertuigtype stijgt per map met ongeveer 8% ten opzichte van de vorige. Lichte voertuigen, vrachtwagens, pantserwagens, halfrupsen en aanwezige tank-assets krijgen verschillende basismultipliers. MG-kogels werken minder goed tegen zwaar pantser; FLAK en explosieven zijn effectiever. De negen fases: (1) intact 100–90%, (2) kogelinslagen 90–78%, (3) deuken 78–65%, (4) kapotte ruiten 65–52%, (5) lichte rook 52–40%, (6) zware rook en onderdelenverlies 40–28%, (7) plaatselijke vlammen 28–15%, (8) ernstige brand 15–0% en (9) uitgebrand wrak bij 0%. Branden boven fase 7 worden geblokkeerd. Lokale beschadigingen, vonken, rook en wrakken gebruiken de bestaande voertuigweergave.
+
+**Soldaten:** gezond, bang/liggend, gewond en dood zijn verschillende statussen. Een mogelijk dodelijke MG-inslag kan een nog levende maar uitgeschakelde gewonde opleveren. Die schiet niet meer, kan beperkt kruipen en heeft een medic nodig om te herstellen. De bestaande medic-AI is aangepast: hij selecteert gewonden van dezelfde factie, houdt rekening met gevaar en zichtlijnen en knielt circa 3,8 seconden naast zijn patiënt. Bij genezing krijgt de soldaat circa 55% HP terug; iedere soldaat kan maximaal eenmaal gereanimeerd worden. Sterft de medic, dan stopt de behandeling.
+
+**Hitboxes en scherven:** liggende soldaten hebben kleine, samengestelde raakvlakken voor hoofd, romp en benen in plaats van een grote rechthoek. Bange soldaten kunnen ineenduiken met handen op het hoofd en tijdelijk ophouden met schieten. Munitie uit ontploffende voertuigen kan vijanden raken via lijnsegmentcontrole; schadelijke scherven hebben zwaartekracht, rotatie, grondbotsing en maximaal één beschadigend contact. Decoratieve hulzen blijven ongevaarlijk.
+
+**Levelprogressie en tests:** map 6 → 7 → 8 → 9 is daadwerkelijk achter elkaar doorlopen met de bestaande aanvalsgolven, schadefuncties, drie parachutekisten en de vijf seconden durende wrakanimatie. Daarnaast zijn alle 30 mapovergangen gesimuleerd. De regressies voor voertuigfases, HP-scaling, revives, liggende MG/FLAK-doelen en scherven staan in v10_regression.cjs. iPhone- en desktopcanvas zijn in een gesimuleerde omgeving gerenderd; een fysieke browsertest en live GitHub Pages-publicatie zijn niet onafhankelijk bevestigd.
