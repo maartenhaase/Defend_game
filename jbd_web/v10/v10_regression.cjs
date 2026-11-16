@@ -422,3 +422,28 @@ console.log('PASS: 30 maps, 3 planned drops each, no automatic arsenal progressi
  }
  console.log('PASS V10.7: actual map transitions 6 -> 7 -> 8 -> 9, five-second afterburn and active next buttons.');
 }
+
+
+// V10.7: real Flak projectile flight and blast vs. prone casualties.
+{
+ const h=loadGame(dir),u=h.t;
+ u.start('easy');u.state.levelIndex=6;u.reset();
+ const s=u.state;
+ s.map.cover=[];s.map.rocks=[];s.map.trees=[];
+ s.infantry=[];s.vehicles=[];s.air=[];s.paras=[];
+ s.events=[{t:9999,type:'foot',count:1}];s.eventCursor=0;
+ const e=u.spawnEnemy(s.bunker.x,s.bunker.y-200,'rifle',null,'vehicle');
+ e.hp=e.maxHp=150;e.armorHp=0;
+ e.wounded=true;e.state='woundedCrawl';e.woundedCrawlT=70;
+ e.bleedT=0;e.speed=0;
+ const before=e.hp;
+ s.aim={x:e.x,y:e.y};
+ const button=h.ids.get('jbdFlakFire9951');
+ assert(button&&button.eventEntries.click.length,'Flak touch button installed');
+ button.eventEntries.click[0].fn({preventDefault(){},stopPropagation(){}});
+ assert.equal(s.flak9950.shots.length,1,'one default Flak projectile launched');
+ for(let tick=0;tick<55;tick++)u.step(1/30);
+ assert(e.hp<before,'real Flak blast damages a prone wounded soldier');
+ u.render();
+ console.log('PASS V10.7: Flak projectile airburst physically hits a prone wounded target.');
+}
