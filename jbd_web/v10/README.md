@@ -2,7 +2,7 @@
 
 **iPhone play:** https://maartenhaase.github.io/Defend_game/jbd_web/v10/index.html
 
-This is a **rebalanced progressive campaign (V10.4)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
+This is a **rebalanced progressive campaign (V10.5)** built on the full V9.9.53 Just Bunker Defense engine. The rushed 40-map Quickfire set is replaced with 30 maps; no V9 files were overwritten.
 
 ## First map: the tutorial
 
@@ -72,3 +72,16 @@ All game graphics, vehicles, ballistics, audio and mobile controls come from the
 - Infanterie krijgt een duidelijke geraakte-reactie en een vallende/ineenzakkende doodanimatie in plaats van een onmiddellijke sprite-wissel. Het originele sprite-atlas blijft gebruikt.
 - Rondvliegende munitie bij een voertuigbrand heeft langere ballistische boogbanen en een afzonderlijk plof-/metaalgeluid per schot.
 - De regressietests controleren nu ook een vastgelopen brandend voertuig in map 3, de valanimatie en de munitieboogjes.
+
+
+## V10.5 — snellere vooruitgang en veel levendiger maps
+
+- Map 1 blijft de introductie: één onbewapend voertuig, nu **12 patronen** en een effectievere FLAK. Daarna nemen de tegenstanders veel sneller toe.
+- Al vanaf map 2: **minimaal twee voertuigcontacten plus infanterie**. Vanaf map 4 drie voertuigen en zwaardere vijandtypes; vanaf map 7 vier of meer voertuigen per missie.
+- Gebruik van bestaande sprites en systemen: BMW R75 met zijspan, Kubel, Horch, Steyr, Blitz-transport, Sd.Kfz.-pantserwagens, halfrups, quad-scouts, cavalerie, machinegeweerteams, scherpschutters, rook, artillerie en vliegtuigen. Gepland per map met verrassingsmomenten.
+- Het MG-magazijn groeit **iedere twee maps** en krijgt extra bonussen; het aantal patronen per salvo stijgt van 3 naar 4 op map 4, naar 5 op map 8 en naar 6 vanaf map 14. Herladen wordt sneller en vuur wordt sterker en preciezer.
+- De FLAK krijgt **2 schoten per druk** vanaf map 4, **3 vanaf map 9** en **4 vanaf map 16**. Ook inslagschade, radius en herlaadsnelheid verbeteren.
+- Vijandelijk voertuigvuur wordt vanaf map 3 weer mogelijk. Een werkelijke bunkerinslag doet nu zichtbaar HP-schade en geeft duidelijke visuele schadefeedback, in plaats van de onmerkbare afkets-schade van 0,055 HP uit de oude engine.
+- De vroegere V10.4 bescherming tegen brandende/uitgeschakelde voertuigen blijft behouden. De campagne behoudt 30 maps met de vijfseconden-afronding.
+- Automatische upgrades blijven werken zonder winkelkeuzes. Op het startmenu kun je iedere map meteen testen.
+
