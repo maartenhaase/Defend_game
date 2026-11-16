@@ -12460,7 +12460,11 @@ update=function(dt){
   var burning=!!v.fuelIgnited||
    v.state==='smoulder9941'||v.burnPhase9941==='cookoff'||
    v.burnPhase9941==='burntOut';
-  if(burning && (v.currentSpeed||0)<3){
+  // The engine can auto-extinguish an ammo fire just before the hull
+  // becomes terminal. A previously burning, stranded target must not
+  // reset its destruction clock merely because the flame went out.
+  var cooledStranded=(v.v104BurnSec||0)>0&&v.burnPhase9941==='cooled9947';
+  if((burning||cooledStranded) && (v.currentSpeed||0)<3){
    v.v104BurnSec=(v.v104BurnSec||0)+dt;
    if(v.v104BurnSec>5.5 && !v.v104BurnFinished){
     v.v104BurnFinished=true;
