@@ -21,24 +21,24 @@ for(let i=0;i<30;i++){
  assert(s.map.v10RouteSignature,'new geography '+i);
  assert(s.map.v10RouteSignature.startsWith('ROAD-'+String(i+1).padStart(2,'0')),'unique map geometry '+i);
  assert(s.shortBattle&&s.shortBattle.maxDuration>=90,'no ultra-short time pressure '+i);
- assert(s.events.every(e=>e.t<39),'spawns paced and finite '+i);
- assert(s.events.length<=5,'not an overwhelming number of waves '+i);
- assert.equal(s.profile.primaryMag,9+Math.floor(i/6)*3,'three-burst magazines scale slowly '+i);
- assert(s.profile.primaryReload>=1.65,'reload remains noticeable '+i);
+ assert(s.events.every(e=>e.t<50),'finite staggered encounters '+i);
+ assert(s.events.length<=14,'bounded variety of waves '+i);
+ assert.equal(s.profile.primaryMag,Math.min(60,12+3*Math.floor(i/2)+3*Math.floor(i/5)),'magazine improves quickly '+i);
+ assert(s.profile.primaryReload>=.95,'reload remains noticeable '+i);
  assert(!['coast','snow','desert','jungle'].includes(m.theme),'no sudden beach/desert/ice jumps');
  assert(m.name===undefined||m.title===t.levels[i].name,'map identity '+i);
- const expected={rate:0,range:0,armor:0,special:0};
- for(let k=0;k<i;k++)expected[['rate','range','armor','special'][k%4]]++;
+ const expected={rate:Math.min(20,Math.round(i*1.30)),special:Math.min(20,Math.round(i*1.55)),range:Math.min(20,Math.floor(i*.86)),armor:Math.min(20,Math.floor(i*.70))};
  for(const key of Object.keys(expected))assert.equal(s.save.upgrades[key],expected[key],'automatic upgrade '+key+' map '+i);
  const f=units.reduce((n,e)=>n+e.count,0),v=vehicles.length;
- assert(f>=prevInf&&v>=prevVehicle,'strictly non-decreasing difficulty at map '+i);
+ if(i>0){assert(v>=2,'more than one vehicle from map 2: '+i);assert(f>=2,'infantry joins from map 2: '+i);}
+ if(i>=6)assert(v>=4,'varied vehicle columns by map 7: '+i);
  prevInf=f;prevVehicle=v;
  if(i===0){
   assert.equal(s.events.length,1,'first map has exactly one encounter');
   assert.equal(f,0,'first map no foot soldiers');
   assert.equal(v,1,'first map one vehicle');
   assert.equal(vehicles[0].passengersOverride,0,'no passenger reinforcements in first car');
-  assert.equal(s.profile.primaryMag,9,'3x3 bullets');
+  assert.equal(s.profile.primaryMag,12,'four 3-shot salvos in tutorial');
   assert.equal(s.save.upgrades.rate,0,'no advanced gun in first map');
   for(let n=0;n<135;n++)t.step(1/30);
   assert.equal(s.vehicles.length,1,'one actual spawned vehicle');
@@ -49,7 +49,7 @@ for(let i=0;i<30;i++){
   assert(flak,'flak button exists');
   flak.eventEntries.click[0].fn({preventDefault(){},stopPropagation(){}});
   assert(s.flak9950&&s.flak9950.shots.length===1,'flak releases exactly ONE shell');
-  assert(s.flak9950.shots[0].vehicleDamage<=10,'flak starts weak');
+  assert(s.flak9950.shots[0].vehicleDamage>=15,'flak is useful from map one');
   t.fpsInput(s.vehicles[0].x,s.vehicles[0].y);
   assert(s.fps9950&&s.fps9950.queued.length>=2&&s.fps9950.queued.length<=3,'tap starts 3-shot salvo');
  }
@@ -62,7 +62,7 @@ assert(biomes.size>=5,'geographic environments evolve');
 assert(features.size>=7,'varied obstacle terrain');
 assert.equal(t.tour[0].theme,'village');
 assert.equal(t.tour[29].theme,'metropolis');
-console.log('PASS: 30 progressive missions, single slow vehicle in level 1, three 3-shot bursts, single weak Flak, upgrades, continent geography and iPhone rendering.');
+console.log('PASS V10.5: 30 missions, fast magazine and skill upgrades, multiple earlier vehicles, mixed infantry, varied terrain and iPhone rendering.');
 
 // V10.2: test the exact problem shown in the iPhone screenshot.
 // Do NOT award a map while the vehicle is parked, disabled or still alive.
@@ -180,4 +180,43 @@ console.log('PASS: 30 progressive missions, single slow vehicle in level 1, thre
  u.ammoStep(1/30);
  assert(b.vy>vy,'cartridge curves under gravity on each frame');
  console.log('PASS V10.4: infantry fall, body-impact reaction, extended curved ammo trails.');
+}
+
+
+// V10.5: upgrades actually increase the number of bullets, blast
+// count, damage feedback and available enemy assets early in the game.
+{
+ const h=loadGame(dir),u=h.t;
+ u.start('easy');
+ u.state.levelIndex=2;u.reset();
+ const s=u.state;
+ assert(s.events.filter(e=>['jeep','scoutcar','truck','trooptruck','lighttruck','halftrack'].includes(e.type)).length>=2,
+  'map 3 already has multiple vehicle contacts');
+ assert(s.events.some(e=>e.type==='foot'),'map 3 already includes infantry');
+ for(let k=0;k<113;k++)u.step(1/30);
+ const car=s.vehicles.find(v=>v.alive&&!v.allied);
+ assert(car&&car.hasMG,'map 3 enemy patrol can actually fire back');
+ s.bunkerGraceT=0;
+ const before=s.bunker.hp,shot={kind:'rifle',x:s.bunker.x,y:s.bunker.y,
+    vx:0,vy:550,dmg:1.4,sourceX9910:s.bunker.x,sourceY9910:s.bunker.y-180};
+ const damage=u.bunkerBulletDamage(shot);
+ u.damageBunker(damage);
+ assert(before-s.bunker.hp>=1,'real bunker hit visibly reduces HP');
+ assert(s.v105HitT>0&&s.v105LastHit>=1,'visible on-screen damage reaction');
+ u.state.levelIndex=3;u.reset();
+ const lvl4=u.state;
+ const flak=h.ids.get('jbdFlakFire9951');
+ assert(flak,'FLAK fire button present');
+ flak.eventEntries.click[0].fn({preventDefault(){},stopPropagation(){}});
+ assert(lvl4.flak9950&&lvl4.flak9950.shots.length===2,
+   'FLAK unlocks two genuinely aimed shells by map 4');
+ u.state.levelIndex=10;u.reset();
+ assert(u.state.events.some(e=>e.type==='plane'),'aircraft appear during the first third of the route');
+ assert(u.state.events.some(e=>e.vehicleId&&e.vehicleId.indexOf('quad')>=0),
+   'quad scout vehicles use the existing sprite atlas');
+ u.state.levelIndex=13;u.reset();
+ assert(u.state.events.some(e=>e.vehicleId&&e.vehicleId.indexOf('cavalry')>=0),
+   'cavalry encounter uses the existing mounted soldier assets');
+ u.render();
+ console.log('PASS V10.5: enemy MG fires by map 3, real HP damage, two-shell FLAK by map 4, aircraft, quad and cavalry.');
 }
