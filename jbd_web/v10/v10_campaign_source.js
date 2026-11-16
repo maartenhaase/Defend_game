@@ -734,3 +734,186 @@ render=function(){
  v103RenderBase.apply(this,arguments);
  if(v103Campaign())v103HideLegacySupport();
 };
+
+
+/* ============================================================
+   V10.4 — BURNOUT SOFTLOCK, KINETIC DEATHS & AMMO COOKOFF ARCS
+   Deliberately scoped to JBD V10 (never the other games).
+   ============================================================ */
+function v104Campaign(){return !!(gameState&&v103Campaign());}
+
+// Distinguish a still-drivable target from a destroyed/burnt-out wreck.
+// A disabled or ignited vehicle never requires a further hit after its
+// actual burnout, because the old engine removes its hitbox at that point.
+var v104ReadyOld=v102ReadyToCelebrate;
+v102ReadyToCelebrate=function(){
+ if(!v104Campaign())return v104ReadyOld.apply(this,arguments);
+ var g=gameState;
+ if(g.mode!=='playing'||g.eventCursor<g.events.length)return false;
+ if(v102HostilesAlive())return false;
+ if(g.levelIndex===0){
+  var car=g.v102IntroCar;
+  if(car&&!car.alive&&(car.hp<=0||car.burntOut9941||car.burnPhase9941==='burntOut'||car.burnPhase9941==='destroyed'))
+   g.v102IntroDestroyed=true;
+  return !!g.v102IntroDestroyed;
+ }
+ if(v104ReadyOld.apply(this,arguments))return true;
+ return (g.stats.vehicleKills||0)>0 ||
+  g.wrecks.some(function(w){return !!(w.exploded||w.carcass||w.burntOut9941||w.burnT>0);});
+};
+
+// Incendiary / ammo damage previously left an immobile, burning and
+// sometimes non-targetable vehicle alive forever. Give it time to burn,
+// then finish its hull through the engine's *normal* destruction path.
+var v104UpdateOld=update;
+update=function(dt){
+ v104UpdateOld.apply(this,arguments);
+ var g=gameState;
+ if(!v104Campaign()||g.mode!=='playing')return;
+ var remaining=g.eventCursor>=g.events.length;
+ g.vehicles.forEach(function(v){
+  if(!v||!v.alive||v.allied)return;
+  var burning=!!v.fuelIgnited||
+   v.state==='smoulder9941'||v.burnPhase9941==='cookoff'||
+   v.burnPhase9941==='burntOut';
+  if(burning && (v.currentSpeed||0)<3){
+   v.v104BurnSec=(v.v104BurnSec||0)+dt;
+   if(v.v104BurnSec>5.5 && !v.v104BurnFinished){
+    v.v104BurnFinished=true;
+    damageVehicle(v,Math.max(150,(v.hp||0)+(v.armorHp||0)+80),'he');
+    g.v102LastDestroyed={x:v.x,y:v.y};
+   }
+  }else v.v104BurnSec=0;
+  // Targets that have physically left the bottom of the camera still
+  // need to be destroyed. Return the hull to a reachable road position.
+  if(remaining&&v.y>H+45&&!v.v104Returned){
+   v.v104Returned=true;v.x=clamp(g.map.road.x,35,W-35);
+   v.y=H*.61;v.currentSpeed=0;v.sideVel=0;v.state='driverless9935';
+   v.hasMG=false;g.message='DOEL TERUG IN SCHOTSVELD';g.messageT=1.6;
+  }
+ });
+ // The legacy AI can keep an offscreen foot soldier alive indefinitely.
+ // Do not make an invisible unit block the next-map button forever.
+ if(remaining&&g.levelTime>32){
+  g.infantry.forEach(function(e){
+   if(!e.alive||e.v102Unarmed||e.allied)return;
+   var off=e.x< -55||e.x>W+55||e.y<safeTop-125||e.y>H+65;
+   e.v104Offscreen=off?(e.v104Offscreen||0)+dt:0;
+   if(e.v104Offscreen>6){e.alive=false;e.hp=0;e.state='dead';e.deadT=8;}
+  });
+ }
+ // Re-evaluate the mission even if the old engine has already detached
+ // the burnt target from its live-vehicle list.
+ if(!g.v102VictoryHold&&v102ReadyToCelebrate())completeLevel();
+ // Guard against a legacy update ending the burn hold one frame too early.
+ if(g.mode==='playing'&&g.v102VictoryHold&&g.v102VictoryHold.elapsed>=5)
+  completeLevel();
+};
+
+// Original atlas is retained; instead of vanishing, a fatal hit produces
+// a readable 0.9-second stagger / fall / collapse before the dead pose.
+var v104KillOld=killInfantry;
+killInfantry=function(e,kind){
+ if(e&&e.alive){
+  e.v104Fall={side:((e.variant||0)%2?1:-1),
+   born:gameState?gameState.time:0,thud:false};
+  e.v104Flinch=0;
+ }
+ return v104KillOld.apply(this,arguments);
+};
+var v104HitOld=damageInfantry;
+damageInfantry=function(e,dmg,kind){
+ var alive=!!(e&&e.alive),ret=v104HitOld.apply(this,arguments);
+ if(alive&&e&&e.alive){
+  e.v104Flinch=.22;
+  e.v104FlinchSide=((e.variant||0)%2?1:-1);
+ }
+ return ret;
+};
+var v104SpriteOld=spritePose;
+spritePose=function(e){
+ if(e&&!e.alive&&e.v104Fall&&!e.charred&&!e.severed9938){
+  if(e.deadT<.24)return 'idle';
+  if(e.deadT<.68)return 'dead1';
+ }
+ return v104SpriteOld.apply(this,arguments);
+};
+var v104SoldierOld=drawSoldier;
+drawSoldier=function(e){
+ if(!e)return;
+ if(e.v104Fall&&!e.alive&&!e.charred&&!e.severed9938&&e.deadT<1.25){
+  var t=Math.max(0,e.deadT),up=clamp(t/.64,0,1);
+  var settle=1-clamp((t-.68)/.48,0,1);
+  var angle=e.v104Fall.side*(1-Math.pow(1-up,3))*1.08*settle;
+  ctx.save();ctx.translate(e.x,e.y+1);
+  ctx.rotate(angle);ctx.translate(-e.x,-e.y-1);
+  ctx.translate(0,Math.sin(Math.min(1,t/.9)*Math.PI)*2.6);
+  v104SoldierOld.apply(this,arguments);ctx.restore();
+  return;
+ }
+ if(e.alive&&e.v104Flinch>0){
+  ctx.save();ctx.translate(e.x,e.y);
+  ctx.rotate((e.v104FlinchSide||1)*e.v104Flinch*.65);
+  ctx.translate(-e.x,-e.y);
+  v104SoldierOld.apply(this,arguments);ctx.restore();
+  return;
+ }
+ return v104SoldierOld.apply(this,arguments);
+};
+var v104InfantryOld=updateInfantry;
+updateInfantry=function(dt){
+ v104InfantryOld.apply(this,arguments);
+ if(!gameState)return;
+ gameState.infantry.forEach(function(e){
+  if(e.v104Flinch>0)e.v104Flinch=Math.max(0,e.v104Flinch-dt);
+  if(e.v104Fall&&!e.v104Fall.thud&&!e.alive&&e.deadT>=.48){
+   e.v104Fall.thud=true;
+   pushEffect({type:'dust',x:e.x,y:e.y+5,r:2.3,t:0,life:.36});
+   AudioSys.tone('flesh',.22,{pan:clamp((e.x-W/2)/(W*.6),-.8,.8)});
+  }
+ });
+};
+
+// Ammunition cook-off now travels visibly further along curved ballistic
+// arcs, with a short audible pop on each escaping round.
+emitCookoffRound9943=function(v,angle){
+ var f=field9943(),a=angle==null?rand(0,TAU):angle,speed=rand(315,455);
+ var sx=v.x+Math.cos(a)*9,sy=v.y+Math.sin(a)*9;
+ f.bullets.push({x:sx,y:sy,px:sx,py:sy,
+  vx:Math.cos(a)*speed,vy:Math.sin(a)*speed-45,
+  life:rand(.58,.82),damage:11,source:v,v104Arc:true,v104Age:0});
+ if(f.bullets.length>42)f.bullets.shift();
+ pushEffect({type:'gunSpark',x:sx,y:sy,vx:Math.cos(a)*33,
+  vy:Math.sin(a)*33,t:0,life:.18});
+ var pan=clamp((v.x-W/2)/(W*.55),-.85,.85);
+ AudioSys.weapon('MG34','lmg',.29,{pan:pan});
+ if((v.cookoffShots9943||0)%2===0)AudioSys.tone('metal',.24,{pan:pan});
+ v.cookoffShots9943=(v.cookoffShots9943||0)+1;
+};
+var v104CookoffStepOld=updateCookoffRounds9943;
+updateCookoffRounds9943=function(dt){
+ field9943().bullets.forEach(function(b){
+  if(b.v104Arc){b.vy+=255*dt;b.v104Age+=dt;}
+ });
+ return v104CookoffStepOld.apply(this,arguments);
+};
+var v104DrawFieldOld=drawField9943;
+drawField9943=function(){
+ v104DrawFieldOld.apply(this,arguments);
+ if(!gameState)return;
+ ctx.save();ctx.lineCap='round';
+ field9943().bullets.forEach(function(b){
+  if(!b.v104Arc)return;
+  var n=Math.hypot(b.vx,b.vy)||1;
+  var len=clamp(n*.067,19,32),ux=b.vx/n,uy=b.vy/n;
+  var x0=b.x-ux*len,y0=b.y-uy*len;
+  var bow=Math.min(9,3+(b.v104Age||0)*11);
+  var cx=(b.x+x0)*.5-uy*bow,cy=(b.y+y0)*.5+ux*bow;
+  var alpha=clamp(b.life/.30,0,1);
+  ctx.globalAlpha=.36*alpha;ctx.strokeStyle='#dd7b3c';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(cx,cy,b.x,b.y);ctx.stroke();
+  ctx.globalAlpha=.92*alpha;ctx.strokeStyle='#ffe6a0';ctx.lineWidth=1.45;
+  ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(cx,cy,b.x,b.y);ctx.stroke();
+ });
+ ctx.restore();
+};
