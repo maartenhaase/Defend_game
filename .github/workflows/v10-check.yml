@@ -1,4 +1,4 @@
-name: V10.6 parachute loot campaign tests
+name: V10.7 campaign, medics and vehicle damage tests
 on:
   push:
     branches: [main]
@@ -20,5 +20,5 @@ jobs:
           node-version: '22'
       - name: Check V10 JavaScript
         run: node --check jbd_web/v10/game.js
-      - name: Validate 30 maps, earned-only loot, 3 parachute crates, MG collisions and Next Map
+      - name: Validate 30 maps, nine-stage damage, medics, loot, shrapnel and Next Map
         run: node jbd_web/v10/v10_regression.cjs
