@@ -126,3 +126,58 @@ console.log('PASS: 30 progressive missions, single slow vehicle in level 1, thre
  assert(s.map.v10RouteSignature.startsWith('ROAD-02'),'the right terrain is loaded');
  console.log('PASS V10.3: Next Map click, actual wreck, fluent native-sprite crew, shooting while burning, no support overlay, and a guaranteed result after 5s despite an intruder.');
 }
+
+
+// V10.4: reproduce a real mid-campaign softlock. A stationary vehicle
+// catches fire, appears to have no shootable hitbox and must still
+// complete by the *ordinary* kill -> 5-second wreck -> Next Map path.
+{
+ const h=loadGame(dir),u=h.t;
+ u.start('easy');u.state.levelIndex=2;u.reset();
+ const s=u.state;
+ for(let n=0;n<120;n++)u.step(1/30);
+ const car=s.vehicles.find(v=>v.alive&&!v.allied);
+ assert(car,'map 3 starts with a real target vehicle');
+ s.eventCursor=s.events.length;s.infantry=[];s.air=[];s.paras=[];
+ car.currentSpeed=0;car.speed=0;car.state='smoulder9941';
+ car.fuelIgnited=true;car.burnPhase9941='cookoff';
+ car.burnPlan9941='ammo';car.fuelBurnT=120;car.fuelBurnDuration9937=120;
+ for(let n=0;n<230&&s.mode==='playing'&&!s.v102VictoryHold;n++)u.step(1/30);
+ assert(!car.alive,'immobile burning target eventually genuinely destroyed');
+ assert(s.v102VictoryHold,'burnout starts the proper five-second aftermath');
+ const start=s.v102VictoryHold.elapsed;
+ for(let n=0;n<190&&s.mode==='playing';n++)u.step(1/30);
+ assert.equal(s.mode,'shop','map 3 cannot be stuck with a burning wreck forever');
+ assert.equal(h.ids.get('deploy').disabled,false,'Next Map available after burnout');
+ console.log('PASS V10.4: burning, untargetable map-3 vehicle is actually destroyed and the level finishes.');
+}
+
+// V10.4: a fatal shot leads through a visible fall, and ammunition
+// cook-off produces longer, gravity-curved projectiles.
+{
+ const h=loadGame(dir),u=h.t;
+ u.start('easy');u.state.levelIndex=2;u.reset();
+ const s=u.state;
+ s.events=[];s.eventCursor=0;
+ const enemy=u.spawnEnemy(190,280,'rifle',null,'vehicle');
+ enemy.hp=5;enemy.armorHp=0;
+ u.damageInfantry(enemy,100,'mg');
+ assert.equal(enemy.alive,false,'fatal hit actually kills');
+ assert(enemy.v104Fall,'fatal hit schedules a fall animation');
+ for(let n=0;n<18;n++)u.step(1/30);
+ assert(enemy.deadT>=.48,'corpse spends frames in the falling state');
+ assert(enemy.v104Fall.thud,'fall makes a landing/thud event');
+ u.render();
+ const v={x:190,y:380,cookoffShots9943:0};
+ const f=u.field();
+ const previous=f.bullets.length;
+ u.ammoEmit(v,Math.PI*1.5);
+ assert.equal(f.bullets.length,previous+1,'one cartridge escapes the vehicle');
+ const b=f.bullets[f.bullets.length-1];
+ assert.equal(b.v104Arc,true,'cartridge has ballistic arc metadata');
+ assert(b.life>=.58,'ammo now travels further than the old short streak');
+ const vy=b.vy;
+ u.ammoStep(1/30);
+ assert(b.vy>vy,'cartridge curves under gravity on each frame');
+ console.log('PASS V10.4: infantry fall, body-impact reaction, extended curved ammo trails.');
+}
