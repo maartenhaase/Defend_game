@@ -124,3 +124,13 @@ Deze versie behoudt het V10.6-systeem met drie parachutekisten per map en 18 ver
 **Hitboxes en scherven:** liggende soldaten hebben kleine, samengestelde raakvlakken voor hoofd, romp en benen in plaats van een grote rechthoek. Bange soldaten kunnen ineenduiken met handen op het hoofd en tijdelijk ophouden met schieten. Munitie uit ontploffende voertuigen kan vijanden raken via lijnsegmentcontrole; schadelijke scherven hebben zwaartekracht, rotatie, grondbotsing en maximaal één beschadigend contact. Decoratieve hulzen blijven ongevaarlijk.
 
 **Levelprogressie en tests:** map 6 → 7 → 8 → 9 is daadwerkelijk achter elkaar doorlopen met de bestaande aanvalsgolven, schadefuncties, drie parachutekisten en de vijf seconden durende wrakanimatie. Daarnaast zijn alle 30 mapovergangen gesimuleerd. De regressies voor voertuigfases, HP-scaling, revives, liggende MG/FLAK-doelen en scherven staan in v10_regression.cjs. iPhone- en desktopcanvas zijn in een gesimuleerde omgeving gerenderd; een fysieke browsertest en live GitHub Pages-publicatie zijn niet onafhankelijk bevestigd.
+
+
+## V10.8 — dynamische upgrades tijdens ieder level
+
+- Nieuw: **4–9 vaste upgrademomenten per map**, gekoppeld aan overgebleven vijandelijke dreiging en voertuigschade in plaats van verstreken tijd. Ook rond 70–95% verschijnen verbeteringen.
+- **Gewogen categorieën:** Magazine Size 35%, Reload Speed 30%, Damage 15%, Fire Rate 10%, overige originele bonussen 10%. Bij vrije slots geldt deze verdeling; de gegarandeerde slots kunnen de feitelijke kans verhogen.
+- **Garanties:** twee magazijnverbeteringen per map, één reload per map en vanaf map 4 twee reloads, zolang de betreffende bonus niet gemaximaliseerd is. Geen drie dezelfde upgrades achter elkaar.
+- **Effecten:** per gekozen moment +15% magazijn, 8% kortere herlaadtijd, +8% MG-schade of +6% MG-vuursnelheid. De originele V10.7 schadebalans en 18 kistbonussen blijven bestaan; maximumwaarden voorkomen onbegrensde stapeling.
+- **Veilig kiezen:** wanneer een mijlpaal wordt bereikt, pauzeert het gevecht en verschijnt de verdiende upgrade met de knop *UPGRADE PAKKEN*. Meerdere snel verdiende beloningen worden in een wachtrij bewaard. De oude vijf seconden nabrand blijven behouden.
+- **Techniek:** `build_v108.cjs` injecteert `v10_8_upgrades.js` binnen de bestaande grote game-closure in de deploymentversie; het origineel `game.js` blijft ongewijzigd. `v108_regression.cjs` test de samengestelde versie en de oorspronkelijke drie parachutekisten.
