@@ -1,4 +1,4 @@
-name: V10.7 campaign, medics and vehicle damage tests
+name: V10.8 campaign, damage and milestone upgrades tests
 on:
   push:
     branches: [main]
@@ -22,3 +22,11 @@ jobs:
         run: node --check jbd_web/v10/game.js
       - name: Validate 30 maps, nine-stage damage, medics, loot, shrapnel and Next Map
         run: node jbd_web/v10/v10_regression.cjs
+
+      - name: Compile the V10.8 game and verify scheduled upgrade integration
+        run: |
+          mkdir -p /tmp/jbd-v108
+          node jbd_web/v10/build_v108.cjs --output /tmp/jbd-v108/game.js
+          cp jbd_web/v10/index.html /tmp/jbd-v108/index.html
+          node --check /tmp/jbd-v108/game.js
+          JBD_GAME_DIR=/tmp/jbd-v108 node jbd_web/v10/v108_regression.cjs
