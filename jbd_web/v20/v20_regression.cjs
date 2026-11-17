@@ -45,5 +45,5 @@ assert(u.fire('mg',s.bunker.x,s.bunker.y-140),'MG is still fireable');
 u.shotStep(1/60);u.render();
 // Completion button and all mission objects remain in legacy V10.8.
 assert(g.ids.get('deploy'),'original Next Map UI remains wired');
-assert(g.ids.get('v108Accept')===null||!!g.ids.get('v108Accept'),'upgrade selector remains in the runtime');
+assert(js.includes('v108UiCreate')&&js.includes('v108Accept'),'original upgrade selection handler remains compiled');
 console.log('PASS BUNKER DEFENSE 2.0: 30 maps, scheduled upgrades, 3 bonus crates, iPhone settings and pausing, original MG/vehicle drawing and touch controls.');
