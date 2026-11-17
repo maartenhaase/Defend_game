@@ -73,7 +73,8 @@ spawnVehicle=function(type,count,id,direction,passengers){
   }else if(/kubel|horch/.test(v.vehicleFamily||'')){
    // Four helmets are visible; keep the original high-quality jeep sprite.
    v.v21FourCrew=true;
-   if(v.passengers<4&&v.state!=='parked')v.passengers=4;
+   // Keep the one-vehicle introductory map's original harmless crew rules.
+   if(i>0&&v.passengers<4&&v.state!=='parked')v.passengers=4;
   }
   // Broadly 2.5–3.5x longer survival. A small, accessible level-1 step;
   // curves still scale with the existing 30-map vehicle progression.
