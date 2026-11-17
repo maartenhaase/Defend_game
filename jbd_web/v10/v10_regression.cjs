@@ -241,7 +241,7 @@ console.log('PASS: 30 maps, 3 planned drops each, no automatic arsenal progressi
  s.events=[{t:9999,type:'foot',count:1}];s.eventCursor=0;
  const soldier=u.spawnEnemy(195,400,'rifle',null,'vehicle');
  soldier.hp=soldier.maxHp=90;soldier.armorHp=0;soldier.state='prone';soldier.suppression=.96;
- h.setRandom(0);u.enemyStep(1/30);
+ s.time=1;h.setRandom(0);u.enemyStep(1/30); // Fear needs positive game time.
  assert(soldier.v107FearUntil>s.time,'intense fire causes a fearful prone pose');
  assert(soldier.state==='prone'&&soldier.muzzle<=0,'fear temporarily prevents shooting');
  const before=soldier.hp;
