@@ -6,6 +6,7 @@ function v20LoadSettings(){
  try{
   var stored=JSON.parse(localStorage.getItem('jbd_v20_mix')||'{}');
   if(V20_CONFIG[stored.quality])v20Settings.quality=stored.quality;
+  if(typeof stored.polish==='boolean')v20Settings.polish=stored.polish;
   ['fx','ambient','music'].forEach(function(k){
    if(Object.prototype.hasOwnProperty.call(stored,k))v20Settings[k]=v20Clamp(stored[k]);
   });
@@ -94,6 +95,19 @@ function v20InitSettings(){
  function updateButtons(){buttons.forEach(function(p){
   p.button.style.background=p.id===v20Settings.quality?'#85652d':'#344735';
  });} updateButtons();
+ var compare=document.createElement('label');
+ compare.style.cssText='display:block;margin:11px 0;font:800 11px/1.4 system-ui;color:#f1d389';
+ var check=document.createElement('input');check.type='checkbox';check.checked=v20Settings.polish;
+ check.style.cssText='margin-right:9px;accent-color:#e1be62;min-width:17px;min-height:17px';
+ check.setAttribute('aria-label','Extra 2.0-effectlaag aan of uit voor vergelijking');
+ check.addEventListener('change',function(){
+  v20Settings.polish=!!check.checked;
+  if(!v20Settings.polish){v20Lights.length=0;v20Particles.length=0;}
+  v20SaveSettings();
+ });
+ compare.appendChild(check);
+ compare.appendChild(document.createTextNode('2.0-EFFECTLAAG (A/B VERGELIJKEN)'));
+ body.appendChild(compare);
  body.appendChild(v20MakeSlider('EFFECTEN','fx'));
  body.appendChild(v20MakeSlider('OMGEVING','ambient'));
  body.appendChild(v20MakeSlider('MUZIEK (GEEN TRACK TOEGEVOEGD)','music'));
