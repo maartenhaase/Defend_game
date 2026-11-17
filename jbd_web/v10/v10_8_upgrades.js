@@ -43,7 +43,7 @@ function v108Anchors(count,level){
  a[0]='magazine';
  a[Math.floor(count*.35)]='mgReload';
  a[Math.floor(count*.68)]='magazine';
- if(level>=4)a[count-2]='mgReload';
+ if(level>=4)a[count-1]='mgReload';
  return a;
 }
 function v108WeightedChoice(last){
