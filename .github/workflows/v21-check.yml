@@ -1,0 +1,27 @@
+name: Bunker Defense 2.1 — challenge and vehicle regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'jbd_web/v21/**'
+      - 'jbd_web/v20/**'
+      - 'jbd_web/v10/**'
+      - '.github/workflows/v21-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build isolated V2.1 using original game assets
+        run: node jbd_web/v21/build.cjs --output /tmp/jbd21
+      - name: Check full engine syntax
+        run: node --check /tmp/jbd21/game.js
+      - name: Regression test 30 maps, ammo, crates, vehicles and easy balance
+        run: JBD_GAME_DIR=/tmp/jbd21 node jbd_web/v21/v21_regression.cjs
