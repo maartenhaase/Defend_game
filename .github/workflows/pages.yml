@@ -49,6 +49,9 @@ jobs:
           node jbd_web/v20/build.cjs --output _site/jbd_web/v20
           node --check _site/jbd_web/v20/game.js
           JBD_GAME_DIR="$PWD/_site/jbd_web/v20" node jbd_web/v20/v20_regression.cjs
+          node jbd_web/v21/build.cjs --output _site/jbd_web/v21
+          node --check _site/jbd_web/v21/game.js
+          JBD_GAME_DIR="$PWD/_site/jbd_web/v21" node jbd_web/v21/v21_regression.cjs
           test -s _site/jbd_web/v10/index.html
           test -s _site/jbd_web/v10/game.js
           node --check _site/jbd_web/v10/game.js
