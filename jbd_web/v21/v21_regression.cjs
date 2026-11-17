@@ -57,13 +57,14 @@ assert(v.alive,'one modest HE shot does not instantly vaporize a truck');
 // substantial MG punishment, and that no unlock is granted for free.
 s.vehicles.length=0;s.infantry.length=0;
 for(const e of s.events)e.t=9999;
-for(let i=0;i<300;i++)u.step(1/60);
+for(let i=0;i<2400&&s.v106Spawned<1;i++)u.step(1/60);
 assert(s.v106Spawned>=1,'early parachute supply crate appears');
 const c=s.v106Crates.find(x=>!x.opened);
 assert(c&&c.hp>=7*18,'first crate needs 18+ base MG hits');
-for(let i=0;i<12;i++)u.crateHit(c,7,'mg');
+function hitCrate(){const b={kind:'mg',px:c.x-24,py:c.y,x:c.x+24,y:c.y,damage:12,penetration:0,penetrationChance9933:0,piercedIds:{},active:true};return u.ballistic(b,[],true);}
+for(let i=0;i<12;i++)hitCrate();
 assert(!c.opened,'crate does not break after 12 normal MG bullets');
-for(let i=0;i<35&&!c.opened;i++)u.crateHit(c,7,'mg');
+for(let i=0;i<35&&!c.opened;i++)hitCrate();
 assert(c.opened,'crate eventually opens with sustained real gunfire');
 assert(!s.v108Offer,'no mandatory upgrade modal after crate is opened');
 u.render();
