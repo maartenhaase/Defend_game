@@ -45,6 +45,31 @@ for(const id of specIds){
  if(id==='v21_medicquad')assert(!v.hasMG&&v.unloadLeft===2,'quad has driver and medic');
  if(id==='v21_medtruck')assert(!v.hasMG&&v.unloadLeft>=4,'medical truck carries Class A medics');
 }
+// Real staggered transport unload and combat-ready medic roles.
+{
+ const h2=loadGame(dir),p=h2.t;p.start('easy');p.state.levelIndex=5;p.reset();
+ const q=p.state;
+ for(const [id,expectedRole] of [['v21_crossbike','storm'],['v21_medicquad','medic'],['v21_medtruck','medic']]){
+  q.vehicles.length=0;q.infantry.length=0;
+  p.spawnVehicle(id==='v21_medtruck'?'trooptruck':'jeep',5,id,0,5);
+  const bus=q.vehicles[0];bus.x=195;bus.y=300;bus.state='unload';
+  bus.stopT=120;bus.currentSpeed=0;bus.unloadCd=0;bus.hasMG=false;
+  let count=0;
+  for(let frame=0;frame<300&&bus.unloadLeft>0;frame++){
+   p.vehicleStep(1/30);
+   count=q.infantry.length;
+  }
+  assert.equal(bus.unloadLeft,0,id+' can unload every passenger');
+  assert(count>=2,id+' creates real dismounted soldiers');
+  if(id==='v21_crossbike')assert(q.infantry.filter(e=>e.role==='storm').length>=2,'both riders become elites');
+  if(id==='v21_medicquad')assert(q.infantry.some(e=>e.role==='medic'),'quad brings a medic');
+  if(id==='v21_medtruck'){
+   assert(q.infantry.length>=4,'medical truck offloads full squad');
+   assert(q.infantry.every(e=>e.role==='medic'&&/MP40/.test(e.weaponName)),
+    'all Class A medics get MP40 weapons and healing AI');
+  }
+ }
+}
 const v=s.vehicles[0],hp=v.hp;
 u.damageVehicle(v,8,'mg');
 const mgLoss=hp-v.hp;
