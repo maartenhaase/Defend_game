@@ -8,7 +8,7 @@ const html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
 const code=fs.readFileSync(path.join(dir,'game.js'),'utf8');
 assert.match(html,/V10\.8/,'iPhone HTML identifies the current V10.8 update');
 assert.match(html,/mapSelectV10/,'map chooser remains available');
-assert.match(code,/V10\.7 — PARACHUTE LOOT/,'destructible crate subsystem is installed');
+assert.match(code,/V10\.6 — PARACHUTE LOOT/,'destructible crate subsystem is installed');
 assert.match(code,/v106BallisticOld/,'loot uses the real MG collision solver');
 assert.match(code,/v106FlakBlastOld/,'Flak explosions can damage parachute crates');
 const rewardKeys=[
