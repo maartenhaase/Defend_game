@@ -70,6 +70,7 @@ for(const id of specIds){
   }
  }
 }
+u.render(); // Smoke-test all four unique new vehicle render paths at real canvas size.
 const v=s.vehicles[0],hp=v.hp;
 u.damageVehicle(v,8,'mg');
 const mgLoss=hp-v.hp;
