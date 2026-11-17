@@ -51,9 +51,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <canvas id="game"></canvas>
 <div id="overlay" class="overlay">
   <div class="panel">
-    <div class="eyebrow">JBD V10.7 // DE LANGE ROUTE</div>
-    <h1 id="title">V10.7 · DE LANGE ROUTE · 30 MAPS</h1>
-    <p id="sub">30 progressieve maps door één werelddeel. Map 1: één langzaam voertuig. MG begint met 12 kogels en FLAK met 1 projectiel. Schiet de 3 parachutekisten per map open: alleen daarin zitten willekeurige upgrades en versterkingen.</p>
+    <div class="eyebrow">JBD V10.8 // DE LANGE ROUTE</div>
+    <h1 id="title">V10.8 · DE LANGE ROUTE · 30 MAPS</h1>
+    <p id="sub">30 progressieve maps door één werelddeel. Map 1: één langzaam voertuig. MG begint met 12 kogels en FLAK met 1 projectiel. Verdien 4–9 upgrades tijdens het gevecht op basis van voortgang. De 3 parachutekisten geven daarnaast extra willekeurige beloningen.</p>
     <div id="summary" class="summary"></div>
     <div id="shop" class="shop"><div class="shopTitle">FIELD WORKSHOP</div><div id="supply" class="supply"></div><div id="shopGrid" class="shopGrid"></div></div>
     <div class="mapPicker" style="margin:10px 0;padding:9px 11px;border:1px solid #8eae8e55;border-radius:12px;background:#202d22"><label for="mapSelectV10" style="display:block;color:#d7c98b;font-size:10px;font-weight:900;letter-spacing:.1em;margin-bottom:7px">KIES EEN MAP OM TE TESTEN (1–30)</label><select id="mapSelectV10" style="width:100%;border:1px solid #b7c2a666;background:#354538;color:#fff6d9;border-radius:7px;min-height:39px;padding:7px;font-size:13px"></select></div>
@@ -64,14 +64,14 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
     </div>
     <button id="deploy" class="action" type="button" style="display:none">DEPLOY</button>
     <button id="restart" class="action" type="button">PLAY AGAIN</button>
-    <div class="hint">Schiet de parachutekist kapot (kleine HP-balk) om de verborgen upgrade te verdienen. MG: 3 kogels per salvo. FLAK begint met 1 projectiel. Extra kracht krijg je alleen uit kisten. Kijk vijf seconden naar het wrak; daarna kun je direct naar de volgende map.</div>
-    <div class="hint" style="opacity:.62;font-size:10px">V10.7 · 9 schadefases · gewonden en medics · echte scherven · 3 kisten</div>
+    <div class="hint">Nieuwe upgrades verschijnen tijdens het hele level. Tik op PAK UPGRADE om veilig verder te spelen. Schiet parachutekisten kapot voor extra loot. MG: 3 kogels per salvo. FLAK begint met 1 projectiel. Extra kracht komt uit gevechtsvoortgang én parachutekisten. Kijk vijf seconden naar het wrak; daarna kun je direct naar de volgende map.</div>
+    <div class="hint" style="opacity:.62;font-size:10px">V10.8 · 9 schadefases · medics · 4–9 voortgangsupgrades · 3 bonuskisten</div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
-<script src="game.js?v=10-7-final-medic-armor-30maps-20261116"></script>
+<script src="game.js?v=10-8-scheduled-upgrades-20261117"></script>
 <script>(function(){var e=document.getElementById('mapSelectV10');if(!e)return;var names=['De eerste weg','Boerderijpad','Het hooiland','Oude brug','Dorpsrand','Bosrand','Dennenweg','Houtkamp','Bospad','Heuvelpost','Stenen weg','Kloofbocht','Hoogboerderij','Tunnelweg','De bergpas','Dalweg','Spoorbrug','Voorstad','De buitenring','Goederenloods','Kanaalweg','Magazijnzone','Rangeerterrein','Stadsrand','De boulevard','Oude markt','Noordwijk','Centraal station','De binnenring','Het centrum'];for(var i=0;i<30;i++){var o=document.createElement('option');o.value=String(i+1);o.textContent=String(i+1).padStart(2,'0')+' · '+names[i];e.appendChild(o);}})();</script>
-<!-- V10.7: 30 maps, three destructible parachute loot crates and earned-only upgrades -->
+<!-- V10.8: combat milestone upgrades plus 3 optional crates, nine damage states -->
 </body>
 </html>
 
