@@ -6,13 +6,14 @@ var V20_CONFIG={
  normal:{lights:20,particles:80,dust:.55,haze:.55},
  performance:{lights:8,particles:32,dust:.12,haze:0}
 };
-var v20Settings={quality:'normal',fx:85,ambient:35,music:0};
+var v20Settings={quality:'normal',fx:85,ambient:35,music:0,polish:true};
 var v20Lights=[],v20Particles=[],v20LastVehicle=new WeakMap();
 var v20SettingsOpen=false,v20SettingsPanel=null;
 function v20Campaign(){return !!(gameState&&v103Campaign());}
+function v20FxEnabled(){return v20Campaign()&&v20Settings.polish!==false;}
 function v20Quality(){return V20_CONFIG[v20Settings.quality]||V20_CONFIG.normal;}
 function v20AddLight(x,y,r,kind){
- if(!v20Campaign()||!Number.isFinite(x)||!Number.isFinite(y))return;
+ if(!v20FxEnabled()||!Number.isFinite(x)||!Number.isFinite(y))return;
  if(v20Lights.length>=v20Quality().lights)v20Lights.shift();
  var t=kind==='blast'?.55:kind==='flak'?.33:kind==='hit'?.13:.085;
  v20Lights.push({x:x,y:y,r:Math.max(7,r||12),kind:kind||'muzzle',life:t,total:t});
@@ -22,7 +23,7 @@ function v20AddParticle(x,y,kind,vx,vy,life){
  v20Particles.push({x:x,y:y,px:x,py:y,kind:kind||'spark',vx:vx||0,vy:vy||0,life:life||.4,total:life||.4,seed:Math.random()});
 }
 function v20Blast(x,y,scale,kind){
- if(!v20Campaign()||!Number.isFinite(x)||!Number.isFinite(y))return;
+ if(!v20FxEnabled()||!Number.isFinite(x)||!Number.isFinite(y))return;
  scale=Math.max(.5,Math.min(2.3,scale||1));
  v20AddLight(x,y,43*scale,kind||'blast');
  var amount=Math.round((v20Settings.quality==='high'?24:14)*scale);
@@ -53,7 +54,7 @@ function v20VisualTick(dt){
  }
 }
 function v20MovingDust(dt){
- if(!v20Campaign()||gameState.mode!=='playing')return;
+ if(!v20FxEnabled()||gameState.mode!=='playing')return;
  var k=v20Quality();
  if(k.dust<=0)return;
  (gameState.vehicles||[]).forEach(function(v){
@@ -68,7 +69,7 @@ function v20MovingDust(dt){
  });
 }
 function v20DrawEffects(){
- if(!v20Campaign()||gameState.mode!=='playing')return;
+ if(!v20FxEnabled()||gameState.mode!=='playing')return;
  var i,p,alpha;
  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
  // Crisp pixel-size fragments, additive only to existing effects.
@@ -104,7 +105,7 @@ function v20DrawEffects(){
  ctx.restore();
 }
 function v20DrawHaze(){
- if(!v20Campaign()||gameState.mode!=='playing'||v20Quality().haze<=0)return;
+ if(!v20FxEnabled()||gameState.mode!=='playing'||v20Quality().haze<=0)return;
  // Extremely subtle localized atmospheric perspective. Terrain and
  // actors remain untouched and not covered by a blur or global filter.
  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -123,7 +124,7 @@ render=function(){
 // unobtrusive underfoot/underbody grounding shadow.
 var v20SoldierOld=drawSoldier;
 drawSoldier=function(e){
- if(v20Campaign()&&e&&e.alive&&Number.isFinite(e.x)&&Number.isFinite(e.y)){
+ if(v20FxEnabled()&&e&&e.alive&&Number.isFinite(e.x)&&Number.isFinite(e.y)){
   ctx.save();ctx.globalAlpha=.15;ctx.fillStyle='#182016';ctx.beginPath();
   ctx.ellipse(e.x,e.y+3,e.wounded?11:7,e.wounded?3.3:2.3,0,0,6.283);
   ctx.fill();ctx.restore();
@@ -132,7 +133,7 @@ drawSoldier=function(e){
 };
 var v20VehicleOld=drawVehicle;
 drawVehicle=function(v,wreck){
- if(v20Campaign()&&v&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&!wreck){
+ if(v20FxEnabled()&&v&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&!wreck){
   ctx.save();ctx.globalAlpha=.19;ctx.fillStyle='#151a11';ctx.beginPath();
   ctx.ellipse(v.x,v.y+9,v.type==='halftrack'?25:19,5,0,0,6.283);
   ctx.fill();ctx.restore();
@@ -152,13 +153,13 @@ fireWeapon=function(kind,x,y){
 var v20FlakBlastOld=explodeFlak9950;
 explodeFlak9950=function(x,y,shell){
  var out=v20FlakBlastOld.apply(this,arguments);
- if(v20Campaign())v20Blast(x,y,Math.max(.6,(shell&&shell.radius||25)/25),'flak');
+ if(v20FxEnabled())v20Blast(x,y,Math.max(.6,(shell&&shell.radius||25)/25),'flak');
  return out;
 };
 var v20ImpactOld=emitGroundImpact;
 emitGroundImpact=function(x,y,amount,material){
  var out=v20ImpactOld.apply(this,arguments);
- if(v20Campaign()&&amount>.8&&Number.isFinite(x)&&Number.isFinite(y)){
+ if(v20FxEnabled()&&amount>.8&&Number.isFinite(x)&&Number.isFinite(y)){
   if(material==='metal'||material==='vehicle')v20AddLight(x,y,15,'hit');
   for(var i=0;i<Math.min(5,Math.ceil(amount*3));i++)
    v20AddParticle(x,y,material==='wood'||material==='earth'?'dust':'spark',
@@ -170,13 +171,13 @@ var v20BurnOld=finishVehicleBurnout9941;
 finishVehicleBurnout9941=function(v){
  var alive=!!(v&&v.alive),x=v&&v.x,y=v&&v.y;
  var out=v20BurnOld.apply(this,arguments);
- if(v20Campaign()&&alive&&v&&!v.alive)v20Blast(x,y,1.6,'blast');
+ if(v20FxEnabled()&&alive&&v&&!v.alive)v20Blast(x,y,1.6,'blast');
  return out;
 };
 var v20VehicleHitOld=primaryVehicleHit;
 primaryVehicleHit=function(v,b){
  var hp=v&&v.hp,out=v20VehicleHitOld.apply(this,arguments);
- if(v20Campaign()&&v&&b&&v.hp<hp&&Math.random()<.40)
+ if(v20FxEnabled()&&v&&b&&v.hp<hp&&Math.random()<.40)
   v20AddLight(Number(b.x)||v.x,Number(b.y)||v.y,11,'hit');
  return out;
 };
@@ -184,7 +185,7 @@ var v20TickOld=update;
 update=function(dt){
  if(v20SettingsOpen&&v20Campaign()&&gameState.mode==='playing')return;
  var out=v20TickOld.apply(this,arguments);
- if(v20Campaign()&&gameState.mode==='playing'){
+ if(v20FxEnabled()&&gameState.mode==='playing'){
   v20VisualTick(dt);v20MovingDust(dt);
   if(typeof v20AmbientUpdate==='function')v20AmbientUpdate(dt);
  }
