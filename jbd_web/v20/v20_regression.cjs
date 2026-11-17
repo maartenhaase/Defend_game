@@ -47,3 +47,43 @@ u.shotStep(1/60);u.render();
 assert(g.ids.get('deploy'),'original Next Map UI remains wired');
 assert(js.includes('v108UiCreate')&&js.includes('v108Accept'),'original upgrade selection handler remains compiled');
 console.log('PASS BUNKER DEFENSE 2.0: 30 maps, scheduled upgrades, 3 bonus crates, iPhone settings and pausing, original MG/vehicle drawing and touch controls.');
+
+// Real transitions under the 2.0 engine, including ALL late scheduled
+// upgrade choices. This catches a softlock from modal/FX integration.
+{
+ const h=loadGame(dir),u=h.t;
+ u.start('easy');u.state.levelIndex=5;u.reset();
+ const s=u.state;
+ for(let map=5;map<=8;map++){
+  assert.equal(s.levelIndex,map,'currently playing map '+(map+1));
+  let frames=0,choices=0;
+  while(s.mode==='playing'&&frames<5400){
+   if(s.v108Offer){
+    const button=h.ids.get('v108Accept');
+    assert(button&&button.eventEntries.click.length,'a scheduled upgrade can be accepted');
+    button.eventEntries.click[0].fn({preventDefault(){},stopPropagation(){}});
+    choices++;if(choices>12)throw Error('upgrade prompt loop');
+    continue;
+   }
+   u.step(1/30);frames++;
+   if(frames%7===0){
+    s.vehicles.filter(v=>v.alive&&!v.allied).forEach(v=>u.damageVehicle(v,(v.hp||0)+(v.armorHp||0)+1000,'he'));
+    s.infantry.filter(e=>e.alive&&!e.v102Unarmed).forEach(e=>u.damageInfantry(e,e.hp+(e.armorHp||0)+1000,'he'));
+    s.air.forEach(a=>a.alive=false);s.paras.forEach(p=>p.alive=false);
+   }
+  }
+  assert.equal(s.mode,'shop','2.0 map '+(map+1)+' can be completed');
+  assert.equal(s.v108Granted,s.v108Schedule.length,'all scheduled upgrades offered in map '+(map+1));
+  assert(s.v102VictoryHold&&s.v102VictoryHold.elapsed>=5,'existing wreck cinematic retained');
+  if(map===8)break;
+  const btn=h.ids.get('deploy');
+  assert.equal(btn.disabled,false,'Next Map button enabled');
+  let stopped=false;
+  const ev={preventDefault(){},stopImmediatePropagation(){stopped=true;}};
+  for(const e of (btn.eventEntries.click||[]).slice().sort((a,b)=>Number(b.capture)-Number(a.capture))){
+   if(stopped)break;e.fn(ev);
+  }
+  assert.equal(s.levelIndex,map+1,'2.0 moves to the following map');
+ }
+ console.log('PASS BUNKER DEFENSE 2.0: true 6 → 7 → 8 → 9 transitions, all earned upgrades and five-second aftermath.');
+}
