@@ -22,6 +22,7 @@ function v108Perks(){
 }
 function v108Rank(id){return v108Perks()[id]||0;}
 function v108Allowed(id){
+ if(id==='repair'||id==='resupply')return true;
  if(id==='magazine'){
   if(v108Rank(id)>=V108_LIMITS.magazine)return false;
   // Both the 15% scheduled bonuses and the original crate perks use
@@ -56,7 +57,8 @@ function v108WeightedChoice(last){
  group=group.filter(function(item){
   return v108Allowed(item.id)&&!(last.length>=2&&last[last.length-1]===item.id&&last[last.length-2]===item.id);
  });
- if(!group.length)return null;
+ if(!group.length)return last.length>=2&&last[last.length-1]==='repair'&&last[last.length-2]==='repair'?'resupply':
+  last.length&&last[last.length-1]==='repair'?'resupply':'repair';
  var total=group.reduce(function(s,x){return s+x.w;},0),r=Math.random()*total;
  for(var i=0;i<group.length;i++){r-=group[i].w;if(r<=0)return group[i].id;}
  return group[group.length-1].id;
@@ -136,11 +138,14 @@ function v108Present(){
  var slot=g.v108Queue.shift(),id=v108Choose(slot);
  if(!id)return;
  var labels={magazine:'MAGAZINE SIZE +15%',mgReload:'RELOAD SPEED +8%',
-  mgDamage:'DAMAGE +8%',mgRate:'FIRE RATE +6%'};
+  mgDamage:'DAMAGE +8%',mgRate:'FIRE RATE +6%',
+  repair:'VELDREPARATIE',resupply:'MUNITIEBEVOORRADING'};
  var info={magazine:'15% meer patronen in je MG-magazijn.',
   mgReload:'8% kortere herlaadtijd van je MG.',
   mgDamage:'8% meer MG-schade.',
-  mgRate:'6% sneller vuren met de MG.'};
+  mgRate:'6% sneller vuren met de MG.',
+  repair:'Herstel schade aan de bunker tijdens dit gevecht.',
+  resupply:'Vul je MG aan en maak de FLAK sneller weer gereed.'};
  g.v108Offer={slot:slot,id:id};
  v108UiCreate();
  if(v108Ui){
@@ -156,10 +161,16 @@ function v108Accept(){
  if(v108Allowed(chosen)){
   if(chosen==='magazine'||chosen==='mgReload'||chosen==='mgDamage'||chosen==='mgRate'){
    v108Perks()[chosen]=v108Rank(chosen)+1;
+  }else if(chosen==='repair'){
+   g.bunker.hp=Math.min(g.bunker.maxHp,g.bunker.hp+g.bunker.maxHp*.28);
+  }else if(chosen==='resupply'){
+   g.primaryAmmo=g.profile.primaryMag;
+   var flak=currentFlak9950();if(flak)flak.cooldown=Math.max(0,(flak.cooldown||0)-2.5);
   }else{
    v106Perks()[chosen]=(v106Rank(chosen)||0)+1;
   }
-  v106ApplyProfile(true);saveGame();
+  if(chosen!=='repair'&&chosen!=='resupply')v106ApplyProfile(true);
+  saveGame();
   g.v108History.push(chosen);
   g.message='UPGRADE VERDIEND · '+(chosen==='magazine'?'MAGAZINE +15%':chosen==='mgReload'?'HERLADEN +8%':chosen==='mgDamage'?'SCHADE +8%':chosen==='mgRate'?'VUURSNELHEID +6%':chosen);
   g.messageT=2.4;
