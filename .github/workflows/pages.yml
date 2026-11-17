@@ -44,6 +44,8 @@ jobs:
           mkdir -p _site
           cp -a jbd_rebuild_v1/dist/. _site/
           cp -a jbd_web _site/jbd_web
+          node jbd_web/v10/build_v108.cjs --output _site/jbd_web/v10/game.js
+          JBD_GAME_DIR="$PWD/_site/jbd_web/v10" node jbd_web/v10/v108_regression.cjs
           test -s _site/jbd_web/v10/index.html
           test -s _site/jbd_web/v10/game.js
           node --check _site/jbd_web/v10/game.js
