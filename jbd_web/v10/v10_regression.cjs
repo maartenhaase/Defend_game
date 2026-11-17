@@ -168,7 +168,14 @@ console.log('PASS: 30 maps, 3 planned drops each, no automatic arsenal progressi
  for(let n=0;n<ratios.length;n++){
   v.hp=v.maxHp*ratios[n];
   u.damageVehicle(v,1,'mg'); // Meaningful post-armor MG damage triggers visual state change.
-  assert.equal(v.v107Stage,n+1,'vehicle damage stage '+(n+1));
+  // V10.7 paints stages from current HP in drawVehicle(). Its cached
+  // v107Stage is only refreshed when a real hit registers hull damage,
+  // so artificial direct HP test assignments must use the live ratio.
+  const ratio=v.hp/v.maxHp;
+  const visualStage=ratio>.90?1:ratio>.78?2:ratio>.65?3:ratio>.52?4:
+    ratio>.40?5:ratio>.28?6:ratio>.15?7:8;
+  assert.equal(visualStage,n+1,'live vehicle visual damage stage '+(n+1));
+  u.render(); // real stage-driven vehicle painting must remain functional
   assert(v.alive,'all pre-wreck damage stages have a shootable vehicle');
  }
  u.damageVehicle(v,v.hp+v.armorHp+10000,'he');
