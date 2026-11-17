@@ -106,7 +106,7 @@ function v20InitSettings(){
   v20SaveSettings();
  });
  compare.appendChild(check);
- compare.appendChild(document.createTextNode('2.0-EFFECTLAAG (A/B VERGELIJKEN)'));
+ var labelText=document.createElement('span');labelText.textContent='2.0-EFFECTLAAG (A/B VERGELIJKEN)';compare.appendChild(labelText);
  body.appendChild(compare);
  body.appendChild(v20MakeSlider('EFFECTEN','fx'));
  body.appendChild(v20MakeSlider('OMGEVING','ambient'));
