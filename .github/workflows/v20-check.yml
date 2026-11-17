@@ -1,0 +1,28 @@
+name: Bunker Defense 2.0 — modular visual/audio regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'jbd_web/v20/**'
+      - 'jbd_web/v10/**'
+      - '.github/workflows/v20-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build separate Bunker Defense 2.0
+        run: node jbd_web/v20/build.cjs --output /tmp/jbd20
+      - name: Syntax-check the original engine plus all enhancement modules
+        run: node --check /tmp/jbd20/game.js
+      - name: Regression-test all campaign maps, upgrades, audio settings and iPhone touch
+        run: JBD_GAME_DIR=/tmp/jbd20 node jbd_web/v20/v20_regression.cjs
+      - name: Test original V10.8 update system alongside 2.0
+        run: JBD_GAME_DIR=/tmp/jbd20 node jbd_web/v10/v108_regression.cjs
