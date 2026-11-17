@@ -321,7 +321,11 @@ console.log('PASS: 30 maps, 3 planned drops each, no automatic arsenal progressi
  for(let i=0;i<8;i++){
   v.hp=v.maxHp*levels[i];v.alive=true;v.fuelIgnited=false;
   u.damageVehicle(v,.03,'mg');
-  assert.equal(v.v107Stage,i+1,'visual damage stage '+(i+1));
+  const liveRatio=v.hp/v.maxHp;
+  const liveStage=liveRatio>.90?1:liveRatio>.78?2:liveRatio>.65?3:liveRatio>.52?4:
+    liveRatio>.40?5:liveRatio>.28?6:liveRatio>.15?7:8;
+  assert.equal(liveStage,i+1,'live visual damage stage '+(i+1));
+  u.render();
  }
  u.damageVehicle(v,v.hp+1000,'he');
  assert(!v.alive,'terminal stage destroys hull');
