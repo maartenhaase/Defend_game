@@ -167,7 +167,7 @@ console.log('PASS: 30 maps, 3 planned drops each, no automatic arsenal progressi
  const ratios=[1,.88,.73,.59,.46,.33,.22,.08];
  for(let n=0;n<ratios.length;n++){
   v.hp=v.maxHp*ratios[n];
-  u.damageVehicle(v,.001,'mg');
+  u.damageVehicle(v,1,'mg'); // Meaningful post-armor MG damage triggers visual state change.
   assert.equal(v.v107Stage,n+1,'vehicle damage stage '+(n+1));
   assert(v.alive,'all pre-wreck damage stages have a shootable vehicle');
  }
