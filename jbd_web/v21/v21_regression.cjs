@@ -94,3 +94,37 @@ assert(c.opened,'crate eventually opens with sustained real gunfire');
 assert(!s.v108Offer,'no mandatory upgrade modal after crate is opened');
 u.render();
 console.log('PASS 2.1: 30 maps, 3–6 randomized drops, no forced modal, 12 bullets loaded, stronger vehicles, flak>MG, four new crewed vehicle specs, damageable glowing crates.');
+
+
+// A real simulated 7 → 8 transition under 2.1: no hidden mandatory
+// reward queue, all 3–6 drops appear, and the wreck remains 5 seconds.
+{
+ const h3=loadGame(dir),p=h3.t;
+ p.start('easy');p.state.levelIndex=6;p.reset();
+ const q=p.state;
+ let frames=0;
+ while(q.mode==='playing'&&frames<5700){
+  assert(!q.v108Offer,'no unskippable upgrade selection at any point');
+  p.step(1/30);frames++;
+  if(frames%8===0){
+   q.vehicles.filter(v=>v.alive&&!v.allied).forEach(v=>p.damageVehicle(v,(v.hp||0)+(v.armorHp||0)+2000,'he'));
+   q.infantry.filter(e=>e.alive&&!e.v102Unarmed).forEach(e=>p.damageInfantry(e,e.hp+(e.armorHp||0)+2000,'he'));
+   q.air.forEach(a=>a.alive=false);
+   q.paras.forEach(a=>a.alive=false);
+  }
+ }
+ assert.equal(q.v106Spawned,q.v106Target,'all chosen parachute crates appeared even if battle was won quickly');
+ assert.equal(q.mode,'shop','level 7 completes without forced upgrade popup');
+ assert(q.v102VictoryHold&&q.v102VictoryHold.elapsed>=5,'five-second burning aftermath remains');
+ const next=h3.ids.get('deploy');
+ assert.equal(next.disabled,false,'Next Map control enabled after level 7');
+ let stop=false;
+ for(const e of (next.eventEntries.click||[]).slice().sort((a,b)=>Number(b.capture)-Number(a.capture))){
+  if(stop)break;
+  e.fn({preventDefault(){},stopImmediatePropagation(){stop=true;}});
+ }
+ assert.equal(q.levelIndex,7,'level 8 actually loads');
+ assert.equal(q.mode,'playing','level 8 is playable');
+ assert(q.profile.primaryMag>=12,'12+ bullets loaded in level 8');
+ console.log('PASS 2.1: actual level 7 → 8 transition, random crates and five-second victory cinematic.');
+}
