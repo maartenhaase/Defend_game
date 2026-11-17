@@ -135,24 +135,32 @@ damageVehicle=function(v,dmg,kind){
   }
   var margin=Math.max(1.5,v.maxHp*.055);
   dmg=Math.max(0,Math.min(dmg*.58,Math.max(0,v.hp-margin)*.75));
- }else if(kind==='he'||kind==='flak')dmg*=2.05;
+ }else if(kind==='he'||kind==='flak'){v.v21HEHits=(v.v21HEHits||0)+1;dmg*=2.05;}
  return v21DamageOld.call(this,v,dmg,kind);
 };
 // Fuel flames are reserved for severe damage, especially explosive strikes.
 var v21IgniteOld=igniteFuel;
 igniteFuel=function(v,delay){
- if(v21Active()&&v&&v.alive&&v107Stage(v)<8){
+ if(v21Active()&&v&&v.alive&&(!v.v21HEHits||v107Stage(v)<8)){
   v.fuelLeak=true;return false;
  }
  return v21IgniteOld.apply(this,arguments);
 };
 var v21BurnOld=updateVehicleDamageParticles;
 updateVehicleDamageParticles=function(v,dt){
- var result=v21BurnOld.apply(this,arguments);
- if(v21Active()&&v&&v.alive&&v107Stage(v)<8&&v.fuelIgnited){
-  v.fuelIgnited=false;v.fuelBurnT=0;v.burnPhase9941=null;
+ if(!v21Active()||!v||!v.alive)return v21BurnOld.apply(this,arguments);
+ var stage=v107Stage(v);
+ v.damageFxCd=(v.damageFxCd||0)-dt;
+ if(v.damageFxCd<=0&&stage>=5){
+  v.damageFxCd=stage>=8?.17:stage>=7?.30:stage===6?.40:.60;
+  emitSmoke(v.x+rand(-7,7),v.y+rand(-11,6),stage>=7);
+  // Only an explosive-damaged critical engine may burn.
+  if(stage>=8&&v.v21HEHits&&Math.random()<.65)
+   emitFlame(v.x+rand(-5,5),v.y+rand(-3,10),true);
+  if(stage>=6&&Math.random()<.20)
+   pushEffect({type:'spark',x:v.x,y:v.y,vx:rand(-25,25),vy:rand(-45,-12),t:0,life:.14});
  }
- return result;
+ if(stage<8&&v.fuelIgnited){v.fuelIgnited=false;v.fuelBurnT=0;v.burnPhase9941=null;}
 };
 // Player starts with TWELVE actual bullets, with all previous permanent
 // upgrades still saved; no reset to 3 through old early-campaign logic.
@@ -277,6 +285,12 @@ drawVehicle=function(v,wreck){
  if(!v21Active()||!v)return v21DrawVehicleOld.apply(this,arguments);
  var kind=v.v21Kind||'';
  var angle=(v.bodyAngle==null?Math.PI/2:v.bodyAngle)-Math.PI/2;
+ // Preserve the real nine-stage HP state and existing dent/paint layers.
+ // In a MG-only emergency, replace an early painted flame with the
+ // already-rendered mechanical damage stage, never fake an ignition.
+ var realStage=v107Stage,maskFire=!wreck&&!v.v21HEHits&&realStage(v)>=7;
+ if(maskFire)v107Stage=function(o){return o===v?6:realStage(o);};
+ try {
  if(kind==='technical'&&!wreck){
   ctx.save();
   // The base jeep atlas supplies all wheel, chassis and equipment detail.
@@ -288,6 +302,7 @@ drawVehicle=function(v,wreck){
   ctx.beginPath();ctx.rect(-9,-23,18,46);ctx.clip();ctx.rotate(-angle);ctx.translate(-v.x,-v.y);
   v21DrawVehicleOld.call(this,v,wreck);ctx.restore();
  }else v21DrawVehicleOld.call(this,v,wreck);
+ }finally{if(maskFire)v107Stage=realStage;}
  if(wreck)return;
  if(kind==='technical'||kind==='crossbike'||kind==='medicquad'||kind==='medtruck'||v.v21FourCrew){
   ctx.save();ctx.translate(v.x,v.y);ctx.rotate(angle);
