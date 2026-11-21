@@ -1,0 +1,28 @@
+name: Bunker Defense 2.2 Arcade regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'jbd_web/v22/**'
+      - 'jbd_web/v21/**'
+      - 'jbd_web/v20/**'
+      - 'jbd_web/v10/**'
+      - '.github/workflows/v22-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build original engine with isolated arcade layer
+        run: node jbd_web/v22/build.cjs --output /tmp/jbd22
+      - name: Syntax check complete engine
+        run: node --check /tmp/jbd22/game.js
+      - name: Verify 30 waves and level 7 to 8 transition
+        run: JBD_GAME_DIR=/tmp/jbd22 node jbd_web/v22/v22_regression.cjs
